@@ -1,0 +1,277 @@
+/* *{
+  margin: 0px;
+  padding: 0px;
+  box-sizing: border-box;
+} */
+
+body {
+  /* overflow-x: hidden; */
+  /* margin: 0px;
+  padding: 0px;
+  box-sizing: border-box; */
+
+}
+
+
+.App {
+  text-align: center;
+}
+
+body>iframe#webpack-dev-server-client-overlay {
+  display: none !important;
+}
+
+.input_text_group label {
+  width: 175px;
+  color: #343434;
+  font-family: Calibri;
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: normal;
+  display: inline-block;
+}
+
+.input_text_group {
+  margin-bottom: 26px;
+}
+
+.form_container {
+
+
+  width: 1372px;
+  height: 655px;
+  background-color: var(--BG-Paper, #F8F8F8);
+  border-top-left-radius: 5px;
+  margin-top: 24px;
+  margin-left: 24px;
+  padding: 32px 24px;
+}
+
+.input_text_group input {
+  width: 328px;
+  height: 42px;
+  font-family: Calibri;
+  border-radius: 8px;
+  border: 1px solid #BFBFBF;
+  background: #FFF;
+  font-size: 16px;
+  font-weight: 400;
+  text-indent: 6px;
+  /* color: #9A9A9A; */
+}
+
+span.link_search_list {
+  /* width:  285px; */
+  display: inline-block;
+  height: 61px;
+  border-top: 0.5px solid var(--Line-Table, #C6C6C8);
+  display: flex;
+  -webkit-align-items: center;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+
+  padding-left: 13px;
+
+
+      line-height: 1.5;
+    letter-spacing: 0.00938em;
+    color: #000000;
+
+    font-family: Calibri;
+    font-size: 16px;
+    font-style: normal;
+    font-weight: 400;
+}
+
+.header_page h1 {
+  color: #05595B;
+  font-family: "Calibri";
+  font-size: 24px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: normal;
+  margin-left: 32px;
+}
+
+.form_content_wrp {
+  float: left;
+  width: 1395px;
+}
+
+.header_page {
+  width: 1395px;
+  height: 64px;
+  flex-shrink: 0;
+  background-color: #FFF;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0px 8px 8px -4px rgba(24, 39, 75, 0.08);
+}
+
+.form_body_wrp {
+  width: 100%;
+  float: left;
+}
+
+input.search_data_list:focus {
+  outline: inherit;
+}
+
+.search_data_list {
+  border: 1px solid #c4c4c4;
+  border-radius: 4px;
+  background-color: #fff;
+}
+
+.search_data_list:hover {
+  border-color: #8BB4FF;
+  background-color: #F5F8FF;
+}
+
+.search_data_list:focus {
+  outline: none;
+  border: 2px solid #8BB4FF;
+  background-color: #FFF;
+}
+
+.search_area {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 24px;
+  position: relative;
+}
+
+span.icon_search {
+  position: absolute;
+  top: 9px;
+  left: 39px;
+}
+
+.disabled_input_field {
+  background: rgb(240 240 240) !important;
+}
+
+table.modal_table {
+  margin: 31px auto;
+  width: 93%;
+  /* min-width: 300px !important; */
+}
+
+input.search_data_list {
+
+  border-radius: 20px;
+  background-color: #FFF;
+  box-shadow: inherit;
+  box-sizing: inherit;
+  border: 0.5px solid rgba(0, 0, 0, 0.23);
+  width: 232px;
+  /* height: 29px; */
+  text-indent: 37px;
+  color: #C0C0C0;
+  font-family: "Segoe UI";
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 400;
+  padding: 6px 0px 6px 0px;
+
+
+}
+
+.search_data_list::placeholder {
+  color: rgb(224, 223, 223);
+  /* put any color you want */
+  margin-right: 10px;
+
+}
+
+.search_wrp {
+  height: 810px;
+  background-color: #FFF;
+  width: 285px;
+}
+
+.input_text_group input::placeholder {
+  font-size: 21px;
+}
+
+.link_search_list_block {
+  display: block;
+  margin-top: 24px;
+}
+
+.input_text_group input:focus {
+  outline: none;
+}
+
+.required_red {
+  color: #E00410;
+}
+
+.App-logo {
+  height: 40vmin;
+  pointer-events: none;
+}
+
+h2.exchange_rate_label_header {
+  color: var(--HeadPage, #05595B);
+  font-family: Calibri;
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: normal;
+}
+
+.exchange_rate_block .block {
+  margin-bottom: 21px;
+
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .App-logo {
+    animation: App-logo-spin infinite 20s linear;
+  }
+}
+
+input[type='text'] {
+  font-style: normal !important;
+}
+
+.App-header {
+  background-color: #282c34;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(10px + 2vmin);
+  color: white;
+}
+
+.App-link {
+  color: #61dafb;
+}
+
+@keyframes App-logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.text_currency_block {
+  position: relative;
+}
+
+.text_currency {
+  position: absolute;
+  right: -87px;
+  width: 69px;
+  height: 23px;
+  overflow: hidden;
+}

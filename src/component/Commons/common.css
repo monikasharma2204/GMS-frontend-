@@ -1,0 +1,19 @@
+table.table_list_data th {
+    border-bottom: 1px solid var(--Line-Table, #C6C6C8);
+    background: var(--Head-Table, #EDEDED);
+    text-align: left;
+    height: 40px;
+}
+table.table_list_data th{
+    height: 40px;
+    padding: 0;
+}
+table.table_list_data td {
+    text-align: left;
+    padding: 0;
+}
+.header_page{
+    width: 100%;
+    /* box-shadow: inherit !important; */
+    /* margin-bottom: 13px !important; */
+}

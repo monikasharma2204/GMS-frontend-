@@ -1,0 +1,98 @@
+.customContainer1 {
+    position: absolute;
+    top: 0;
+    left: 223px;
+    width: 255px;
+    height: 114vh;
+    background-color: #EAEAF4;
+    z-index: 1300;
+    transition: left 0.3s;
+}
+
+.customHeader1 {
+    height: 70px;
+    border-bottom: 1px solid #ccc;
+    border-color: white;
+    display: flex;
+    align-items: center;
+    padding-left: 15px;
+}
+
+.customSubContainer1 {
+    height: 70px;
+    padding-left: 15px;
+    padding-top: 15px;
+}
+
+.customText1 {
+    color: #343434;
+    font-size: 14px;
+}
+
+.customText1:hover {
+    color: #0072EC;
+}
+
+.customText2 {
+    color: #343434;
+}
+
+.customText2:hover {
+    color: #0072EC;
+}
+
+.customContainer2 {
+    position: absolute;
+    top: 0;
+    left: 223px;
+    width: 255px;
+    height: 114vh;
+    background-color: #EAEAF4;
+    z-index: 1300;
+    transition: left 0.3s;
+}
+
+.customSubContainer2 {
+    height: 70px;
+    border-bottom: 1px solid #ccc;
+    border-color: white;
+    display: flex;
+    align-items: center;
+    padding-left: 15px;
+}
+
+.customContainer3 {
+    position: absolute;
+    top: 0;
+    left: 223px;
+    width: 255px;
+    height: 114vh;
+    background-color: #EAEAF4;
+    z-index: 1300;
+    transition: left 0.3s;
+}
+
+.customSubContainer3 {
+    height: 70px;
+    border-bottom: 1px solid #ccc;
+    border-color: white;
+    display: flex;
+    align-items: center;
+    padding-left: 15px;
+}
+
+.boxContaiinder {
+    height: 70px;
+    padding-left: 15px;
+    padding-top: 15px;
+}
+
+.customText3 {
+    font-size: 14px;
+    margin-top: 15px;
+    color: #343434;
+}
+
+.customText3:hover {
+    color: #0072EC;
+}

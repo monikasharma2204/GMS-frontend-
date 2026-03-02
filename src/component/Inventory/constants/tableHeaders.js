@@ -1,0 +1,52 @@
+/**
+ * Table header configurations for different components
+ */
+
+export const FIRST_SECTION_HEADERS = [
+  { label: "#", width: "40px" },
+  { label: "Stone", width: "120px" },
+  { label: "Shape", width: "120px" },
+  { label: "Size", width: "120px" },
+  { label: "Color", width: "120px" },
+  { label: "Cutting", width: "120px" },
+  { label: "Quality", width: "120px" },
+  { label: "Clarity", width: "100px" },
+  { label: "Pcs", width: "100px" },
+  { label: "Weight", width: "100px" },
+  { label: "Price", width: "120px" },
+  { label: "Unit", width: "120px" },
+  { label: "Amount", width: "120px" },
+  { label: "PU No.", width: "145px" },
+  { label: "", width: "50px" },
+];
+
+export const SECOND_SECTION_HEADERS = [
+  { label: "", width: "15px" },
+  { label: "#", width: "40px" },
+  { label: "Pic", width: "40px" },
+  { label: "Stone Code", width: "143px" },
+  { label: "location", width: "150px" },
+  { label: "Stone", width: "115px" },
+  { label: "Shape", width: "180px" },
+  { label: "Size", width: "80px" },
+  { label: "Color", width: "215px" },
+  { label: "Cutting", width: "80px" },
+  { label: "Quality", width: "190px" },
+  { label: "Clarity", width: "105px" },
+  { label: "Cer Type", width: "165px" },
+  { label: "CerNo.", width: "135px" },
+  { label: "lot", width: "120px" },
+  { label: "Pcs", width: "165px" },
+  { label: "Wt/Pc", width: "130px" },
+  { label: "Weight", width: "155px" },
+  { label: "Original Price", width: "140px" },
+  { label: "Unit", width: "140px" },
+  { label: "Amount", width: "140px" },
+  { label: "Stock Price", width: "140px" },
+  { label: "Unit", width: "140px" },
+  { label: "Amount", width: "140px" },
+  { label: "Sale Price", width: "140px" },
+  { label: "Unit", width: "140px" },
+  { label: "Amount", width: "140px" },
+  { label: "Remark", width: "358px" },
+];

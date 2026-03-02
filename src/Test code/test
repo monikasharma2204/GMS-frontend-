@@ -1,0 +1,122 @@
+import React, { useState } from "react";
+import { Box } from "@mui/material";
+import NavBar from "../../component/NavBar/NavBar";
+import Header from "../../component/Layout/Header";
+import Footer from "../../component/Layout/Footer";
+import SearchBarStoneMaster from "../../component/StoneMaster/StoneMaster/SearchBarStoneMaster";
+import StoneMasterHeader from "../../component/StoneMaster/StoneMaster/StoneMasterHeader";
+import StoneMasterBody from "../../component/StoneMaster/StoneMaster/StoneMasterBody";
+import { useNavigate } from "react-router-dom";
+import apiRequest from "../../helpers/apiHelper";
+
+const StoneGroup = () => {
+  const [selectedData, setSelectedData] = useState(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [originalData, setOriginalData] = useState(null);
+  const [responseMessage, setResponseMessage] = useState("");
+
+  const navigate = useNavigate();
+
+  const handleDataSelection = (data) => {
+    setSelectedData(data);
+    setOriginalData(data);
+    setIsEditing(false);
+  };
+
+  const handleEditToggle = () => {
+    setIsEditing(true);
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditing(false);
+    setSelectedData(originalData);
+  };
+
+  const handleCodeChange = (newCode) => {
+    setSelectedData((prevData) => ({
+      ...prevData,
+      code: newCode,
+    }));
+  };
+
+  const handleNameChange = (newName) => {
+    setSelectedData((prevData) => ({
+      ...prevData,
+      name: newName,
+    }));
+  };
+
+  const handleStatusChange = (newStatus) => {
+    console.log("New status:", newStatus ? "active" : "inactive");
+    setSelectedData((prevData) => ({
+      ...prevData,
+      master_status: newStatus ? "active" : "inactive",
+    }));
+  };
+
+  const handlePost = async () => {
+    if (!selectedData) return;
+
+    const { _id, code, name, master_status } = selectedData;
+    const data = {
+      _id,
+      code,
+      name,
+      master_info: {}, 
+      master_type: "master_stone_group", 
+      master_status
+    };
+    
+    try {
+      const response = await apiRequest(
+        "POST",
+        "/master?master_type=master_stone_group",
+        data
+      );
+      const statusCode = response.status;
+      setResponseMessage(`${statusCode}`);
+  
+      navigate("/stone-master/stone-group");
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
+    } catch (error) {
+      if (error.response && error.response.status) {
+        const statusCode = error.response.status;
+        setResponseMessage(`${statusCode}`);
+      }
+    }
+    console.log("Data to be posted:", selectedData);
+    
+  };
+
+  return (
+    <Box sx={{ display: "flex" }}>
+      <NavBar />
+      <Box>
+        <Header />
+        <Box sx={{ display: "flex" }}>
+          <Box>
+            <StoneMasterHeader
+              selectedData={selectedData}
+              isEditing={isEditing}
+              onEditToggle={handleEditToggle}
+              onStatusChange={handleStatusChange}
+            />
+            <StoneMasterBody
+              selectedData={selectedData}
+              isEditing={isEditing}
+              onCodeChange={handleCodeChange}
+              onNameChange={handleNameChange}
+              onStatusChange={handleStatusChange}
+            />
+          </Box>
+          <SearchBarStoneMaster onDataSelect={handleDataSelection} />
+        </Box>
+        <Footer onCancelEdit={handleCancelEdit} onClick={handlePost} responseMessage={responseMessage}/>
+      </Box>
+    </Box>
+  );
+};
+
+export default StoneGroup;

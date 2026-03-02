@@ -1,0 +1,343 @@
+.box1 {
+    background-color: #062C30;
+    height: 64px;
+    max-width: 100%;
+    display: flex;
+    align-items: center;
+    padding-right: 25px;
+    padding-left: 35px;
+}
+
+.box2 {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    width: 100%;
+    height: 100%;
+}
+
+.box3 {
+    height: 100%;
+    width: 100%;
+    display: flex;
+    align-items: center;
+}
+
+.text1 {
+    color: white;
+    font-size: 20px;
+    font-weight: bold;
+}
+
+.box4 {
+    height: 100%;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+}
+
+.buttonDayBook {
+    background-color: #C6A969;
+    width: 115px;
+    color: white;
+    border-radius: 5px;
+    text-transform: none;
+    margin-right: 25px;
+}
+
+.box5 {
+    background-color: white;
+    border-radius: 10px;
+    width: 1360px;
+    height: 860px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.box6 {
+    border-top-right-radius: 8px;
+    border-top-left-radius: 8px;
+    width: 100%;
+    background-color: #05595B;
+    height: 55px;
+    display: flex;
+    align-items: center;
+    padding-left: 30px;
+}
+
+.box7 {
+    width: 95%;
+    height: 700px;
+    padding-top: 25px;
+}
+
+.modal1 {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.box8 {
+    width: 100%;
+    background-color: #F8F8F8;
+    height: 700px;
+    padding-top: 25px;
+    padding-left: 30px;
+}
+
+.displayflex {
+    display: flex;
+}
+
+.box9 {
+    width: 640px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+}
+
+.box10 {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 70px;
+    height: 35px;
+    border: 1px solid black;
+    border-radius: 4px;
+    padding: 5px;
+    margin-right: 20px;
+}
+
+.marginRight {
+    margin-right: 10px;
+}
+
+.fontsize14 {
+    font-size: 14px;
+}
+
+.customBox1 {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    margin-right: 10px;
+}
+
+.customBox1:hover {
+    cursor: pointer;
+}
+
+.img1 {
+    width: 90%;
+    height: 90%;
+}
+
+.customBox2 {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+}
+
+.customBox2:hover {
+    cursor: pointer;
+}
+
+.box11 {
+    border-radius: 5px;
+    border-color: #C6C6C8;
+    border: 1px solid #ccc;
+}
+
+.box12 {
+    width: 1230px;
+    padding-top: 20px;
+}
+
+.font1 {
+    font-weight: bold;
+    color: #343434;
+}
+
+.backgroundcolor1 {
+    background-color: #EDEDED;
+}
+
+.customBox3 {
+    display: flex;
+    align-items: center;
+    height: 35px;
+    width: 275px;
+    padding-left: 10px;
+    justify-content: space-between;
+    border-radius: 4px;
+}
+
+.customBox3:hover {
+    border: 1px solid #1B84FF;
+}
+
+.fontcolor1 {
+    color: #B3B3B3;
+}
+
+.box13 {
+    width: 15px;
+    height: 15px;
+    margin-right: 10px;
+}
+
+.box14 {
+    width: 95%;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 30px;
+}
+
+.customButtonOK {
+    width: 82px;
+    height: 35px;
+}
+
+.customButtonCancel {
+    width: 82px;
+    height: 35px;
+}
+
+.customButtonMemoPending {
+    width: 131px;
+    color: white;
+    border-radius: 5px;
+    text-transform: none;
+    margin-right: 25px;
+}
+
+.box15 {
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-right: 2px;
+}
+
+.img2 {
+    width: 80%;
+    height: 80%;
+}
+
+.customBox4 {
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+}
+
+.customBox4:hover {
+    cursor: pointer;
+}
+
+.customBox4:hover img {
+    filter: brightness(0.8);
+}
+
+.box16 {
+    background-color: white;
+    padding: 20px;
+    border-radius: 15px;
+    width: 500px;
+    height: 600px;
+}
+
+.box17 {
+    width: 100%;
+    height: 20px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: flex-end;
+
+}
+
+.customIcon1 {
+    width: 20px;
+    height: 100%;
+
+}
+
+.customIcon1:hover {
+    cursor: pointer;
+}
+
+.img3 {
+    width: 17px;
+    height: 17px;
+}
+
+.box18 {
+    width: 100%;
+    height: 120px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.fontWeight {
+    font-weight: bold;
+}
+
+.fontsize12 {
+    font-size: 12px;
+}
+
+.box19 {
+    height: 320px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.box20 {
+    height: 100px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.customButtonSCAN {
+    width: 220px;
+    height: 43px;
+    background-color: #E6E6E6;
+    border-radius: 20px;
+}
+
+.customButtonSCAN:hover {
+    background-color: #E6E6E6;
+}
+
+.customButtonDayBook {
+    width: 115px;
+    color: white;
+    border-radius: 5px;
+    text-transform: none;
+}
+
+.customButtonPO {
+    width: 84px;
+    color: white;
+    border-radius: 5px;
+    text-transform: none;
+}

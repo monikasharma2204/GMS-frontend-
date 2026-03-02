@@ -1,0 +1,62 @@
+import { TextField } from "@mui/material";
+import { useRecoilState , useRecoilValue   } from "recoil";
+import { memoInfoState, editMemoState} from "recoil/MemoState";
+
+const Ref1 = ({ onRef1Change, ref1, disabled }) => {
+
+  const editMemoStatus = useRecoilValue(editMemoState);
+  const [memoInfo] = useRecoilState(memoInfoState);
+  const shouldDisableFields = disabled || (memoInfo?.isDayBookEdit && !editMemoStatus);
+
+  return (
+    <TextField
+      id="outlined-required"
+      label="Ref. 1 :"
+      value={ref1}
+      disabled={shouldDisableFields}
+      onChange={(e) => onRef1Change(e.target.value)}
+      InputLabelProps={{
+        shrink: true,
+        sx: {
+          color: "var(--Text-Field, #666)",
+          fontFamily: "Calibri",
+          fontSize: "18px",
+          fontStyle: "normal",
+          fontWeight: 400,
+        },
+      }}
+      sx={{
+        "& .MuiInputLabel-asterisk": {
+          color: "red",
+        },
+        "& .MuiOutlinedInput-root": {
+          borderRadius: "8px",
+          backgroundColor: "#FFF",
+          width: "281px",
+          height: "42px",
+          "&:hover .MuiOutlinedInput-notchedOutline": {
+            borderColor: "#8BB4FF",
+          },
+          "&:hover": {
+            backgroundColor: "#F5F8FF",
+          },
+          "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+            borderColor: "#8BB4FF",
+          },
+        },
+        "& .MuiOutlinedInput-input::placeholder": {
+          color:
+            "var(--gbreadcrumbs-and-other-parts-text, var(--Text-Dis-Field, #9A9A9A))",
+          fontFamily: "Calibri",
+          fontSize: "16px",
+          fontStyle: "normal",
+          fontWeight: 400,
+          lineHeight: "normal",
+        },
+        
+      }}
+    />
+  );
+};
+
+export default Ref1;

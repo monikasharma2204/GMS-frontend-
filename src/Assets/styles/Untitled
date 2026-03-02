@@ -1,0 +1,144 @@
+.ButtonOnNavBarWithOutRightArrow {
+  display: flex;
+  width: 222px;
+  height: 51px;
+  align-items: center;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+.ButtonOnNavBarWithOutRightArrow:hover {
+  background-color: #fff;
+  color: black;
+}
+
+.ButtonOnNavBarWithOutRightArrow:hover svg path {
+  stroke: #fff;
+}
+
+.ButtonOnNavBarWithOutRightArrow:hover .hovered-text {
+  color: #fff;
+}
+
+/* -------------------------------------------- */
+
+.ButtonOnNavBarWithRightArrow {
+  display: flex;
+  width: 222px;
+  height: 51px;
+  align-items: center;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+.ButtonOnNavBarWithRightArrow:hover svg path {
+  stroke: #fff;
+}
+
+.ButtonOnNavBarWithRightArrow:hover .hovered-text {
+  color: #fff;
+}
+
+.ButtonOnNavBarWithRightArrow:hover .hovered-box {
+  background-color: #fff;
+}
+
+/* -------------------------------------------- */
+
+.TextButton {
+  color: #fff;
+  text-align: center;
+  font-family: Calibri;
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: normal;
+  margin-left: 16px;
+}
+
+/* -------------------------------------------- */
+
+.NewTab {
+  position: absolute;
+  top: 294px;
+  right: -180px;
+  background-color: #fff;
+  width: 180px;
+  height: 156px;
+  cursor: default;
+  border-left: 1px solid #e4e8ec;
+  z-index: 999;
+  border-top-right-radius: 10px;
+  border-bottom-right-radius: 10px;
+  filter: drop-shadow(0px 8px 8px rgba(24, 39, 75, 0.08))
+          drop-shadow(0px 4px 6px rgba(24, 39, 75, 0.12));
+}
+
+/* -------------------------------------------- */
+
+.TextHeader {
+  color: var(--Muay-Black, #343434);
+  font-family: Calibri;
+  font-size: 20px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: normal;
+  margin-left: 16px;
+  margin-top: 24px;
+  margin-bottom: 24px;
+}
+
+.TextTitle {
+  color: var(--Muay-Black, #343434);
+  font-family: Calibri;
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: normal;
+  margin-left: 16px;
+  margin-top: 16px;
+}
+
+/* -------------------------------------------- */
+
+.TextMain {
+  color: #05595B;
+  font-family: Calibri;
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: normal;
+  margin-left: 10px;
+  cursor: pointer;
+}
+
+/* -------------------------------------------- */
+
+.TextSub {
+  color: var(--Muay-Black, #343434);
+  font-family: Calibri;
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: normal;
+  margin-left: 41px;
+  margin-top: 8px;
+  cursor: pointer;
+}
+
+.TextSub:hover {
+  color: #05595B;
+}
+
+/* -------------------------------------------- */
+
+.TextMainDisable {
+  color: var(--Muay-Black, #ACACAC);
+  font-family: Calibri;
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: normal;
+  margin-left: 10px;
+  cursor: pointer;
+}

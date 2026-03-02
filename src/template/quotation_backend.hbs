@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Quotation - {{invoice_no}}</title>
+    <!-- pdf library (optional if using puppeteer, but good for styling consistency) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
+
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@300;400;600;700&display=swap"
+        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:ital,wght@0,100..900;1,100..900&display=swap"
+        rel="stylesheet" />
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: "Noto Sans", sans-serif;
+            color: #2a2a2a;
+            background: #f5f5f5;
+            margin: 0;
+        }
+
+        /* Main Container - A4 size */
+        .main-container {
+            width: 794px;
+            /* A4 width at 96 DPI */
+            background: #fff;
+            margin: auto;
+            padding: 32px;
+            position: relative;
+            box-sizing: border-box;
+            page-break-after: avoid;
+            page-break-inside: avoid;
+            display: flex;
+            flex-direction: column;
+            min-height: 1123px;
+            /* Ensure full A4 height */
+        }
+
+        /* Table-based layout styles */
+        .layout-table,
+        .header-table,
+        .details-table,
+        .items-table,
+        .summary-container-table,
+        .signatures-table,
+        .footer-table {
+            width: 100%;
+            border-collapse: collapse;
+            border-spacing: 0;
+        }
+
+        td {
+            vertical-align: top;
+        }
+
+        /* Header Section */
+        .logo-cell {
+            width: 22%;
+            vertical-align: middle;
+            padding-right: 20px;
+        }
+
+        .logo-cell img {
+            max-width: 100%;
+            max-height: 85px;
+            object-fit: contain;
+        }
+
+        .company-details {
+            padding-left: 8px;
+            color: #706f6f;
+            line-height: normal;
+            margin-top: -7px;
+            border-left: 1px solid #ededed;
+            width: 280px;
+            /* Increased slightly for flexibility */
+        }
+
+        .company-name {
+            font-size: 9px;
+            font-weight: 600;
+            color: #2a2a2a;
+            margin-bottom: 6px;
+        }
+
+        .company-details-item {
+            display: block;
+            font-size: 9px;
+            font-weight: 400;
+            margin-bottom: 4px;
+        }
+
+        .company-address {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 4px;
+        }
+
+        .address-img svg,
+        .phone-email-item svg {
+            width: 12px;
+            height: 12px;
+        }
+
+        .phone-email {
+            display: flex;
+            flex-direction: column;
+            /* Stacked for better fit */
+            gap: 4px;
+        }
+
+        .quotation-title-cell {
+            text-align: right;
+            vertical-align: top;
+        }
+
+        .quotation-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #1e1e1e;
+            line-height: normal;
+        }
+
+        .barcode-image {
+            width: auto;
+            height: 37px;
+            margin-top: 5px;
+        }
+
+        .phone-email-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        hr {
+            height: 1px;
+            border: none;
+            background-color: #ededed;
+            margin: 14px 0px;
+            width: 100%;
+        }
+
+        /* Customer & Info Section */
+        .customer-section {
+            width: 50%;
+            padding-right: 15px;
+        }
+
+        .customer-section-inner {
+            border: 1px solid #ededed;
+            position: relative;
+            padding: 12px 10px;
+            border-radius: 4px;
+            height: 100%;
+        }
+
+        .customer-title {
+            font-size: 10px;
+            color: #706f6f;
+            background-color: #fff;
+            position: absolute;
+            top: -7px;
+            left: 10px;
+            font-weight: 400;
+            padding: 0 4px;
+        }
+
+        .customer-name {
+            font-size: 9px;
+            font-weight: 600;
+            color: #1e1e1e;
+            margin-bottom: 4px;
+        }
+
+        .quotation-details-section {
+            width: 50%;
+            text-align: right;
+        }
+
+        .items-table tbody {
+            vertical-align: top;
+        }
+
+        .quotation-details-table {
+            width: 100%;
+            max-width: 300px;
+            margin-left: auto;
+        }
+
+        .quotation-details-table td {
+            padding: 3px 0;
+        }
+
+        .quotation-details-table td:first-child {
+            text-align: left;
+            font-size: 9px;
+            font-weight: 600;
+            color: #706f6f;
+        }
+
+        .quotation-details-table td:last-child {
+            text-align: right;
+            color: #706f6f;
+            font-size: 9px;
+            font-weight: 400;
+        }
+
+        /* Items Table */
+        .items-table {
+            margin-bottom: 6px;
+        }
+
+        .items-table th {
+            padding: 8px 4px;
+            text-align: left;
+            font-size: 9px;
+            font-weight: 600;
+            color: #1e1e1e;
+            background: #f3f3f3;
+        }
+
+        .items-table td {
+            padding: 6px 4px;
+            text-align: left;
+            font-size: 9px;
+            font-weight: 400;
+            color: #706f6f;
+            border-bottom: 1px solid #e6e6e6;
+        }
+
+        /* Alignment Helper Classes */
+        .text-right {
+            text-align: right !important;
+        }
+
+        .text-center {
+            text-align: center !important;
+        }
+
+        .text-left {
+            text-align: left !important;
+        }
+
+        .items-table th:last-child,
+        .items-table td:last-child {
+            text-align: right;
+        }
+
+        /* Remark Row */
+        .remark-row td {
+            border-bottom: 1px solid #e6e6e6;
+            padding-top: 0;
+            padding-bottom: 8px;
+            color: #666;
+            font-size: 8px;
+            font-style: italic;
+        }
+
+        .remark-label {
+            font-weight: 600;
+            color: #111;
+            margin-right: 4px;
+        }
+
+        /* Subtotals at bottom of table */
+        .subtotal-table {
+            width: 100%;
+            background-color: #f3f3f3;
+            margin-bottom: 8px;
+        }
+
+        .subtotal-table td {
+            padding: 6px 4px;
+            font-size: 9px;
+            font-weight: 700;
+            color: #1e1e1e;
+        }
+
+        /* Summary Section */
+        .summary-wrapper {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-top: 18px;
+        }
+
+        .note-section {
+            width: 60%;
+            border: 1px solid #ededed;
+            border-radius: 4px;
+            padding: 8px;
+            min-height: 80px;
+        }
+
+        .note-title {
+            font-size: 10px;
+            color: #706f6f;
+            margin-bottom: 4px;
+        }
+
+        .note-content {
+            font-size: 9px;
+        }
+
+        .summary-totals {
+            width: 35%;
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 10px;
+            margin-bottom: 4px;
+            color: #1e1e1e;
+        }
+
+        .summary-row.bold {
+            font-weight: 600;
+        }
+
+        .summary-row.total-row {
+            border-top: 1px solid #d2d2d2;
+            border-bottom: 1px solid #d2d2d2;
+            padding: 6px 0;
+            margin-top: 6px;
+            font-weight: 700;
+            font-size: 11px;
+        }
+
+        /* Signatures */
+        .signatures-table {
+            margin-top: 40px;
+        }
+
+        .signatures-table td {
+            text-align: center;
+            width: 33%;
+            vertical-align: bottom;
+        }
+
+        .signature-line {
+            border-top: 1px solid #ededed;
+            width: 80%;
+            margin: auto;
+            padding-top: 4px;
+            font-size: 9px;
+            color: #1e1e1e;
+        }
+
+        .signature-space {
+            height: 40px;
+        }
+
+        /* Footer */
+        .footer-main {
+            margin-top: auto;
+            padding-top: 10px;
+        }
+
+        .footer-table td {
+            font-size: 9px;
+            color: #706f6f;
+        }
+
+        @media print {
+            @page {
+                size: A4;
+                margin: 0;
+            }
+
+            body {
+                background: #fff;
+            }
+
+            .main-container {
+                width: 100%;
+                box-shadow: none;
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="main-container">
+        <!-- Content Wrapper to push footer down -->
+        <div style="flex: 1;">
+
+            <!-- Header -->
+            <table class="header-table">
+                <tr>
+                    <td class="logo-cell">
+                        <div style="width: 161px; height: 65px; overflow: hidden; display: flex; align-items: center;">
+                            {{#if companyProfile.image_logo_url}}
+
+                            <img src="{{companyProfile.image_logo_url}}"
+                                style="max-width: 100%; max-height: 100%; object-fit: contain;" alt="Company Logo" />
+                            {{else}}
+
+                            <img src="data:image/png;base64,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0/4qqcMYaC9j44S0/TVJXyrp1VKnTpdffjm0H5VMJj3aS91fXrVq1XKT9tLG4dAuSHtJP0v4DtoPIn3Pnj1HpfznoT3pwi+9hDY3Dhs2zKN9WVnZwfnz59fSXmjWR/r+G4MHD4b2qe3bty9ZtGjRfdK0JTJuqoVW6XvuuaeKNHgf5nduvPHGnNGjRw/4wQ9+MF06oLvg6ZpOp0dLZw+T/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/KuO3To0D/yG52swAAAABJRU5ErkJggg=="
+                                style="width:128px; height:65px; object-fit:contain;" alt="LOGO" />
+                            {{/if}}
+                        </div>
+                    </td>
+                    <td>
+                        <div class="company-details">
+                            <div class="company-name">{{companyProfile.company_name}}</div>
+
+                            <div class="company-details-main-box">
+                                <div class="company-details-item">
+                                    <div class="company-address">
+                                        <div class="address-img">
+
+                                            <svg width="15" height="15" viewBox="0 0 10 10" fill="none"
+                                                xmlns="http://www.w3.org/2000/svg">
+                                                <path
+                                                    d="M8.33335 4.16667C8.33335 6.24708 6.02544 8.41375 5.25044 9.08292C5.17824 9.1372 5.09035 9.16656 5.00002 9.16656C4.90969 9.16656 4.8218 9.1372 4.7496 9.08292C3.9746 8.41375 1.66669 6.24708 1.66669 4.16667C1.66669 3.28261 2.01788 2.43476 2.643 1.80964C3.26812 1.18452 4.11597 0.833332 5.00002 0.833332C5.88407 0.833332 6.73192 1.18452 7.35704 1.80964C7.98216 2.43476 8.33335 3.28261 8.33335 4.16667Z"
+                                                    stroke="#706F6F" stroke-width="0.75" stroke-linecap="round"
+                                                    stroke-linejoin="round" />
+                                                <path
+                                                    d="M5 5.41667C5.69036 5.41667 6.25 4.85702 6.25 4.16667C6.25 3.47631 5.69036 2.91667 5 2.91667C4.30964 2.91667 3.75 3.47631 3.75 4.16667C3.75 4.85702 4.30964 5.41667 5 5.41667Z"
+                                                    stroke="#706F6F" stroke-width="0.75" stroke-linecap="round"
+                                                    stroke-linejoin="round" />
+                                            </svg>
+                                        </div>
+                                        <div>{{companyProfile.address}}</div>
+                                    </div>
+                                </div>
+
+                                <div class="phone-email">
+                                    <span class="company-details-item phone-email-item">
+                                        <!-- Direct Path SVG for Phone -->
+                                        <svg width="15" height="15" viewBox="0 0 10 10" fill="none"
+                                            xmlns="http://www.w3.org/2000/svg"
+                                            style="margin-right: 4px; vertical-align: middle;">
+                                            <path
+                                                d="M5.76331 6.90334C5.84937 6.94286 5.94631 6.95188 6.03818 6.92894C6.13006 6.90599 6.21137 6.85243 6.26873 6.77709L6.41665 6.58334C6.49427 6.47984 6.59492 6.39584 6.71064 6.33798C6.82635 6.28012 6.95394 6.25 7.08331 6.25H8.33331C8.55433 6.25 8.76629 6.3378 8.92257 6.49408C9.07885 6.65036 9.16665 6.86232 9.16665 7.08334V8.33334C9.16665 8.55435 9.07885 8.76631 8.92257 8.92259C8.76629 9.07887 8.55433 9.16667 8.33331 9.16667C6.34419 9.16667 4.43653 8.37649 3.03001 6.96997C1.62349 5.56345 0.833313 3.65579 0.833313 1.66667C0.833313 1.44566 0.92111 1.23369 1.07739 1.07741C1.23367 0.921133 1.44563 0.833336 1.66665 0.833336H2.91665C3.13766 0.833336 3.34962 0.921133 3.5059 1.07741C3.66218 1.23369 3.74998 1.44566 3.74998 1.66667V2.91667C3.74998 3.04604 3.71986 3.17363 3.662 3.28935C3.60415 3.40506 3.52014 3.50571 3.41665 3.58334L3.22165 3.72959C3.14515 3.78799 3.09124 3.87108 3.06906 3.96473C3.04688 4.05838 3.05781 4.15683 3.09998 4.24334C3.66943 5.39995 4.60599 6.33533 5.76331 6.90334Z"
+                                                stroke="#706F6F" stroke-width="0.75" stroke-linecap="round"
+                                                stroke-linejoin="round" />
+                                        </svg>
+                                        {{companyProfile.phone}}
+                                    </span>
+                                    <span class="company-details-item phone-email-item">
+                                        <!-- Direct Path SVG for Email -->
+                                        <svg width="15" height="15" viewBox="0 0 10 10" fill="none"
+                                            xmlns="http://www.w3.org/2000/svg"
+                                            style="margin-right: 4px; vertical-align: middle;">
+                                            <path
+                                                d="M9.16665 2.91666L5.4204 5.30291C5.29327 5.37675 5.14887 5.41565 5.00185 5.41565C4.85484 5.41565 4.71044 5.37675 4.58331 5.30291L0.833313 2.91666"
+                                                stroke="#706F6F" stroke-width="0.75" stroke-linecap="round"
+                                                stroke-linejoin="round" />
+                                            <path
+                                                d="M8.33331 1.66666H1.66665C1.20641 1.66666 0.833313 2.03976 0.833313 2.5V7.5C0.833313 7.96023 1.20641 8.33333 1.66665 8.33333H8.33331C8.79355 8.33333 9.16665 7.96023 9.16665 7.5V2.5C9.16665 2.03976 8.79355 1.66666 8.33331 1.66666Z"
+                                                stroke="#706F6F" stroke-width="0.75" stroke-linecap="round"
+                                                stroke-linejoin="round" />
+                                        </svg>
+                                        {{companyProfile.email}}
+                                    </span>
+                                </div>
+
+                                <div class="company-details-item">Tax ID: {{companyProfile.tax_id}}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="quotation-title-cell">
+                        <div class="quotation-title">Quotation</div>
+                        <div>
+                            <svg id="barcode-quote" class="barcode-image"></svg>
+                        </div>
+                    </td>
+                </tr>
+            </table>
+
+            <hr />
+
+            <!-- Customer & Info -->
+            <table class="details-table">
+                <tr>
+                    <td class="customer-section">
+                        <div class="customer-section-inner">
+                            <div class="customer-title">Customer</div>
+                            <div class="customer-details">
+                                <div class="customer-name">{{accountInfo.vendor_code_name}}</div>
+
+                                <div class="company-details-item">Tax ID: {{accountInfo.tax_id}}</div>
+
+                                <!-- Address with Icon -->
+                                <div class="company-details-item">
+                                    <div class="company-address">
+                                        <div class="address-img">
+                                            <svg width="15" height="15" viewBox="0 0 10 10" fill="none"
+                                                xmlns="http://www.w3.org/2000/svg">
+                                                <g clip-path="url(#clip0_21978_5652)">
+                                                    <path
+                                                        d="M8.33335 4.16666C8.33335 6.24708 6.02544 8.41374 5.25044 9.08291C5.17824 9.1372 5.09035 9.16656 5.00002 9.16656C4.90969 9.16656 4.8218 9.1372 4.7496 9.08291C3.9746 8.41374 1.66669 6.24708 1.66669 4.16666C1.66669 3.28261 2.01788 2.43476 2.643 1.80964C3.26812 1.18452 4.11597 0.833328 5.00002 0.833328C5.88408 0.833328 6.73192 1.18452 7.35704 1.80964C7.98216 2.43476 8.33335 3.28261 8.33335 4.16666Z"
+                                                        stroke="#706F6F" stroke-width="0.75" stroke-linecap="round"
+                                                        stroke-linejoin="round" />
+                                                    <path
+                                                        d="M5 5.41667C5.69036 5.41667 6.25 4.85703 6.25 4.16667C6.25 3.47632 5.69036 2.91667 5 2.91667C4.30964 2.91667 3.75 3.47632 3.75 4.16667C3.75 4.85703 4.30964 5.41667 5 5.41667Z"
+                                                        stroke="#706F6F" stroke-width="0.75" stroke-linecap="round"
+                                                        stroke-linejoin="round" />
+                                                </g>
+                                                <defs>
+                                                    <clipPath id="clip0_21978_5652">
+                                                        <rect width="10" height="10" fill="white" />
+                                                    </clipPath>
+                                                </defs>
+                                            </svg>
+                                        </div>
+                                        <div>
+                                            {{#if accountInfo.invoice_address}}
+                                            {{#with (lookup accountInfo.invoice_address 0)}}
+                                            {{address}}
+                                            {{/with}}
+                                            {{else}}
+                                            -
+                                            {{/if}}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Contact Person with Icon -->
+                                <div class="company-details-item">
+                                    <div style="display: flex; gap: 8px;">
+                                        <svg width="15" height="15" viewBox="0 0 10 10" fill="none"
+                                            xmlns="http://www.w3.org/2000/svg">
+                                            <g clip-path="url(#clip0_21978_5657)">
+                                                <path fill-rule="evenodd" clip-rule="evenodd"
+                                                    d="M4.99998 1.25001C4.30962 1.25001 3.74998 1.80965 3.74998 2.50001C3.74998 3.19036 4.30962 3.75001 4.99998 3.75001C5.69033 3.75001 6.24998 3.19036 6.24998 2.50001C6.24998 1.80965 5.69033 1.25001 4.99998 1.25001ZM2.91665 2.50001C2.91665 1.34941 3.84939 0.416672 4.99998 0.416672C6.15057 0.416672 7.08331 1.34941 7.08331 2.50001C7.08331 3.6506 6.15057 4.58334 4.99998 4.58334C3.84939 4.58334 2.91665 3.6506 2.91665 2.50001ZM2.40766 5.89583C3.2391 5.52312 4.24331 5.41667 4.99998 5.41667C5.75665 5.41667 6.76086 5.52312 7.59229 5.89583C8.43871 6.27526 9.16665 6.96752 9.16665 8.12501V8.54167C9.16665 9.10608 8.71031 9.58334 8.13261 9.58334H1.86735C1.28964 9.58334 0.833313 9.10608 0.833313 8.54167V8.12501C0.833313 6.96752 1.56125 6.27526 2.40766 5.89583ZM2.74854 6.65626C2.08454 6.95392 1.66665 7.40749 1.66665 8.12501V8.54167C1.66665 8.6592 1.76313 8.75001 1.86735 8.75001H8.13261C8.23683 8.75001 8.33331 8.6592 8.33331 8.54167V8.12501C8.33331 7.40749 7.91542 6.95392 7.25141 6.65626C6.57243 6.35189 5.70165 6.25001 4.99998 6.25001C4.29831 6.25001 3.42753 6.35189 2.74854 6.65626Z"
+                                                    fill="#706F6F" />
+                                            </g>
+                                            <defs>
+                                                <clipPath id="clip0_21978_5657">
+                                                    <rect width="10" height="10" fill="white" />
+                                                </clipPath>
+                                            </defs>
+                                        </svg>
+                                        <span>{{#if
+                                            accountInfo.contact_person}}{{accountInfo.contact_person}}{{else}}-{{/if}}</span>
+                                    </div>
+                                </div>
+
+                                <!-- Phone/Email with Icon -->
+                                <div class="company-details-item">
+                                    <div style="display: flex; gap: 16px; align-items: center;">
+                                        <!-- Phone -->
+                                        <div style="display: flex; gap: 8px; align-items: center;">
+                                            <svg width="15" height="15" viewBox="0 0 10 10" fill="none"
+                                                xmlns="http://www.w3.org/2000/svg">
+                                                <g clip-path="url(#clip0_21978_5662)">
+                                                    <path
+                                                        d="M5.76331 6.90333C5.84937 6.94285 5.94631 6.95188 6.03818 6.92893C6.13006 6.90598 6.21137 6.85242 6.26873 6.77708L6.41665 6.58333C6.49427 6.47983 6.59492 6.39583 6.71064 6.33797C6.82635 6.28012 6.95394 6.25 7.08331 6.25H8.33331C8.55433 6.25 8.76629 6.33779 8.92257 6.49407C9.07885 6.65035 9.16665 6.86231 9.16665 7.08333V8.33333C9.16665 8.55434 9.07885 8.7663 8.92257 8.92258C8.76629 9.07886 8.55433 9.16666 8.33331 9.16666C6.34419 9.16666 4.43654 8.37649 3.03001 6.96996C1.62349 5.56344 0.833313 3.65579 0.833313 1.66666C0.833313 1.44565 0.92111 1.23369 1.07739 1.07741C1.23367 0.921126 1.44563 0.833328 1.66665 0.833328H2.91665C3.13766 0.833328 3.34962 0.921126 3.5059 1.07741C3.66218 1.23369 3.74998 1.44565 3.74998 1.66666V2.91666C3.74998 3.04603 3.71986 3.17363 3.662 3.28934C3.60415 3.40505 3.52014 3.50571 3.41665 3.58333L3.22165 3.72958C3.14515 3.78799 3.09124 3.87107 3.06906 3.96472C3.04688 4.05838 3.05781 4.15682 3.09998 4.24333C3.66943 5.39994 4.60599 6.33533 5.76331 6.90333Z"
+                                                        stroke="#706F6F" stroke-width="0.75" stroke-linecap="round"
+                                                        stroke-linejoin="round" />
+                                                </g>
+                                                <defs>
+                                                    <clipPath id="clip0_21978_5662">
+                                                        <rect width="10" height="10" fill="white" />
+                                                    </clipPath>
+                                                </defs>
+                                            </svg>
+                                            <span>
+                                                {{#if accountInfo.phone_no}}
+                                                {{accountInfo.phone_no}}
+                                                {{else}}
+                                                -
+                                                {{/if}}
+                                            </span>
+                                        </div>
+
+                                        <!-- Email -->
+                                        <div style="display: flex; gap: 8px; align-items: center;">
+                                            <svg width="15" height="15" viewBox="0 0 10 10" fill="none"
+                                                xmlns="http://www.w3.org/2000/svg">
+                                                <path
+                                                    d="M9.16665 2.91666L5.4204 5.30291C5.29327 5.37675 5.14887 5.41565 5.00185 5.41565C4.85484 5.41565 4.71044 5.37675 4.58331 5.30291L0.833313 2.91666"
+                                                    stroke="#706F6F" stroke-width="0.75" stroke-linecap="round"
+                                                    stroke-linejoin="round" />
+                                                <path
+                                                    d="M8.33331 1.66666H1.66665C1.20641 1.66666 0.833313 2.03976 0.833313 2.5V7.5C0.833313 7.96023 1.20641 8.33333 1.66665 8.33333H8.33331C8.79355 8.33333 9.16665 7.96023 9.16665 7.5V2.5C9.16665 2.03976 8.79355 1.66666 8.33331 1.66666Z"
+                                                    stroke="#706F6F" stroke-width="0.75" stroke-linecap="round"
+                                                    stroke-linejoin="round" />
+                                            </svg>
+                                            <span>
+                                                {{#if accountInfo.email}}
+                                                {{accountInfo.email}}
+                                                {{else}}
+                                                -
+                                                {{/if}}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="quotation-details-section">
+                        <table class="quotation-details-table">
+                            <tr>
+                                <td>Quote No:</td>
+                                <td>{{invoice_no}}</td>
+                            </tr>
+                            <tr>
+                                <td>Date:</td>
+                                <td><span class="date-format" data-date="{{doc_date}}"></span></td>
+                            </tr>
+                            <tr>
+                                <td>Due Date:</td>
+                                <td><span class="date-format" data-date="{{due_date}}"></span></td>
+                            </tr>
+                            <tr>
+                                <td>Ref No:</td>
+                                <td>{{ref_1}}</td>
+                            </tr>
+                            <tr>
+                                <td>Currency/Rate:</td>
+                                <td>{{currency.code}} / {{#if exchange_rate}}{{exchange_rate}}{{else}}1{{/if}}</td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+            </table>
+
+            <div style="height: 15px;"></div>
+
+            <!-- Items Table -->
+
+            <div class="items-table-wrapper" style="min-height: 452px;">
+                <table class="items-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 5%;">#</th>
+                            <th>Stone</th>
+                            <th>Shape</th>
+                            <th>Size</th>
+                            <th>Color</th>
+                            <th>Cutting</th>
+                            <th>Clarity</th>
+                            <th class="text-right">Pcs</th>
+                            <th class="text-right">Weight(cts)</th>
+                            <th class="text-right">Price/Unit</th>
+                            <th class="text-right">Disc(%)</th>
+                            <th class="text-right" style="width: 15%;">Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{#each items}}
+                        <tr>
+                            <td>{{inc @index}}</td>
+                            <td>{{stone}}</td>
+                            <td>{{shape}}</td>
+                            <td>{{size}}</td>
+                            <td>{{color}}</td>
+                            <td>{{cutting}}</td>
+                            <td>{{clarity}}</td>
+                            <td class="text-right">{{pcs}}</td>
+                            <td class="text-right">{{weight}}</td>
+                            <td class="text-right">{{price}}</td>
+                            <td class="text-right">{{discount_percent}}%</td>
+                            <td class="text-right">{{amount}} USD</td>
+                        </tr>
+                        {{#if remark}}
+                        <tr class="remark-row">
+                            <td></td>
+                            <td colspan="11">
+                                <span class="remark-label">Remark:</span> {{remark}}
+                            </td>
+                        </tr>
+                        {{/if}}
+                        {{/each}}
+                    </tbody>
+                </table>
+
+            </div>
+
+            <!-- Subtotal Strip (Under table like in design) -->
+            <table class="subtotal-table">
+                <tr>
+                    <td style="width: 50%; text-align: left;">Total</td>
+                    <td style="text-align: right;">{{summary.total_pcs}}</td>
+                    <td style="text-align: right;">{{summary.total_weight}}</td>
+                    <td style="width: 25%;"></td> <!-- Spacer for Price/Disc cols -->
+                    <td style="text-align: right; width: 15%;">{{summary.sub_total}} {{currency.code}}</td>
+                </tr>
+            </table>
+
+            <!-- Summary & Notes -->
+            <div class="summary-wrapper">
+                <div class="note-section">
+                    <div class="note-title">Note</div>
+                    <div class="note-content">
+                        <!-- Static note or dynamic if available -->
+                        {{#if note}}{{note}}{{else}}Standard Terms and Conditions Apply.{{/if}}
+                    </div>
+                </div>
+
+                <div class="summary-totals">
+                    <div class="summary-row">
+                        <span>Discount</span>
+                        <span>{{summary.discount}} {{currency.code}}</span>
+                    </div>
+                    <div class="summary-row bold">
+                        <span>Amount</span>
+                        <span>{{summary.total_after_discount}} {{currency.code}}</span>
+                    </div>
+                    <div class="summary-row">
+                        <span>VAT {{#if summary.vat}}{{summary.vat}}{{else}}7{{/if}}%</span>
+                        <span>{{#if summary.vat_amount}}{{summary.vat_amount}}{{else}}0.00{{/if}}
+                            {{currency.code}}</span>
+                    </div>
+                    <div class="summary-row">
+                        <span>Other Charges</span>
+                        <span>{{#if summary.other_charge}}{{summary.other_charge}}{{else}}0.00{{/if}}
+                            {{currency.code}}</span>
+                    </div>
+                    <div class="summary-row total-row">
+                        <span>Grand Total</span>
+                        <span>{{summary.grand_total}} {{currency.code}}</span>
+                    </div>
+                </div>
+            </div>
+
+        </div> <!-- End Content Wrapper -->
+
+        <!-- Footer/Signatures -->
+        <div class="footer-main">
+            <table class="signatures-table">
+                <tr>
+                    <td>
+                        <div class="signature-space"></div>
+                        <div class="signature-line">Prepared By</div>
+                    </td>
+                    <td>
+                        <div class="signature-space"></div>
+                        <div class="signature-line">Approved By</div>
+                    </td>
+                    <td>
+                        <div class="signature-space"></div>
+                        <div class="signature-line">Received By</div>
+                    </td>
+                </tr>
+            </table>
+
+            <table class="footer-table" style="margin-top: 10px;">
+                <tr>
+                    <td>© 2024 {{companyProfile.company_name}}</td>
+                    <td class="text-right">
+                        Generated by ERP System - {{doc_date}}
+                    </td>
+                </tr>
+            </table>
+        </div>
+
+    </div>
+
+    <script>
+        // Initialize Barcode
+        document.addEventListener("DOMContentLoaded", function () {
+            JsBarcode("#barcode-quote", "{{invoice_no}}", {
+                format: "CODE128",
+                width: 1.2,
+                height: 30,
+                displayValue: false,
+                margin: 0,
+            });
+
+            // Date Formatting helper (simple JS approach for the rendered HTML)
+            const dateElements = document.querySelectorAll(".date-format");
+            dateElements.forEach(el => {
+                const rawDate = el.getAttribute('data-date');
+                if (rawDate) {
+                    const d = new Date(rawDate);
+                    if (!isNaN(d.getTime())) {
+                        el.textContent = d.toLocaleDateString('en-GB'); // DD/MM/YYYY format
+                    } else {
+                        el.textContent = rawDate;
+                    }
+                }
+            });
+
+            // Fix relative image paths for Puppeteer if backend base URL is missing
+            const images = document.querySelectorAll('img');
+            images.forEach(img => {
+                const src = img.getAttribute('src');
+                if (src && src.startsWith('/')) {
+                    // Attempt to make it absolute if you know the port, or just log it
+                    // Assuming backend serves static files on the same port/domain
+                    // In Puppeteer (file://), this might be tricky. 
+                    // Ideally backend converts to base64.
+                    // As a fallback, we can try to point to a known dev server or just leave it.
+                    // img.src = 'http://localhost:5000' + src; 
+                }
+
+                img.onerror = function () {
+                    this.style.display = 'none';
+                    // Optional: show placeholder text
+                    // this.parentNode.innerHTML = '<span style="font-size:10px; color:red;">Img Err</span>';
+                };
+            });
+        });
+    </script>
+</body>
+
+</html>

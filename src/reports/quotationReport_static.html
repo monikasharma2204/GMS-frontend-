@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Invoice - Quotation-2</title>
+    <!-- html2pdf.js library for PDF generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: Arial, Helvetica, sans-serif;
+        font-size: 12px;
+        color: #2a2a2a;
+        background: #f5f5f5;
+        padding: 20px;
+        margin: 0;
+      }
+
+      /* Main Container - A4 size */
+      .main-container {
+        width: 210mm; /* A4 width */
+        min-height: 297mm; /* A4 height */
+        background: #ffffff;
+        margin: 0 auto;
+        padding: 15mm 20mm; /* Top/Bottom: 15mm, Left/Right: 20mm */
+        position: relative;
+        box-sizing: border-box;
+      }
+
+      /* Download PDF Button */
+      .pdf-button-container {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 1000;
+      }
+
+      .pdf-button {
+        background: #05595B;
+        color: #fff;
+        border: none;
+        padding: 12px 24px;
+        font-size: 14px;
+        font-weight: 700;
+        cursor: pointer;
+        border-radius: 4px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+      }
+
+      .pdf-button:hover {
+        background: #044A4C;
+      }
+
+      /* Table-based layout styles */
+      .layout-table {
+        width: 100%;
+        border-collapse: collapse;
+        border-spacing: 0;
+      }
+
+      .layout-table td {
+        vertical-align: top;
+        padding: 0;
+      }
+
+      /* Header Section */
+      .header-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 20px;
+      }
+
+      .header-table td {
+        vertical-align: top;
+        padding: 0;
+      }
+
+      .logo-cell {
+        width: 60px;
+        padding-right: 15px;
+      }
+
+      .logo-box {
+        width: 60px;
+        height: 60px;
+        background: #e0e0e0;
+        display: table-cell;
+        vertical-align: middle;
+        text-align: center;
+        font-size: 12px;
+        font-weight: 700;
+        color: #ffffff;
+      }
+
+      .company-name {
+        font-size: 14px;
+        font-weight: 700;
+        color: #2a2a2a;
+        margin-bottom: 6px;
+        line-height: 1.3;
+      }
+
+      .company-details {
+        font-size: 10px;
+        color: #2a2a2a;
+        line-height: 1.8;
+      }
+
+      .company-details-item {
+        display: inline-block;
+        vertical-align: middle;
+        margin-right: 6px;
+      }
+
+      .icon {
+        display: inline-block;
+        width: 12px;
+        height: 12px;
+        vertical-align: middle;
+        margin-right: 6px;
+        fill: #666;
+      }
+
+      .quotation-title-cell {
+        text-align: right;
+      }
+
+      .quotation-title {
+        font-size: 28px;
+        font-weight: 700;
+        color: #05595B;
+        margin-bottom: 8px;
+        line-height: 1;
+      }
+
+      .barcode-placeholder {
+        width: 120px;
+        height: 40px;
+        background: repeating-linear-gradient(
+          90deg,
+          #000 0px,
+          #000 2px,
+          transparent 2px,
+          transparent 4px
+        );
+        margin-bottom: 8px;
+        margin-left: auto;
+        border: 1px solid #ddd;
+      }
+
+      /* Details Section */
+      .details-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 15px;
+      }
+
+      .details-table td {
+        vertical-align: top;
+        padding: 0;
+      }
+
+      .customer-section {
+        width: 50%;
+        padding-right: 20px;
+      }
+
+      .customer-title {
+        font-size: 12px;
+        font-weight: 700;
+        color: #2a2a2a;
+        margin-bottom: 8px;
+        padding-bottom: 6px;
+        border-bottom: 1px solid #ddd;
+      }
+
+      .customer-info-table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+
+      .customer-info-table td {
+        padding: 4px 0;
+        font-size: 11px;
+        vertical-align: top;
+      }
+
+      .customer-info-table td:first-child {
+        font-weight: 700;
+        width: 140px;
+        color: #2a2a2a;
+      }
+
+      .customer-info-table td:last-child {
+        color: #2a2a2a;
+      }
+
+      .customer-info-table .icon-cell {
+        width: 20px;
+        padding-right: 6px;
+        vertical-align: top;
+        padding-top: 4px;
+      }
+
+      .customer-info-table .icon-cell svg {
+        width: 12px;
+        height: 12px;
+        fill: #666;
+      }
+
+      .quotation-details-section {
+        width: 50%;
+        text-align: right;
+      }
+
+      .quotation-details-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-left: auto;
+      }
+
+      .quotation-details-table td {
+        padding: 4px 0;
+        font-size: 11px;
+      }
+
+      .quotation-details-table td:first-child {
+        text-align: left;
+        font-weight: 700;
+        padding-right: 15px;
+        color: #2a2a2a;
+      }
+
+      .quotation-details-table td:last-child {
+        text-align: right;
+        color: #2a2a2a;
+      }
+
+      /* Currency Info */
+      .currency-row {
+        margin-bottom: 15px;
+      }
+
+      .currency-info {
+        font-size: 10px;
+        font-weight: 700;
+        color: #2a2a2a;
+      }
+
+      /* Items Table */
+      .items-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 15px;
+        font-size: 9px;
+      }
+
+      .items-table thead {
+        background: #05595B;
+      }
+
+      .items-table th {
+        padding: 8px 4px;
+        text-align: center;
+        font-size: 9px;
+        font-weight: 700;
+        color: #ffffff;
+        border: 1px solid #2a2a2a;
+      }
+
+      .items-table th:nth-child(2),
+      .items-table td:nth-child(2) {
+        text-align: left;
+        padding-left: 8px;
+      }
+
+      .items-table td {
+        padding: 6px 4px;
+        text-align: center;
+        font-size: 9px;
+        color: #2a2a2a;
+        border: 1px solid #ddd;
+        background: #ffffff;
+      }
+
+      .items-table tbody tr:nth-child(even) td {
+        background-color: #f7f8f9;
+      }
+
+      .remark-row td {
+        font-size: 8px;
+        color: #666;
+        font-style: italic;
+        padding: 4px 8px;
+        text-align: left;
+        background: #f7f8f9 !important;
+      }
+
+      /* Summary Section */
+      .summary-container-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 15px;
+      }
+
+      .summary-container-table td {
+        vertical-align: top;
+      }
+
+      .summary-wrapper {
+        width: 280px;
+        margin-left: auto;
+      }
+
+      .subtotal-above {
+        text-align: right;
+        font-size: 11px;
+        font-weight: 700;
+        color: #2a2a2a;
+        margin-bottom: 8px;
+        padding-right: 12px;
+      }
+
+      .summary-table {
+        width: 100%;
+        border-collapse: collapse;
+        border: 1px solid #2a2a2a;
+      }
+
+      .summary-table td {
+        padding: 6px 12px;
+        font-size: 10px;
+        color: #2a2a2a;
+        border-bottom: 1px solid #ddd;
+      }
+
+      .summary-table td:first-child {
+        font-weight: 700;
+        text-align: left;
+      }
+
+      .summary-table td:last-child {
+        text-align: right;
+        font-weight: 400;
+      }
+
+      .summary-table tr.total-row td {
+        font-weight: 700;
+        font-size: 12px;
+        border-top: 2px solid #2a2a2a;
+        border-bottom: 2px solid #2a2a2a;
+        padding-top: 10px;
+        padding-bottom: 10px;
+      }
+
+      /* Notes and Terms Section */
+      .notes-terms-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 15px;
+      }
+
+      .notes-terms-table td {
+        vertical-align: top;
+        padding: 0 10px 0 0;
+        width: 50%;
+      }
+
+      .notes-terms-table td:last-child {
+        padding: 0 0 0 10px;
+      }
+
+      .note-title,
+      .terms-title {
+        font-size: 11px;
+        font-weight: 700;
+        color: #05595B;
+        margin-bottom: 6px;
+      }
+
+      .note-content,
+      .terms-content {
+        border: 1px solid #ddd;
+        padding: 10px;
+        min-height: 60px;
+        font-size: 10px;
+        line-height: 1.5;
+        color: #2a2a2a;
+        background: #fafafa;
+      }
+
+      /* Signatures Section */
+      .signatures-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 15px;
+      }
+
+      .signatures-table td {
+        text-align: center;
+        width: 33.33%;
+        padding: 0 15px;
+      }
+
+      .signature-line {
+        border-top: 1px solid #2a2a2a;
+        margin-top: 40px;
+        padding-top: 6px;
+        font-size: 10px;
+        font-weight: 700;
+        color: #2a2a2a;
+      }
+
+      /* Footer */
+      .footer-table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+
+      .footer-table td {
+        font-size: 9px;
+        color: #666;
+        padding: 8px 0;
+      }
+
+      .footer-table td:first-child {
+        text-align: left;
+      }
+
+      .footer-table td:last-child {
+        text-align: right;
+      }
+      .customer-icon-td {
+        font-size: 14px;
+      }
+
+      /* Print Styles */
+      @media print {
+        body {
+          background: #fff;
+          margin: 0;
+          padding: 0;
+        }
+        .pdf-button-container {
+          display: none;
+        }
+        .main-container {
+          margin: 0;
+          padding: 0;
+          width: 210mm;
+          min-height: 297mm;
+          page-break-after: always;
+        }
+        @page {
+          size: A4;
+          margin: 0;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- PDF Download Button -->
+    <div class="pdf-button-container">
+      <button class="pdf-button" onclick="downloadPDF()">Download PDF</button>
+    </div>
+
+    <!-- Main Content Container with exact dimensions -->
+    <div class="main-container" id="quotation-content">
+      <!-- Header Section - Table based -->
+      <table class="header-table">
+        <tr>
+          <td class="logo-cell">
+            <div class="logo-box">LOGO</div>
+          </td>
+          <td>
+            <div class="company-name">Jeweal Prosoft Co., Ltd. (Head Office)</div>
+            <div class="company-details">
+              <span class="company-details-item">
+                <svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+                </svg>
+                11/12 Charoen Krung 30, Bang Rak, Bangkok 10500, Thailand
+              </span><br />
+              <span class="company-details-item">
+                <svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/>
+                </svg>
+                +66 12 3456 7899
+              </span><br />
+              <span class="company-details-item">
+                <svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
+                </svg>
+                jeweal@gmail.com
+              </span><br />
+              Tax ID: 1000x111110
+            </div>
+          </td>
+          <td class="quotation-title-cell">
+            <div class="barcode-placeholder"></div>
+            <div class="quotation-title">Quotation</div>
+          </td>
+        </tr>
+      </table>
+
+      <!-- Details Section - Table based -->
+      <table class="details-table">
+        <tr>
+          <td class="customer-section">
+            <div class="customer-title">Customer</div>
+            <table class="customer-info-table">
+              <tr>
+                <td>Customer:</td>
+                <td>Jah Jewelry Co., Ltd. (Head Office)</td>
+              </tr>
+              <tr>
+                <td>Tax ID:</td>
+                <td>200x222220</td>
+              </tr>
+              <tr>
+             
+                <td>
+                  <svg width="41" height="41" viewBox="0 0 41 41" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M20.667 22.2031C23.4975 22.2031 25.792 19.9086 25.792 17.0781C25.792 14.2477 23.4975 11.9531 20.667 11.9531C17.8365 11.9531 15.542 14.2477 15.542 17.0781C15.542 19.9086 17.8365 22.2031 20.667 22.2031Z" stroke="black" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M20.6672 3.41406C17.0425 3.41406 13.5664 4.85394 11.0034 7.41694C8.44037 9.97993 7.00049 13.4561 7.00049 17.0807C7.00049 20.3129 7.68724 22.4278 9.56299 24.7682L20.6672 37.5807L31.7713 24.7682C33.6471 22.4278 34.3338 20.3129 34.3338 17.0807C34.3338 13.4561 32.8939 9.97993 30.3309 7.41694C27.768 4.85394 24.2918 3.41406 20.6672 3.41406V3.41406Z" stroke="black" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                    
+                  1013 Geylang East Avenue 3, Southeast, 389728, Singapore
+                </td>
+              </tr>
+              <tr>
+             
+                <td class="customer-icon-td">
+                  <svg width="41" height="41" viewBox="0 0 41 41" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M20.5088 20.5168C24.5927 20.5168 27.9217 16.8795 27.9217 12.4523C27.9217 8.05942 24.6271 4.61029 20.5088 4.61029C16.4417 4.61029 13.0958 8.12824 13.0958 12.4867C13.1127 16.8964 16.4417 20.5168 20.5088 20.5168ZM20.5088 17.9258C18.0034 17.9258 15.8582 15.5243 15.8582 12.486C15.8582 9.50101 17.969 7.20134 20.5088 7.20134C23.0823 7.20134 25.1586 9.46659 25.1586 12.4523C25.1586 15.4892 23.0479 17.9258 20.5088 17.9258ZM9.73237 36.3904H31.2852C34.1332 36.3904 35.4892 35.5316 35.4892 33.6449C35.4892 29.1481 29.826 22.6452 20.5088 22.6452C11.1908 22.6452 5.51083 29.1488 5.51083 33.6441C5.51083 35.5316 6.86676 36.3904 9.73237 36.3904ZM8.90871 33.7979C8.4621 33.7979 8.27394 33.6778 8.27394 33.3176C8.27394 30.5033 12.6324 25.2348 20.508 25.2348C28.3852 25.2348 32.726 30.5033 32.726 33.3176C32.726 33.6778 32.5547 33.7979 32.1089 33.7979H8.90871Z" fill="black"/>
+                    </svg>
+                    
+                    
+                    
+                  Mrs. Jah Jewelry
+                </td>
+              </tr>
+              <tr>
+              
+                <td>
+                  <svg width="38" height="38" viewBox="0 0 38 38" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M30.875 34.4375H30.6731C7.33874 33.0956 4.02561 13.4069 3.56249 7.39813C3.52517 6.93094 3.58041 6.46098 3.72503 6.01518C3.86965 5.56937 4.10081 5.15649 4.40528 4.80017C4.70974 4.44386 5.08152 4.15113 5.49931 3.93875C5.91711 3.72636 6.3727 3.59851 6.83999 3.5625H13.3831C13.8588 3.56204 14.3236 3.70442 14.7174 3.97119C15.1112 4.23797 15.4159 4.61685 15.5919 5.05875L17.3969 9.5C17.5707 9.93171 17.6138 10.405 17.5209 10.861C17.428 11.317 17.2032 11.7357 16.8744 12.065L14.345 14.6181C14.7401 16.8634 15.8153 18.9331 17.4252 20.5473C19.0351 22.1614 21.102 23.2421 23.3462 23.6431L25.9231 21.09C26.2574 20.7648 26.68 20.5452 27.1383 20.4587C27.5965 20.3721 28.0701 20.4223 28.5 20.6031L32.9769 22.3963C33.4121 22.5778 33.7834 22.8848 34.0436 23.2782C34.3037 23.6715 34.4408 24.1334 34.4375 24.605V30.875C34.4375 31.8198 34.0622 32.726 33.3941 33.3941C32.726 34.0622 31.8198 34.4375 30.875 34.4375ZM7.12499 5.9375C6.81004 5.9375 6.508 6.06261 6.2853 6.28531C6.0626 6.50801 5.93749 6.81006 5.93749 7.125V7.22C6.48374 14.25 9.98686 30.875 30.8037 32.0625C30.9597 32.0721 31.1161 32.0509 31.2639 32C31.4117 31.949 31.5479 31.8694 31.6649 31.7657C31.7818 31.662 31.8772 31.5363 31.9454 31.3956C32.0136 31.255 32.0534 31.1023 32.0625 30.9462V24.605L27.5856 22.8119L24.1775 26.1962L23.6075 26.125C13.2762 24.8306 11.875 14.4994 11.875 14.3925L11.8037 13.8225L15.1762 10.4144L13.395 5.9375H7.12499Z" fill="black"/>
+                    </svg>
+                    
+                  +65 34 3456 7788
+                </td>
+              </tr>
+              <tr>
+               
+                <td>
+                  <svg width="38" height="38" viewBox="0 0 38 38" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M8.31234 6.33594H29.6873C31.0017 6.33585 32.2663 6.83873 33.2217 7.74142C34.1771 8.6441 34.7508 9.87816 34.8253 11.1904L34.8332 11.4818V26.5234C34.8333 27.8378 34.3304 29.1024 33.4277 30.0578C32.525 31.0132 31.2909 31.5869 29.9787 31.6614L29.6873 31.6693H8.31234C6.99795 31.6694 5.73336 31.1665 4.77797 30.2638C3.82258 29.3611 3.24884 28.127 3.17442 26.8148L3.1665 26.5234V11.4818C3.16642 10.1674 3.6693 8.90279 4.57198 7.94741C5.47467 6.99202 6.70873 6.41827 8.021 6.34385L8.31234 6.33594H29.6873H8.31234ZM32.4582 14.8432L19.554 21.6357C19.4083 21.7127 19.2482 21.7585 19.0838 21.7702C18.9194 21.7819 18.7544 21.7593 18.5993 21.7038L18.4473 21.6373L5.5415 14.8448V26.5234C5.54153 27.2188 5.80302 27.8888 6.27408 28.4003C6.74514 28.9118 7.39131 29.2276 8.08434 29.2848L8.31234 29.2943H29.6873C30.383 29.2942 31.0531 29.0325 31.5647 28.5611C32.0763 28.0897 32.3918 27.4432 32.4487 26.7499L32.4582 26.5234V14.8432ZM29.6873 8.71094H8.31234C7.61695 8.71096 6.947 8.97246 6.43547 9.44351C5.92394 9.91457 5.60822 10.5607 5.551 11.2538L5.5415 11.4818V12.161L18.9998 19.2433L32.4582 12.1594V11.4818C32.4581 10.7861 32.1964 10.116 31.725 9.6044C31.2536 9.09283 30.6071 8.77728 29.9138 8.72044L29.6873 8.71094Z" fill="black"/>
+                    </svg>
+                    
+                  jahjewelry@gmail.com
+                </td>
+              </tr>
+            </table>
+          </td>
+          <td class="quotation-details-section">
+            <table class="quotation-details-table">
+              <tr>
+                <td>Quote No:</td>
+                <td>QT-005</td>
+              </tr>
+              <tr>
+                <td>Date:</td>
+                <td>06/09/2024</td>
+              </tr>
+              <tr>
+                <td>User:</td>
+                <td>BB</td>
+              </tr>
+              <tr>
+                <td>Ref No:</td>
+                <td>QT20211100001</td>
+              </tr>
+              <tr>
+                <td>Page:</td>
+                <td>1 of 1</td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>
+
+      <!-- Currency Info -->
+      <div class="currency-row">
+        <div class="currency-info">Currency: USD Exchange Rate: 12.34</div>
+      </div>
+
+      <!-- Items Table -->
+      <table class="items-table">
+        <thead>
+          <tr>
+            <th style="width: 3%">#</th>
+            <th style="width: 12%">Stone</th>
+            <th style="width: 8%">Shape</th>
+            <th style="width: 8%">Size</th>
+            <th style="width: 8%">Color</th>
+            <th style="width: 8%">Cutting</th>
+            <th style="width: 8%">Quality</th>
+            <th style="width: 8%">Clarity</th>
+            <th style="width: 5%">Pcs</th>
+            <th style="width: 8%">Weight</th>
+            <th style="width: 12%">Price / Unit</th>
+            <th style="width: 12%">Amount</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Item 1 -->
+          <tr>
+            <td>1</td>
+            <td>Diamond</td>
+            <td>Round</td>
+            <td>5.54 MM</td>
+            <td>White</td>
+            <td>Normal</td>
+            <td>AAA</td>
+            <td>VS2</td>
+            <td>1</td>
+            <td>0.5000</td>
+            <td>50,000.00 / Cts</td>
+            <td>25,000.00</td>
+          </tr>
+          <tr class="remark-row">
+            <td></td>
+            <td colspan="10">Remark: Stock</td>
+            <td></td>
+          </tr>
+          
+          <!-- Item 2 -->
+          <tr>
+            <td>2</td>
+            <td>Diamond</td>
+            <td>Emerald</td>
+            <td>4.4 MM</td>
+            <td>Yellow</td>
+            <td>Full</td>
+            <td>AA</td>
+            <td>VS1</td>
+            <td>1</td>
+            <td>0.5000</td>
+            <td>50,000.00 / Cts</td>
+            <td>25,000.00</td>
+          </tr>
+          <tr class="remark-row">
+            <td></td>
+            <td colspan="10">Remark: Stock</td>
+            <td></td>
+          </tr>
+          
+          <!-- Item 3 -->
+          <tr>
+            <td>3</td>
+            <td>Diamond</td>
+            <td>Round</td>
+            <td>4 MM</td>
+            <td>White</td>
+            <td>Normal</td>
+            <td>AAA</td>
+            <td>VS2</td>
+            <td>1</td>
+            <td>0.5000</td>
+            <td>50,000.00 / Cts</td>
+            <td>25,000.00</td>
+          </tr>
+          <tr class="remark-row">
+            <td></td>
+            <td colspan="10">Remark: Stock</td>
+            <td></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- Summary Section - Table based -->
+      <table class="summary-container-table">
+        <tr>
+          <td>
+            <div class="summary-wrapper">
+              <div class="subtotal-above">75,000.00</div>
+              <table class="summary-table">
+                <tr>
+                  <td>Discount:</td>
+                  <td>5,000.00</td>
+                </tr>
+                <tr>
+                  <td>Amount:</td>
+                  <td>70,000.00</td>
+                </tr>
+                <tr>
+                  <td>Vat 7%:</td>
+                  <td>4,900.00</td>
+                </tr>
+                <tr class="total-row">
+                  <td>Total Amount:</td>
+                  <td>74,900.00</td>
+                </tr>
+              </table>
+            </div>
+          </td>
+        </tr>
+      </table>
+
+      <!-- Notes and Terms Section - Table based -->
+      <table class="notes-terms-table">
+        <tr>
+          <td>
+            <div class="note-title">Note</div>
+            <div class="note-content">Additional notes or special instructions can be added here.</div>
+          </td>
+          <td>
+            <div class="terms-title">Term and Conditions</div>
+            <div class="terms-content">Terms and conditions details can be added here.</div>
+          </td>
+        </tr>
+      </table>
+
+      <!-- Signatures Section - Table based -->
+      <table class="signatures-table">
+        <tr>
+          <td>
+            <div class="signature-line">Prepare By</div>
+          </td>
+          <td>
+            <div class="signature-line">Approve By</div>
+          </td>
+          <td>
+            <div class="signature-line">Receive By</div>
+          </td>
+        </tr>
+      </table>
+
+      <!-- Footer - Table based -->
+      <table class="footer-table">
+        <tr>
+          <td>© 2021 JEWEAL Corporation</td>
+          <td>20/08/2024 12:30:00 AM / User: Admin</td>
+        </tr>
+      </table>
+    </div>
+
+    <script>
+      function downloadPDF() {
+        const element = document.getElementById('quotation-content');
+        
+        const options = {
+          margin: [0, 0, 0, 0],
+          filename: 'Quotation-QT-005.pdf',
+          image: { type: 'jpeg', quality: 0.98 },
+          html2canvas: { 
+            scale: 2,
+            useCORS: true,
+            letterRendering: true
+          },
+          jsPDF: { 
+            unit: 'mm', 
+            format: 'a4', 
+            orientation: 'portrait' 
+          }
+        };
+
+        const button = document.querySelector('.pdf-button');
+        const originalText = button.textContent;
+        button.textContent = 'Generating PDF...';
+        button.disabled = true;
+
+        html2pdf()
+          .set(options)
+          .from(element)
+          .save()
+          .then(() => {
+            button.textContent = originalText;
+            button.disabled = false;
+          })
+          .catch((error) => {
+            console.error('Error generating PDF:', error);
+            alert('Error generating PDF. Please try again or use Print to PDF option.');
+            button.textContent = originalText;
+            button.disabled = false;
+          });
+      }
+
+      function printToPDF() {
+        window.print();
+      }
+
+      document.addEventListener('keydown', function(e) {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'p') {
+          e.preventDefault();
+          printToPDF();
+        }
+      });
+    </script>
+  </body>
+</html>

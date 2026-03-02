@@ -1,0 +1,363 @@
+.homeShortcutModalRoot {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 1360px;
+  height: 862px;
+  background: #ffffff;
+  border-radius: 6px;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.25);
+  outline: none;
+  display: flex;
+  flex-direction: column;
+}
+
+
+.homeShortcutModalHeader {
+  height: 56px;
+  padding: 0 24px;
+  background: #05595b;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-radius: 6px 6px 0 0;
+}
+
+.homeShortcutModalTitle.MuiTypography-root {
+  font-family: Calibri;
+  font-weight: 700;
+  font-size: 24px;
+  line-height: 28px;
+}
+
+.homeShortcutCloseBtn {
+  color: #ffffff !important;
+}
+
+.homeShortcutCloseBtn svg  {
+  height: 24px;
+  width: 24px ;
+}
+.homeShortcutCloseBtn svg path {
+  strokeWidth: 1.25px ;
+}
+
+.homeShortcutModalBody {
+  display: flex;
+  /* gap: 18px; */
+  padding: 24px 24px 0 24px;
+  margin: 0 24px;
+  flex: 1;
+  min-height: 0;
+
+}
+
+.homeShortcutPanel {
+  flex: 1 1 auto;
+  background: #FAFAFA;
+  /* border: 1px solid #e6e6e6; */
+
+  padding: 32px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  max-width: 861px;
+  /* margin: 0 0 0 24px; */
+}
+/* .homeShortcutPanel--sort {
+  flex: 0 0 270px;
+} */
+
+.homeShortcutPanel.homeShortcutPanel--sort {
+  border-left: 1px solid #C6C6C8;
+  padding: 32px;
+  
+}
+
+.homeShortcutPanelHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.homeShortcutPanelHeaderLeft {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.homeShortcutPanelTitle.MuiTypography-root {
+  font-family: Calibri;
+  font-weight: 700;
+  font-size: 24px;
+  color: #343434;
+  line-height: normal;
+}
+
+.homeSortPanelTitle.MuiTypography-root {
+  font-family: Calibri;
+  font-weight: 700;
+  font-size: 24px;
+  color: #343434;
+  /* border-left: 1px solid #e6e6e6; */
+  line-height: normal;
+}
+
+.homeShortcutCount {
+  font-family: Calibri !important;
+  font-weight: 400 !important;
+  font-size: 24px !important;
+  color: #343434 !important;
+  line-height: normal !important;
+}
+.homeShortcutDivider {
+  height: 1px;
+  background: #EDEDED;
+  margin: 24px 0;
+}
+
+.homeShortcutLeftScroll,
+.homeShortcutRightScroll {
+/*   overflow: auto; */
+  min-height: 0;
+  flex: 1;
+}
+
+.homeShortcutLeftScroll::-webkit-scrollbar,
+.homeShortcutRightScroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+.homeShortcutLeftScroll::-webkit-scrollbar-thumb,
+.homeShortcutRightScroll::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: 6px;
+}
+
+.homeShortcutColumns {
+  display: flex;
+  gap: 20.33px;
+  /* gap: 28px; */
+  /* padding-right: 6px; */
+}
+
+.homeShortcutColumn {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  /* gap: 14px; */
+  max-width: 200px;
+  min-width: 200px;
+}
+
+.homeShortcutGroupTitle.MuiTypography-root {
+  font-family: Calibri;
+  font-weight: 700;
+  font-size: 16px;
+  color: #343434;
+  /* margin-bottom: 8px; */
+  line-height: 20px;
+}
+
+ .homeShortcutGroupItems {
+  display: flex;
+  flex-direction: column;
+ /*  gap: 2px; */ 
+ margin: 11px 0 18px 0;
+} 
+
+.homeShortcutCheckboxRow {
+   /* margin: 0 !important;  */
+  display: flex;
+  align-items: center;
+  flex-direction: row;
+  /* padding: 1px 0; */
+  margin: 2px  0 !important;
+}
+
+.homeShortcutCheckboxRow .MuiFormControlLabel-root {
+  flex-direction: row;
+  margin: 0;
+}
+
+.homeShortcutCheckboxRow .MuiFormControlLabel-label {
+  margin-left: 6px;
+}
+
+.homeShortcutCheckboxRow
+  .MuiCheckbox-root.Mui-disabled
+  + .MuiFormControlLabel-label {
+  opacity: 0.6;         
+}
+
+.homeShortcutCheckboxRow .MuiCheckbox-root {
+  /* padding: 2px 5px 3px 0px !important; */
+  padding: 0px 5px 0px 0px !important;
+  color: #ededed !important; 
+}
+
+.homeShortcutCheckboxRow .MuiCheckbox-root .MuiSvgIcon-root {
+  font-size: 26px !important; 
+ 
+}
+
+.homeShortcutCheckboxRow .MuiCheckbox-root input[type="checkbox"] {
+  border: 1px solid #1B84FF !important;
+
+}
+
+.homeShortcutCheckboxRow .MuiCheckbox-root.Mui-checked {
+  color: #1B84FF !important; 
+}
+
+.homeShortcutCheckboxRow .MuiCheckbox-root.Mui-disabled {
+  color: #ededed !important;
+  opacity: 1 !important;  
+}
+.homeShortcutCheckboxLabel.MuiTypography-root {
+  font-family: Calibri;
+  font-weight: 400;
+  font-size: 14px;
+  color: #7a7a7a;
+  line-height: 16px !important;
+}
+
+.homeShortcutSortItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  /* border-bottom: 1px solid #f0f0f0; */
+  /* padding: 4px 8px; */
+  /* height: 40px;               */
+  padding: 10px 4px;           
+  /* gap: 12px; */
+}
+
+.homeShortcutSortItem.isDragging {
+  background: rgba(5, 89, 91, 0.06);
+}
+
+.homeShortcutSortLeft {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  flex: 1;  
+}
+
+.homeShortcutDragHandle {
+  /* width: 28px; */
+  /* width: 24px;
+  height: 24px; */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: grab;
+  color: #9e9e9e;
+}
+
+.homeShortcutSortText.MuiTypography-root {
+  font-family: Calibri;
+  font-weight: 400;
+  font-size: 14px;
+  color: #7a7a7a;
+  line-height: 20px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.homeShortcutRemoveBtn {
+  /* padding: 6px !important; */
+}
+.homeShortcutRemoveBtn svg path {
+      transition: fill .3s ease-in-out;
+}
+.homeShortcutRemoveBtn:hover svg path {
+      fill: #B41E38;
+}
+
+.homeShortcutFooter {
+  display: flex;
+  justify-content: flex-end;
+  border-top: 1px solid #C6C6C8;
+  gap: 12px;
+  padding: 12px 32px 12px 32px;
+}
+
+.homeShortcutBtnReset {
+  text-transform: none !important;
+  width: 96px !important;
+  min-width: 96px !important;
+  height: 32px !important;
+  padding: 0 !important;
+  border-color: #c6c6c8 !important;
+  color: #343434 !important;
+  font-family: Calibri !important;
+  font-weight: 700 !important;
+}
+
+.homeShortcutBtnOk {
+  text-transform: none !important;
+  width: 96px !important;
+  min-width: 96px !important;
+  height: 32px !important;
+  padding: 0 !important;
+  background: #05595b !important;
+  font-family: Calibri !important;
+  font-weight: 700 !important;
+  color:#fff !important;
+}
+
+.homeShortcutBtnOk:hover {
+  background: #05595b !important;
+}
+
+.homeShortcutBtnOk.Mui-disabled,
+.homeShortcutBtnOk:disabled {
+  background: #E6E6E6 !important;
+  /* color: #ffffff !important; */
+  color: #57646E !important
+}
+
+.homeShortcutModalRoot {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 90vw;
+  max-width: 1360px;
+  max-height: 90vh;              
+  display: flex;
+  flex-direction: column;
+  background: #FAFAFA;
+  border-radius: 8px;
+  box-shadow: 0px 8px 24px rgba(0,0,0,0.15);
+}
+.homeShortcutModalHeader {
+  flex-shrink: 0;
+}
+.homeShortcutFooter {
+  flex-shrink: 0;
+}
+
+.homeShortcutModalBody {
+  flex: 1;                       
+  min-height: 0;               
+  overflow: hidden;
+  display: flex;
+  background-color: #FAFAFA;
+}
+
+
+.homeShortcutLeftScroll,
+.homeShortcutRightScroll {
+ /*  overflow-y: auto; */
+  max-height: 100%;
+}
+
