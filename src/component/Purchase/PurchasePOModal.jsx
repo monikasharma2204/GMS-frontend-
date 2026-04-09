@@ -33,6 +33,36 @@ const textStyle = {
   fontStyle: "normal",
   fontWeight: 400,
 };
+
+const normalizePOAccount = (po) => {
+  const rawAccount = po?.account;
+  const accountObj =
+    rawAccount && typeof rawAccount === "object" ? rawAccount : {};
+  const accountId = accountObj?._id || accountObj?.id || po?.account_id;
+
+  return {
+    ...accountObj,
+    _id: accountId || undefined,
+    code: accountObj?.vendor_code_id || accountObj?.code || po?.vendor_code_id || "",
+    label:
+      accountObj?.vendor_code_name ||
+      accountObj?.label ||
+      accountObj?.name ||
+      (typeof rawAccount === "string" ? rawAccount : ""),
+  };
+};
+
+const getAccountObjectId = (account) => {
+  const rawId = account?._id || account?.id || "";
+  return typeof rawId === "string" && /^[0-9a-fA-F]{24}$/.test(rawId) ? rawId : "";
+};
+
+const getAccountLabel = (account) => {
+  if (!account) return "";
+  if (typeof account === "string") return account;
+  return account.vendor_code_name || account.label || account.name || account.code || "";
+};
+
 const PurchasePOModal = ({ 
   handleSubmit = () => {}, 
   handleEdit,
@@ -82,10 +112,15 @@ const PurchasePOModal = ({
     const fetchPOData = async () => {
       try {
         setLoading(true);
+        const accountValue = getAccountObjectId(memoInfo?.account);
+        if (!accountValue) {
+          setRowData([]);
+          return;
+        }
         // Fetch approved Purchase Order data
         const response = await apiRequest(
           "GET",
-          `/po/approved/by-account?account=${memoInfo?.account?.label || ""}`
+          `/po/approved/by-account?account=${accountValue}`
         );
         
         // Group by invoice number and create PO-level data (like DayBook)
@@ -93,6 +128,7 @@ const PurchasePOModal = ({
           _id: po._id,
           invoice_no: po.invoice_no,
           account: po.account,
+          account_id: typeof po.account === "object" ? po.account?._id || po.account?.id : "",
           vendor_code_id: po.vendor_code_id,
           doc_date: po.doc_date,
           due_date: po.due_date,
@@ -117,7 +153,8 @@ const PurchasePOModal = ({
       }
     };
 
-    if (open && memoInfo?.account?.label) {
+    const hasAccount = getAccountObjectId(memoInfo?.account);
+    if (open && hasAccount) {
       fetchPOData();
     }
   }, [open, memoInfo?.account]);
@@ -193,9 +230,10 @@ const PurchasePOModal = ({
   };
 
   const handleOkClick = () => {
-    console.log("PO Modal handleOkClick called with selectedRows:", selectedRows.length);
+    
     if (selectedRows.length === 1) {
       const selectedPO = selectedRows[0];
+      const selectedPOAccount = normalizePOAccount(selectedPO);
       
       // Set approval state and PO ID
       setCurrentPOId(selectedPO._id);
@@ -207,7 +245,7 @@ const PurchasePOModal = ({
         id: selectedPO._id,
         isPOEdit: true,
         status: selectedPO.status,
-        account: { label: selectedPO.account, code: selectedPO.vendor_code_id },
+        account: selectedPOAccount,
         invoice_no: selectedPO.invoice_no,
         currency: selectedPO.currency?._id,
         currencyCode: selectedPO.currency?.code,
@@ -333,7 +371,8 @@ const PurchasePOModal = ({
   };
 
   const handleOpen = () => {
-    if (!memoInfo?.account?.label) {
+    const hasAccount = getAccountObjectId(memoInfo?.account);
+    if (!hasAccount) {
       setOpenSelectAccountModal(true);
     } else {
       setOpen(true);
@@ -1276,7 +1315,7 @@ const PurchasePOModal = ({
                           justifyContent: "center",
                         }}
                       >
-                        <Typography sx={textStyle}>{row.account}</Typography>
+                        <Typography sx={textStyle}>{getAccountLabel(row.account)}</Typography>
                       </Box>
                       <Box
                         sx={{

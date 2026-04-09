@@ -17,6 +17,16 @@ import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { getStockMovementByStoneCode } from "../../../services/stockMovementService.js";
 import { exportConsignmentToExcel } from "../../../helpers/consignmentExcelHelper";
 
+
+const formatProfitForExcel = (profit) => {
+  const n = Number(profit);
+  if (Number.isNaN(n)) return "-";
+  const formatted = Math.abs(n).toLocaleString();
+  if (n > 0) return `+${formatted}`;
+  if (n < 0) return `-${formatted}`;
+  return `+${formatted}`;
+};
+
 const StockMovementReportInSide = ({ selectedItem, onBack, exportTrigger }) => {
   const [rowPP, setRowPP] = React.useState("");
   const [movementDetails, setMovementDetails] = useState(null);
@@ -33,8 +43,24 @@ const StockMovementReportInSide = ({ selectedItem, onBack, exportTrigger }) => {
       }
 
       const itemHeaders = [
-        ["#", "Doc Date", "Ref", "Stock ID", "Account", "In", "In", "In", "In", "Out", "Out", "Out", "Out", "Balance", "Balance", "Balance", "Balance"],
-        ["", "", "", "", "", "Pcs", "Weight", "Price / Unit", "Amount", "Pcs", "Weight", "Price / Unit", "Amount", "Pcs", "Weight", "Price / Unit", "Amount"]
+        [
+          "#", "Doc Date", "Ref", "Stock ID", "Account",
+          "In", "In", "In", "In",
+          "Out", "Out", "Out", "Out",
+          "Balance", "Balance", "Balance", "Balance", "Balance", "Balance", "Balance"
+        ],
+        [
+          "", "", "", "", "",
+          "Pcs", "Weight", "Price / Unit", "Amount",
+          "Pcs", "Weight", "Price / Unit", "Amount",
+          "Pcs", "Weight", "Stock Cost", "Stock Cost", "Stock Value", "Stock Value", "Profit"
+        ],
+        [
+          "", "", "", "", "",
+          "", "", "", "",
+          "", "", "", "",
+          "", "", "Price / Unit", "Amount", "Price / Unit", "Amount", ""
+        ]
       ];
 
       const itemRows = movementDetails.movements.map((movement, index) => [
@@ -42,7 +68,9 @@ const StockMovementReportInSide = ({ selectedItem, onBack, exportTrigger }) => {
         new Date(movement.doc_date).toLocaleDateString('en-GB'),
         movement.ref || "",
         movement.stock_id || "",
-        movement.account || "",
+        typeof movement.account === "object"
+          ? (movement.account?.vendor_code_name || movement.account?.label || "")
+          : (movement.account || ""),
         Number(movement.in_pcs || 0),
         Number(movement.in_weight || 0),
         Number(movement.in_price || 0),
@@ -53,19 +81,35 @@ const StockMovementReportInSide = ({ selectedItem, onBack, exportTrigger }) => {
         Number(movement.out_amount || 0),
         Number(movement.balance_pcs || 0),
         Number(movement.balance_weight || 0),
-        Number(movement.balance_price || 0),
-        Number(movement.balance_amount || 0)
+        Number(movement.stock_cost_price || 0),
+        Number(movement.stock_cost_amount || 0),
+        Number(movement.stock_value_price || 0),
+        Number(movement.stock_value_amount || 0),
+        formatProfitForExcel(movement.profit)
       ]);
 
       const merges = [
-        { s: { r: 2, c: 0 }, e: { r: 3, c: 0 } }, // #
-        { s: { r: 2, c: 1 }, e: { r: 3, c: 1 } }, // Doc Date
-        { s: { r: 2, c: 2 }, e: { r: 3, c: 2 } }, // Ref
-        { s: { r: 2, c: 3 }, e: { r: 3, c: 3 } }, // Stock ID
-        { s: { r: 2, c: 4 }, e: { r: 3, c: 4 } }, // Account
+        { s: { r: 2, c: 0 }, e: { r: 4, c: 0 } }, // #
+        { s: { r: 2, c: 1 }, e: { r: 4, c: 1 } }, // Doc Date
+        { s: { r: 2, c: 2 }, e: { r: 4, c: 2 } }, // Ref
+        { s: { r: 2, c: 3 }, e: { r: 4, c: 3 } }, // Stock ID
+        { s: { r: 2, c: 4 }, e: { r: 4, c: 4 } }, // Account
         { s: { r: 2, c: 5 }, e: { r: 2, c: 8 } }, // In
         { s: { r: 2, c: 9 }, e: { r: 2, c: 12 } }, // Out
-        { s: { r: 2, c: 13 }, e: { r: 2, c: 16 } } // Balance
+        { s: { r: 2, c: 13 }, e: { r: 2, c: 19 } }, // Balance
+        { s: { r: 3, c: 5 }, e: { r: 4, c: 5 } }, // In Pcs
+        { s: { r: 3, c: 6 }, e: { r: 4, c: 6 } }, // In Weight
+        { s: { r: 3, c: 7 }, e: { r: 4, c: 7 } }, // In Price
+        { s: { r: 3, c: 8 }, e: { r: 4, c: 8 } }, // In Amount
+        { s: { r: 3, c: 9 }, e: { r: 4, c: 9 } }, // Out Pcs
+        { s: { r: 3, c: 10 }, e: { r: 4, c: 10 } }, // Out Weight
+        { s: { r: 3, c: 11 }, e: { r: 4, c: 11 } }, // Out Price
+        { s: { r: 3, c: 12 }, e: { r: 4, c: 12 } }, // Out Amount
+        { s: { r: 3, c: 13 }, e: { r: 4, c: 13 } }, // Bal Pcs
+        { s: { r: 3, c: 14 }, e: { r: 4, c: 14 } }, // Bal Weight
+        { s: { r: 3, c: 15 }, e: { r: 3, c: 16 } }, // Stock Cost
+        { s: { r: 3, c: 17 }, e: { r: 3, c: 18 } }, // Stock Value
+        { s: { r: 3, c: 19 }, e: { r: 4, c: 19 } } // Profit
       ];
 
       exportConsignmentToExcel({

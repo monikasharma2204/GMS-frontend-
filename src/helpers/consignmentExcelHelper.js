@@ -101,6 +101,17 @@ export const exportConsignmentToExcel = ({
 
 
     const range = XLSX.utils.decode_range(ws["!ref"]);
+    const topHeaderRowIndex = 2;
+    const resolveTopHeader = (colIndex) => {
+      const row2Cell = ws[XLSX.utils.encode_cell({ r: topHeaderRowIndex, c: colIndex })];
+      if (row2Cell && row2Cell.v) return String(row2Cell.v);
+      const matchedMerge = (ws["!merges"] || []).find(
+        (m) => m.s.r <= topHeaderRowIndex && m.e.r >= topHeaderRowIndex && m.s.c <= colIndex && m.e.c >= colIndex
+      );
+      if (!matchedMerge) return "";
+      const startCell = ws[XLSX.utils.encode_cell({ r: matchedMerge.s.r, c: matchedMerge.s.c })];
+      return String(startCell?.v || "");
+    };
 
     for (let R = range.s.r; R <= range.e.r; R++) {
       for (let C = range.s.c; C <= range.e.c; C++) {
@@ -135,16 +146,12 @@ export const exportConsignmentToExcel = ({
           const cellValue = String(ws[cellRef].v || "");
           let customStyle = { ...itemHeaderStyle };
       
-          if (R === 2) {
+          if (R === topHeaderRowIndex) {
               if (cellValue === "In") customStyle.fill = { fgColor: { rgb: colorMap.in_h } };
               else if (cellValue === "Out") customStyle.fill = { fgColor: { rgb: colorMap.out_h } };
               else if (cellValue === "Balance") customStyle.fill = { fgColor: { rgb: colorMap.bal_h } };
-          } 
-          // Second row of headers
-          else if (R === 3) {
-         
-              const topCell = ws[XLSX.utils.encode_cell({ r: 2, c: C })];
-              const topVal = String(topCell ? topCell.v : "");
+          } else {
+              const topVal = resolveTopHeader(C);
               if (topVal === "In") customStyle.fill = { fgColor: { rgb: colorMap.in_s } };
               else if (topVal === "Out") customStyle.fill = { fgColor: { rgb: colorMap.out_s } };
               else if (topVal === "Balance") customStyle.fill = { fgColor: { rgb: colorMap.bal_s } };

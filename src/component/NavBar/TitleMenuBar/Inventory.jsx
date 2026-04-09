@@ -419,12 +419,12 @@ const Inventory = ({ handleClick, showRedBox, openInventory,
                     sx={DropdownMenuTransfer}
                   >
                     <ProtectedLink
-                      to="/inventory/transfer/consignment"
+                      to="/inventory/transfer/merge-split"
                     >
                       <Typography
-                        className={isPathActive("/inventory/transfer/consignment") ? "active" : ""}
+                        className={isPathActive("/inventory/transfer/merge-split") ? "active" : ""}
                         sx={TextMainTransfer}
-                      >Consignment</Typography>
+                      >Merge & Split</Typography>
                     </ProtectedLink>
                   </Box>
                 </Box>
@@ -439,7 +439,7 @@ const Inventory = ({ handleClick, showRedBox, openInventory,
                       <Typography
                         className={isPathActive("/inventory/transfer/stock-check") ? "active" : ""}
                         sx={TextMainTransfer}
-                      >Stock Check</Typography>
+                      >Transfer</Typography>
                     </ProtectedLink>
                   </Box>
                 </Box>

@@ -188,7 +188,7 @@ export const TextMainTransfer = {
   fontStyle: "normal",
   fontWeight: 400,
   lineHeight: "normal",
-  marginLeft: "70px",
+  marginLeft: "60px",
   cursor: "pointer",
   "&.active": {
     color: "#fff",

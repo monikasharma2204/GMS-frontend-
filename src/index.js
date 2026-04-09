@@ -51,9 +51,10 @@ import StockMovement from "./Page/Inventory/StockMovement.jsx";
 import PrimaryReportPage from "./Page/Inventory/Report/PrimaryReportPage.jsx";
 import ConsignmentReportPage from "./Page/Inventory/Report/ConsignmentReportPage.jsx";
 import ConsignmentTransferPage from "./Page/Inventory/Transfer/ConsignmentTransferPage.jsx";
+import MergeSplitStock from "./Page/Inventory/Transfer/MergeSplitStock.jsx";
 import StockMovementReportPage from "./Page/Inventory/Report/StockMovementReportPage.jsx";
 import ConsignmentCheckPage from "./Page/Inventory/Report/ConsignmentCheckPage.jsx";
-import StockMovementTransferPage from "./Page/Inventory/Transfer/StockMovementTransferPage.jsx";
+
 import Currency from "Page/Currency/Currency";
 import MainLocation from "Page/MainLocation/MainLocation";
 import SubLocation from "Page/SubLocation/SubLocation";
@@ -112,12 +113,12 @@ const router = createBrowserRouter([
         path: "company/bank/:action/:id",
         element: <Bank />,
       },
-  // { 
+      // { 
 
-  //   path : "/company/bank",
-  //   element : <Bank />,
-  //   errorElement : <ErrorPage />
-  // },
+      //   path : "/company/bank",
+      //   element : <Bank />,
+      //   errorElement : <ErrorPage />
+      // },
       {
         path: "userandpermission/add",
         element: <UserAndPermission />,
@@ -282,7 +283,7 @@ const router = createBrowserRouter([
         path: "inventory/stockmovement",
         element: <StockMovement />,
       },
-   
+
       {
         path: "inventory/report/primary",
         element: <PrimaryReportPage />,
@@ -300,13 +301,10 @@ const router = createBrowserRouter([
         element: <ConsignmentCheckPage />,
       },
       {
-        path: "inventory/transfer/consignment",
-        element: <ConsignmentTransferPage />,
+        path: "inventory/transfer/merge-split",
+        element: <MergeSplitStock />,
       },
-      {
-        path: "inventory/transfer/stock-check",
-        element: <StockMovementTransferPage />,
-      },
+
       {
         path: "settings/currency",
         element: <Currency />,
@@ -348,13 +346,13 @@ const router = createBrowserRouter([
 
 
 
-  
+
 ]);
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <>
-     <RecoilRoot>
-         <RouterProvider router={router} />
-     </RecoilRoot>
+    <RecoilRoot>
+      <RouterProvider router={router} />
+    </RecoilRoot>
   </>
 );
