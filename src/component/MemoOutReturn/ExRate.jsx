@@ -36,7 +36,7 @@ const ExRate = ({ onExchangeRateChange , exchangeRate , disabled = false}) => {
       }
     };
     checkExchangeRate();
-  }, [memoInfo?.currency, memoInfo?.isDayBookEdit, buyingRate, exchangeRate, onExchangeRateChange]);
+  }, [memoInfo?.currency, memoInfo?.isDayBookEdit, buyingRate]);
 
    
   const handleChange = (e) => {

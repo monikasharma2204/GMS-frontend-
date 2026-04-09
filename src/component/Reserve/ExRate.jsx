@@ -76,8 +76,6 @@ const ExRate = ({ onExchangeRateChange, exchangeRate, disabled = false }) => {
     buyingRate,
     initialCurrency,
     initialExchangeRate,
-    exchangeRate,
-    onExchangeRateChange,
   ]);
 
   const handleChange = (e) => {

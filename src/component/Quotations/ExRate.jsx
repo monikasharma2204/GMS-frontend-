@@ -54,7 +54,7 @@ const ExRate = ({ onExchangeRateChange, exchangeRate, disabled, companyCurrency 
       }
     };
     checkExchangeRate();
-  }, [memoInfo?.currency, memoInfo?.isDayBookEdit, memoInfo?.exchange_rate, buyingRate, exchangeRate, onExchangeRateChange, companyCurrency]);
+  }, [memoInfo?.currency, memoInfo?.isDayBookEdit, memoInfo?.exchange_rate, buyingRate, companyCurrency]);
 
 
 

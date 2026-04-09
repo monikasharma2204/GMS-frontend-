@@ -26,7 +26,7 @@ const ExRate = ({ onExchangeRateChange , exchangeRate, disabled: externalDisable
       }
     };
     checkExchangeRate();
-  }, [memoInfo?.currency, buyingRate, onExchangeRateChange]);
+  }, [memoInfo?.currency, buyingRate]);
  
 
   const handleChange = (e) => {
