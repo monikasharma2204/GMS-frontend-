@@ -1,6 +1,4 @@
-/**
- * Utility functions for row data manipulation
- */
+
 import { API_URL } from "config/config.js";
 
 export const createCompositeStoneCode = (sourceRow) => {
@@ -13,11 +11,7 @@ export const createCompositeStoneCode = (sourceRow) => {
   return `${stoneCode}${shapeCode}${colorCode}${qualityCode}${clarityCode}`;
 };
 
-/**
- * Maps PU modal data to row format
- *  selectedStockRows - Selected rows from PU modal
- *  Mapped row data
- */
+
 export const mapPUModalData = (selectedStockRows) => {
   return selectedStockRows.map((item, index) => ({
     stone_code: item.stone, 
@@ -44,8 +38,7 @@ export const mapPUModalData = (selectedStockRows) => {
     weight: item.weight, // Use current weight
     price: item.price, // Use current price
     unit: item.unit, // Unit doesn't change
-    amount: item.amount, // Use current amount
-    
+    amount: item.total_amount ?? item.amount, // Use current total amount
     // IMPORTANT: Preserve original data for daybook display
     original_pcs: item.original_pcs, // Store original PCS (200) for daybook
     remark: item.remark || "",
@@ -142,10 +135,18 @@ export const createMappedRowData = (sourceRow) => {
 export const createCombinedRow = (firstSectionRows) => {
   if (firstSectionRows.length === 0) return null;
 
+  // Helper to safely parse numbers with commas
+  const parseNum = (val) => {
+    if (val === null || val === undefined) return 0;
+    const strMatch = String(val).replace(/,/g, '');
+    const num = parseFloat(strMatch);
+    return isNaN(num) ? 0 : num;
+  };
+
   // Calculate combined totals from all rows
-  const totalPcs = firstSectionRows.reduce((sum, row) => sum + (Number(row.pcs) || 0), 0);
-  const totalWeight = firstSectionRows.reduce((sum, row) => sum + (Number(row.weight) || 0), 0);
-  const totalAmount = firstSectionRows.reduce((sum, row) => sum + (Number(row.amount) || 0), 0);
+  const totalPcs = firstSectionRows.reduce((sum, row) => sum + parseNum(row.pcs), 0);
+  const totalWeight = firstSectionRows.reduce((sum, row) => sum + parseNum(row.weight), 0);
+  const totalAmount = firstSectionRows.reduce((sum, row) => sum + parseNum(row.amount), 0);
   
   // Check if all rows have the same unit
   const firstUnit = firstSectionRows[0]?.unit || "";

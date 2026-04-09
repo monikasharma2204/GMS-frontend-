@@ -571,20 +571,27 @@ const SelectedDataComponent2 = React.forwardRef(({
   const headers = SECOND_SECTION_HEADERS;
 
   const currentPURow = useMemo(() => {
+    const parseNum = (val) => {
+      if (val === null || val === undefined) return 0;
+      const strMatch = String(val).replace(/,/g, '');
+      const num = parseFloat(strMatch);
+      return isNaN(num) ? 0 : num;
+    };
+
     if (operationType === "merge") {
       // In merge mode, use total of all rows
       if (firstSectionRows.length > 0) {
         const totals = {
           totalAmount: firstSectionRows.reduce(
-            (sum, row) => sum + (Number(row.amount) || 0),
+            (sum, row) => sum + parseNum(row.amount),
             0
           ),
           totalWeight: firstSectionRows.reduce(
-            (sum, row) => sum + (Number(row.weight) || 0),
+            (sum, row) => sum + parseNum(row.weight),
             0
           ),
           totalPcs: firstSectionRows.reduce(
-            (sum, row) => sum + (Number(row.pcs) || 0),
+            (sum, row) => sum + parseNum(row.pcs),
             0
           ),
         };
@@ -601,9 +608,9 @@ const SelectedDataComponent2 = React.forwardRef(({
         const specificRow = firstSectionRows[selectedRowIndex];
 
         return {
-          totalAmount: Number(specificRow.amount) || 0,
-          totalWeight: Number(specificRow.weight) || 0,
-          totalPcs: Number(specificRow.pcs) || 0,
+          totalAmount: parseNum(specificRow.amount),
+          totalWeight: parseNum(specificRow.weight),
+          totalPcs: parseNum(specificRow.pcs),
         };
       }
     }

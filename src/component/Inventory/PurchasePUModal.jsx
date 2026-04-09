@@ -106,7 +106,7 @@ const PurchasePUModal = ({ handleSubmit = () => { }, disabledItems = [], isAppro
       weight: item.weight,
       price: item.price,
       unit: item.unit,
-      amount: item.amount,
+      amount: item.total_amount,
       remark: item.remark || "",
       ref_no: item.ref_no,
       pu_no: item.invoice_no, // Map invoice_no to pu_no
@@ -1076,7 +1076,7 @@ const PurchasePUModal = ({ handleSubmit = () => { }, disabledItems = [], isAppro
                               padding: "0 8px",
                             }}
                           >
-                            <Typography sx={textStyle}>{row.amount || ""}</Typography>
+                            <Typography sx={textStyle}>{row.total_amount || ""}</Typography>
                           </Box>
                         </Box>
                       );

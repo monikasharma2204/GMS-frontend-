@@ -128,8 +128,8 @@ const TableRowComponent = React.memo(
         {/* Amount */}
         <TableCell sx={{ ...cellStyle, width: "120px" }}>
           <Typography sx={typographyStyle}>
-            {item?.amount
-              ? formatNumberWithCommas(Number(item.amount).toFixed(2))
+            {item?.amount || item?.total_amount
+              ? formatNumberWithCommas(Number(item.amount || item.total_amount).toFixed(2))
               : ""}
           </Typography>
         </TableCell>

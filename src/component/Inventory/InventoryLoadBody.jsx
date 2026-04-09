@@ -280,6 +280,13 @@ const InventoryLoadBody = React.forwardRef(
               selectedDataComponent2Ref.current?.getAllLoadItems() || [];
             return allLoadItems;
           })().map((item) => {
+            const cleanNum = (val) => {
+              if (val === null || val === undefined) return 0;
+              const strVal = String(val).replace(/,/g, '');
+              const num = parseFloat(strVal);
+              return isNaN(num) ? 0 : num;
+            };
+
             let payloadItem = {
               stock_id:
                 item.stock_id ||
@@ -297,18 +304,18 @@ const InventoryLoadBody = React.forwardRef(
               cer_type: item.cer_type || "",
               cer_no: item.cer_no || "",
               lot_no: item.lot_no || "",
-              pcs: Number(item.pcs) || 0,
-              weight_per_piece: Number(item.weight_per_piece) || 0,
-              weight: Number(item.weight) || 0,
-              price: Number(item.price) || 0,
-              stock_price: Number(item.stock_price) || 0,
-              sale_price: Number(item.sale_price) || 0,
+              pcs: cleanNum(item.pcs),
+              weight_per_piece: cleanNum(item.weight_per_piece),
+              weight: cleanNum(item.weight),
+              price: cleanNum(item.price),
+              stock_price: cleanNum(item.stock_price),
+              sale_price: cleanNum(item.sale_price),
               unit: item.unit || "",
               stock_unit: item.stock_unit || "",
               sale_unit: item.sale_unit || "",
-              amount: Number(item.amount) || 0,
-              stock_amount: Number(item.stock_amount) || 0,
-              sale_amount: Number(item.sale_amount) || 0,
+              amount: cleanNum(item.amount),
+              stock_amount: cleanNum(item.stock_amount),
+              sale_amount: cleanNum(item.sale_amount),
               remark: item.remark || "",
               // carry image fields for multipart handling in parent
               image_preview: item.image_preview || null,

@@ -39,10 +39,17 @@ const TableForTotalComponent = ({ parentHeight, rows = [] }) => {
 
   
     useEffect(() => {
-      const total = rows.reduce((acc, row) => acc + (Number(row.pcs) || 0), 0);
-      const weightSum = parseFloat(rows.reduce((sum, row) => sum + (parseFloat(row.weight) || 0), 0).toFixed(2));
+      const parseNum = (val) => {
+        if (val === null || val === undefined) return 0;
+        const strMatch = String(val).replace(/,/g, '');
+        const num = parseFloat(strMatch);
+        return isNaN(num) ? 0 : num;
+      };
+
+      const total = rows.reduce((acc, row) => acc + parseNum(row.pcs), 0);
+      const weightSum = parseFloat(rows.reduce((sum, row) => sum + parseNum(row.weight), 0).toFixed(3));
   
-      const amountSum = parseFloat(rows.reduce((sum, row) => sum + (Number(row.amount) || 0), 0).toFixed(2));
+      const amountSum = parseFloat(rows.reduce((sum, row) => sum + parseNum(row.amount), 0).toFixed(2));
       const stockAmountSum = parseFloat(rows.reduce((sum, row) => sum + calculateStockAmount(row), 0).toFixed(2));
       const saleAmountSum = parseFloat(rows.reduce((sum, row) => sum + calculateSaleAmount(row), 0).toFixed(2));
   

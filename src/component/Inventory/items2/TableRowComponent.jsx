@@ -211,8 +211,16 @@ const TableRowComponent = React.memo(
     const MAX_IMAGE_BYTES = 500 * 1024; // 500KB
 
     // PCS validation state
-  const [warningPopup, setWarningPopup] = useState(false);
-  const [pcsValidationError, setPcsValidationError] = useState(false);
+    const [warningPopup, setWarningPopup] = useState(false);
+    const [pcsValidationError, setPcsValidationError] = useState(false);
+
+    // Helper to safely parse numbers with commas
+    const parseNum = useCallback((val) => {
+      if (val === null || val === undefined) return 0;
+      const strMatch = String(val).replace(/,/g, '');
+      const num = parseFloat(strMatch);
+      return isNaN(num) ? 0 : num;
+    }, []);
 
 
     
@@ -241,9 +249,9 @@ const TableRowComponent = React.memo(
       
       // Check total of ALL Load rows' PCS against individual PU row's PCS
       const totalLoadPcs = newRows.reduce((sum, row) => {
-        return sum + (parseFloat(row.pcs || 0));
+        return sum + parseNum(row.pcs);
       }, 0);
-      const puPcs = originalPUtotals.totalPcs;
+      const puPcs = parseNum(originalPUtotals.totalPcs);
       
     
       
@@ -277,48 +285,40 @@ const TableRowComponent = React.memo(
 
 
     // Calculate stock amount based on stock price, stock unit, and pcs
-    const calculateStockAmount = (currItem) => {
-      const stockPrice = parseFloat(currItem.stock_price || 0);
-      const pcs = parseFloat(currItem.pcs || 0);
-      const weight = parseFloat(currItem.weight || 0);
+    const calculateStockAmount = useCallback((currItem) => {
+      const stockPrice = parseNum(currItem.stock_price);
+      const pcs = parseNum(currItem.pcs);
+      const weight = parseNum(currItem.weight);
       const stockUnit = currItem.stock_unit;
       
-     
-      
       let stockAmount = 0;
-      // Only calculate if we have a valid stock price and unit
       if (stockPrice > 0 && stockUnit) {
-        if (stockUnit === "pcs") {
+        if (stockUnit === "pcs" || stockUnit.toLowerCase() === "pcs") {
           stockAmount = pcs * stockPrice;
         } else {
           stockAmount = weight * stockPrice;
         }
       }
-      
-     
       return parseFloat(stockAmount.toFixed(2));
-    };
+    }, [parseNum]);
 
     // Calculate sale amount based on sale price, sale unit, and pcs
-    const calculateSaleAmount = (currItem) => {
-      const salePrice = parseFloat(currItem.sale_price || 0);
-      const pcs = parseFloat(currItem.pcs || 0);
-      const weight = parseFloat(currItem.weight || 0);
+    const calculateSaleAmount = useCallback((currItem) => {
+      const salePrice = parseNum(currItem.sale_price);
+      const pcs = parseNum(currItem.pcs);
+      const weight = parseNum(currItem.weight);
       const saleUnit = currItem.sale_unit;
       
       let saleAmount = 0;
-      // Only calculate if we have a valid sale price and unit
       if (salePrice > 0 && saleUnit) {
-        if (saleUnit === "pcs") {
+        if (saleUnit === "pcs" || saleUnit.toLowerCase() === "pcs") {
           saleAmount = pcs * salePrice;
         } else {
           saleAmount = weight * salePrice;
         }
       }
-      
-     
       return parseFloat(saleAmount.toFixed(2));
-    };
+    }, [parseNum]);
     //   this is subtotal
 
     // Calculate stock_amount and sale_amount when component loads or item changes
@@ -421,34 +421,30 @@ const TableRowComponent = React.memo(
           // Auto-calculate amount when weight or PCS changes
           if (field === "weight" || field === "pcs") {
             const item = newRows[index];
-            const currentWeight = parseFloat(item.weight || 0);
-            const currentPcs = parseFloat(item.pcs || 0);
-            const currentPrice = parseFloat(item.price || 0);
+            const currentWeight = parseNum(item.weight);
+            const currentPcs = parseNum(item.pcs);
+            const currentPrice = parseNum(item.price);
             
             // Check if we're in merge mode (have original PU totals)
-            const isMergeMode = originalPUtotals && originalPUtotals.totalAmount > 0 && originalPUtotals.totalWeight > 0;
+            const isMergeMode = originalPUtotals && parseNum(originalPUtotals.totalAmount) > 0 && parseNum(originalPUtotals.totalWeight) > 0;
             
             if (isMergeMode) {
-              
-              const averagePrice = originalPUtotals.totalAmount / originalPUtotals.totalWeight;
+              const totalAmountVal = parseNum(originalPUtotals.totalAmount);
+              const totalWeightVal = parseNum(originalPUtotals.totalWeight);
+              const averagePrice = totalAmountVal / totalWeightVal;
               newRows[index]["price"] = parseFloat(averagePrice.toFixed(2));
               
-              
-              const newAmount = item.unit === "pcs" 
+              const newAmount = (item.unit || "").toLowerCase() === "pcs" 
                 ? currentPcs * averagePrice
                 : currentWeight * averagePrice;
               newRows[index]["amount"] = parseFloat(newAmount.toFixed(2));
-              
-             
             } else {
               // Normal mode: Only calculate if user has entered values for weight or pcs
               if (currentPrice > 0 && (currentWeight > 0 || currentPcs > 0)) {
-                const newAmount = item.unit === "pcs" 
+                const newAmount = (item.unit || "").toLowerCase() === "pcs" 
                   ? currentPcs * currentPrice
                   : currentWeight * currentPrice;
                 newRows[index]["amount"] = parseFloat(newAmount.toFixed(2));
-                
-               
               }
             }
           }
