@@ -17,6 +17,7 @@ import {
   IconButton
 } from "@mui/material";
 import apiRequest from "../../../helpers/apiHelper";
+import { API_URL } from "../../../config/config.js";
 
 const StockSelectionModal = ({ open, onClose, onSelect }) => {
   const [stocks, setStocks] = useState([]);
@@ -71,8 +72,11 @@ const StockSelectionModal = ({ open, onClose, onSelect }) => {
     onSelect(selectedStocks);
     onClose();
   };
-
-
+  const firstSelectedStone = useMemo(() => {
+    if (selectedIds.length === 0) return null;
+    const firstSelected = stocks.find(s => s._id === selectedIds[0]);
+    return firstSelected ? firstSelected.stone : null;
+  }, [selectedIds, stocks]);
 
   return (
     <Modal open={open} onClose={onClose}>
@@ -149,6 +153,8 @@ const StockSelectionModal = ({ open, onClose, onSelect }) => {
                   <Box sx={{ flexGrow: 1 }}>
                     <TextField
                       placeholder="Search List..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
                       InputProps={{
                         startAdornment: (
                           <InputAdornment position="start">
@@ -370,6 +376,7 @@ const StockSelectionModal = ({ open, onClose, onSelect }) => {
                         indeterminate={selectedIds.length > 0 && selectedIds.length < filteredStocks.length}
                         checked={filteredStocks.length > 0 && selectedIds.length === filteredStocks.length}
                         onChange={handleSelectAll}
+                        disabled={!!firstSelectedStone}
                       />
                     </TableCell>
                     {["#", "Stock ID", "Doc Date", "Lot", "Stone Code", "Stone", "Shape", "Size", "Color", "Cutting", "Quality", "Clarity", "Cer Type", "Cer No.", "Pcs", "Weight", "Price", "Unit", "Amount"].map(h => (
@@ -382,32 +389,53 @@ const StockSelectionModal = ({ open, onClose, onSelect }) => {
                     <TableRow><TableCell colSpan={20} align="center">Loading...</TableCell></TableRow>
                   ) : filteredStocks.length === 0 ? (
                     <TableRow><TableCell colSpan={20} align="center">No stocks found</TableCell></TableRow>
-                  ) : filteredStocks.map((stock, idx) => (
-                    <TableRow key={stock._id} hover onClick={() => handleToggleSelect(stock._id)} sx={{ cursor: "pointer" }}>
-                      <TableCell padding="checkbox">
-                        <Checkbox checked={selectedIds.includes(stock._id)} />
-                      </TableCell>
-                      <TableCell sx={{ fontFamily: "Calibri" }}>{idx + 1}</TableCell>
-                      <TableCell sx={{ fontFamily: "Calibri" }}>{stock.stock_id}</TableCell>
-                      <TableCell sx={{ fontFamily: "Calibri" }}>{stock.doc_date ? new Date(stock.doc_date).toLocaleDateString() : "-"}</TableCell>
-                      <TableCell sx={{ fontFamily: "Calibri", borderRight: "1px solid #C6C6C8" }}>{stock.lot_no || "-"}</TableCell>
-                      <TableCell sx={{ fontFamily: "Calibri" }}>{stock.stone_code}</TableCell>
-                      <TableCell sx={{ fontFamily: "Calibri" }}>{stock.stone}</TableCell>
-                      <TableCell sx={{ fontFamily: "Calibri" }}>{stock.shape || "-"}</TableCell>
-                      <TableCell sx={{ fontFamily: "Calibri" }}>{stock.size || "-"}</TableCell>
-                      <TableCell sx={{ fontFamily: "Calibri" }}>{stock.color || "-"}</TableCell>
-                      <TableCell sx={{ fontFamily: "Calibri" }}>{stock.cutting || "-"}</TableCell>
-                      <TableCell sx={{ fontFamily: "Calibri" }}>{stock.quality || "-"}</TableCell>
-                      <TableCell sx={{ fontFamily: "Calibri" }}>{stock.clarity || "-"}</TableCell>
-                      <TableCell sx={{ fontFamily: "Calibri" }}>{stock.cer_type || "-"}</TableCell>
-                      <TableCell sx={{ fontFamily: "Calibri" }}>{stock.cer_no || "-"}</TableCell>
-                      <TableCell sx={{ fontFamily: "Calibri" }}>{stock.pcs || 0}</TableCell>
-                      <TableCell sx={{ fontFamily: "Calibri", borderRight: "1px solid #C6C6C8" }}>{stock.weight?.toFixed(3) || "0.000"}</TableCell>
-                      <TableCell sx={{ fontFamily: "Calibri" }}>{stock.price?.toLocaleString(undefined, { minimumFractionDigits: 2 }) || "0.00"}</TableCell>
-                      <TableCell sx={{ fontFamily: "Calibri" }}>{stock.unit || "-"}</TableCell>
-                      <TableCell sx={{ fontFamily: "Calibri" }}>{stock.amount?.toLocaleString(undefined, { minimumFractionDigits: 2 }) || "0.00"}</TableCell>
-                    </TableRow>
-                  ))}
+                  ) : filteredStocks.map((stock, idx) => {
+                    const isSelected = selectedIds.includes(stock._id);
+                    const isDisabled = firstSelectedStone && stock.stone !== firstSelectedStone;
+                    return (
+                      <TableRow
+                        key={stock._id}
+                        hover={!isDisabled}
+                        onClick={() => !isDisabled && handleToggleSelect(stock._id)}
+                        sx={{
+                          cursor: isDisabled ? "default" : "pointer",
+                          opacity: isDisabled ? 0.6 : 1
+                        }}
+                      >
+                        <TableCell padding="checkbox">
+                          <Checkbox checked={isSelected} disabled={isDisabled} />
+                        </TableCell>
+                        <TableCell sx={{ fontFamily: "Calibri", color: isDisabled ? "#AAA" : "inherit" }}>{idx + 1}</TableCell>
+
+                        <TableCell sx={{ fontFamily: "Calibri", color: isDisabled ? "#AAA" : "inherit" }}>{stock.stock_id}</TableCell>
+                        <TableCell sx={{ fontFamily: "Calibri", color: isDisabled ? "#AAA" : "inherit" }}>{stock.doc_date ? new Date(stock.doc_date).toLocaleDateString() : "-"}</TableCell>
+                        <TableCell sx={{ fontFamily: "Calibri", borderRight: "1px solid #C6C6C8", color: isDisabled ? "#AAA" : "inherit" }}>{stock.lot_no || "-"}</TableCell>
+                        <TableCell
+                          sx={{
+                            fontFamily: "Calibri", borderRight: "1px solid #C6C6C8",
+                            color: isDisabled ? "#AAA" : "inherit",
+                            fontWeight: 400
+                          }}
+                        >
+                          {stock.stone_code}
+                        </TableCell>
+                        <TableCell sx={{ fontFamily: "Calibri", color: isDisabled ? "#AAA" : "inherit" }}>{stock.stone}</TableCell>
+                        <TableCell sx={{ fontFamily: "Calibri", color: isDisabled ? "#AAA" : "inherit" }}>{stock.shape || "-"}</TableCell>
+                        <TableCell sx={{ fontFamily: "Calibri", color: isDisabled ? "#AAA" : "inherit" }}>{stock.size || "-"}</TableCell>
+                        <TableCell sx={{ fontFamily: "Calibri", color: isDisabled ? "#AAA" : "inherit" }}>{stock.color || "-"}</TableCell>
+                        <TableCell sx={{ fontFamily: "Calibri", color: isDisabled ? "#AAA" : "inherit" }}>{stock.cutting || "-"}</TableCell>
+                        <TableCell sx={{ fontFamily: "Calibri", color: isDisabled ? "#AAA" : "inherit" }}>{stock.quality || "-"}</TableCell>
+                        <TableCell sx={{ fontFamily: "Calibri", color: isDisabled ? "#AAA" : "inherit" }}>{stock.clarity || "-"}</TableCell>
+                        <TableCell sx={{ fontFamily: "Calibri", color: isDisabled ? "#AAA" : "inherit" }}>{stock.cer_type || "-"}</TableCell>
+                        <TableCell sx={{ fontFamily: "Calibri", color: isDisabled ? "#AAA" : "inherit" }}>{stock.cer_no || "-"}</TableCell>
+                        <TableCell sx={{ fontFamily: "Calibri", color: isDisabled ? "#AAA" : "inherit" }}>{stock.pcs || 0}</TableCell>
+                        <TableCell sx={{ fontFamily: "Calibri", borderRight: "1px solid #C6C6C8", color: isDisabled ? "#AAA" : "inherit" }}>{stock.weight?.toFixed(3) || "0.000"}</TableCell>
+                        <TableCell sx={{ fontFamily: "Calibri", color: isDisabled ? "#AAA" : "inherit" }}>{stock.price?.toLocaleString(undefined, { minimumFractionDigits: 2 }) || "0.00"}</TableCell>
+                        <TableCell sx={{ fontFamily: "Calibri", color: isDisabled ? "#AAA" : "inherit" }}>{stock.unit || "-"}</TableCell>
+                        <TableCell sx={{ fontFamily: "Calibri", color: isDisabled ? "#AAA" : "inherit" }}>{stock.amount?.toLocaleString(undefined, { minimumFractionDigits: 2 }) || "0.00"}</TableCell>
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
             </TableContainer>

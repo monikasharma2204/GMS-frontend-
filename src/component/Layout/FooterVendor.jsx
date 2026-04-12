@@ -54,6 +54,10 @@ const Footer = (props) => {
   };
 
   const handleSaveClick = () => {
+    if (props.useCustomSaveConfirm && props.onSaveClick) {
+      props.onSaveClick();
+      return;
+    }
 
     if ((props.type === "purchaseOrder" || props.type === "purchase" || props.type === "memo_in" || props.type === "memo_return") && props.onSaveClick) {
       props.onSaveClick();
@@ -495,6 +499,7 @@ const Footer = (props) => {
           zIndex: 5,
           paddingLeft: "32px",
           paddingRight: "32px",
+          left:"222px"
         }}
       >
 

@@ -3,10 +3,7 @@ import { useRecoilState } from "recoil";
 import { QuotationtableRowsDropdownData } from "recoil/Load/LoadState";
 import apiRequest from "../../../helpers/apiHelper.js";
 
-/**
- * Custom hook for managing dropdown options
- * Dropdown options and related state
- */
+
 export const useDropdownOptions = () => {
   const [dropdownOptions, setDropdownOptions] = useState({});
   const [allDropdownOptions, setAllDropdownOptions] = useRecoilState(

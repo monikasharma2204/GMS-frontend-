@@ -1,12 +1,13 @@
 import React from "react";
 import { Box, Typography, Button } from "@mui/material";
 
-const MergeSplitHeader = ({ onApprove, onDayBook, invoiceNo }) => {
+const MergeSplitHeader = ({ onApprove, onDayBook, invoiceNo, disableApprove = false }) => {
   return (
     <Box
       sx={{
-        width: "1683px",
-        height: "64px",
+        width: "calc(100% - 64px)", 
+        height: "56px",
+        padding : "0px 32px",
         flexShrink: 0,
         backgroundColor: "#FFF",
         display: "flex",
@@ -15,11 +16,12 @@ const MergeSplitHeader = ({ onApprove, onDayBook, invoiceNo }) => {
         boxShadow: "0px 8px 8px -4px rgba(24, 39, 75, 0.08)",
       }}
     >
-      <Box sx={{ marginLeft: "32px" }}>
+      <Box sx={{ }}>
         <Typography
           sx={{
             color: "#05595B",
             fontFamily: "Calibri",
+            lineHeight : "normal",
             fontSize: "24px",
             fontWeight: 700,
           }}
@@ -28,23 +30,29 @@ const MergeSplitHeader = ({ onApprove, onDayBook, invoiceNo }) => {
         </Typography>
       </Box>
 
-      <Box sx={{ display: "flex", alignItems: "center", marginRight: "32px", gap: "12px" }}>
+      <Box sx={{ display: "flex", alignItems: "center", gap: "8px" }}>
         <Button
           onClick={onApprove}
+          disabled={disableApprove}
           sx={{
             textTransform: "none",
-            height: "35px",
-            width: "100px",
+            height: "32px",
+            width: "96px",
             borderRadius: "4px",
             backgroundColor: "#E6E6E6",
             border: "1px solid #BFBFBF",
             color: "#57646E",
             fontFamily: "Calibri",
-            fontSize: "16px",
+            fontSize: "14px",
             fontWeight: 700,
             "&:hover": {
               backgroundColor: "#D0D0D0",
-            }
+            },
+            "&:disabled": {
+              backgroundColor: "#E6E6E6",
+              border: "1px solid #BFBFBF",
+              color: "#57646E",
+            },
           }}
         >
           Approve
@@ -53,13 +61,16 @@ const MergeSplitHeader = ({ onApprove, onDayBook, invoiceNo }) => {
           onClick={onDayBook}
           sx={{
             textTransform: "none",
-            height: "35px",
-            width: "100px",
+            paddingLeft : "16px",
+            paddingRight : "16px",
+        
+            height: "32px",
+            width: "96px",
             borderRadius: "4px",
             backgroundColor: "#C6A969",
             color: "white",
             fontFamily: "Calibri",
-            fontSize: "16px",
+            fontSize: "14px",
             fontWeight: 700,
             "&:hover": {
               backgroundColor: "#B0955B",
