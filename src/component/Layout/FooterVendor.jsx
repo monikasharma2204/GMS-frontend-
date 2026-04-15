@@ -486,49 +486,72 @@ const Footer = (props) => {
     <>
       <Box
         sx={{
-          width: "1697px",
-          height: "65px",
+          width: { xs: "100%", x991: "calc(100% - 222px)" },
+          height: "60px",
           display: "flex",
           justifyContent: "center",
           alignItems: "center",
           borderTop: "1px solid #BFBFBF",
-          gap: "8px",
+          gap: "20px",
+          "@media (max-width: 480px)": {
+            gap: "4px",
+          },
           position: "fixed",
           bottom: "0",
+          left: { xs: 0, x991: "222px" },
           backgroundColor: "#FFF",
           zIndex: 5,
           paddingLeft: "32px",
           paddingRight: "32px",
-          left:"222px"
+          left: "222px"
         }}
       >
 
-        <Box sx={{ display: "flex", alignItems: "center", gap: "12px" }}>
+        <Box sx={{ display: "flex", gap: { xs: "8px", sm: "12px" }, borderRight: "1px solid #BFBFBF", }}>
           {props.onAddClick ? (
             <Button
               disabled={getAddDisabled()}
               onClick={!getAddDisabled() && props.onAddClick ? props.onAddClick : undefined}
               sx={{
-                textTransform: "none",
-                height: "45px",
-                width: "84px",
-                padding: "12px",
+
+
+                height: "32px",
+                width: "96px",
+                paddingLeft: "16px",
+                paddingRight: "16px",
                 borderRadius: "4px",
-                gap: "8px",
-                backgroundColor: getAddDisabled() ? "#E6E6E6" : "#05595B",
+                "@media (min-width: 320px) and (max-width: 480px)": {
+                  width: "40px",
+
+                },
+                color: "#FFFFFF",
+                backgroundColor: getAddDisabled() ? "#E6E6E6" : "#086E71",
                 "&:hover": {
                   backgroundColor: getAddDisabled() ? "#E6E6E6" : "#05595B",
                 },
                 "&:disabled": {
-                  color: "#57646E",
+                  color: "#666666",
+                  backgroundColor: "#E6E6E6",
+                  border: "1px solid #E6E6E6",
+
+                  "& .MuiTypography-root": {
+                    color: "#666666",
+                  },
                 },
               }}
             >
               <Typography
                 sx={{
-                  color: getAddDisabled() ? "#57646E" : "var(--jw-background-white-textwhite, #FFF)",
+                  textTransform: "none",
+
                   fontFamily: "Calibri",
-                  fontSize: "16px",
+                  fontSize: {
+                    xs: "12px",
+                    sm: "14px",
+                    "@media (min-width: 320px) and (max-width: 480px)": {
+                      fontSize: "10px",
+                    },
+                  },
                   fontStyle: "normal",
                   fontWeight: 700,
                   lineHeight: "normal",
@@ -539,67 +562,116 @@ const Footer = (props) => {
             </Button>
           ) : null}
 
-          <Button
-            disabled={getEditDisabled()}
-            onClick={!getEditDisabled() && props.onEditToggle ? props.onEditToggle : undefined}
-            sx={{
-              textTransform: "none",
-              height: "45px",
-              width: "84px",
-              padding: "12px",
-              borderRadius: "4px",
-              border: "1px solid #05595B",
-              gap: "8px",
-              backgroundColor: "#fff",
-              "&:hover": {
+          <Box sx={{
+            paddingRight: "20px",
+
+
+            "@media (min-width: 320px) and (max-width: 480px)": {
+              paddingRight: "4px",
+
+            },
+          }}>
+            <Button
+              disabled={getEditDisabled()}
+              onClick={!getEditDisabled() && props.onEditToggle ? props.onEditToggle : undefined}
+              sx={{
+                textTransform: "none",
+                height: "32px",
+                width: "96px",
+                padding: "12px",
+                borderRadius: "4px",
+                paddingLeft: "16px",
+                paddingRight: "16px",
+                gap: "8px",
                 backgroundColor: "#fff",
-              },
-              "&:disabled": {
-                color: "#999191",
-                backgroundColor: "#fff",
-                borderColor: "#999191",
+                border: "1px solid #EDEDED",
+                color: "#343434",
                 "& .MuiTypography-root": {
-                  color: "#999191",
+                  color: "#343434",
                 },
                 "& svg path": {
-                  fill: "#999191",
+                  stroke: "#343434",
                 },
-              },
-            }}
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-            >
-              <path
-                d="M7 17.0134L11.413 16.9984L21.045 7.45839C21.423 7.08039 21.631 6.57839 21.631 6.04439C21.631 5.51039 21.423 5.00839 21.045 4.63039L19.459 3.04439C18.703 2.28839 17.384 2.29239 16.634 3.04139L7 12.5834V17.0134ZM18.045 4.45839L19.634 6.04139L18.037 7.62339L16.451 6.03839L18.045 4.45839ZM9 13.4174L15.03 7.44439L16.616 9.03039L10.587 15.0014L9 15.0064V13.4174Z"
-                fill={!getEditDisabled() && (props.formData || props.selectedData) ? "#05595B" : "#E6E6E6"}
-              />
-              <path
-                d="M5 21H19C20.103 21 21 20.103 21 19V10.332L19 12.332V19H8.158C8.132 19 8.105 19.01 8.079 19.01C8.046 19.01 8.013 19.001 7.979 19H5V5H11.847L13.847 3H5C3.897 3 3 3.897 3 5V19C3 20.103 3.897 21 5 21Z"
-                fill={!getEditDisabled() && (props.formData || props.selectedData) ? "#05595B" : "#E6E6E6"}
-              />
-            </svg>
-            <Typography
-              sx={{
-                color: !getEditDisabled() && (props.formData || props.selectedData) ? "#05595B" : "#E6E6E6",
-                fontFamily: "Calibri",
-                fontSize: "16px",
-                fontStyle: "normal",
-                fontWeight: 700,
-                lineHeight: "normal",
+                "&:hover": {
+                  backgroundColor: "#fff",
+                },
+                "&:disabled": {
+                  color: "#666666",
+                  backgroundColor: "#E6E6E6",
+
+                  "& .MuiTypography-root": {
+                    color: "#666666",
+                  },
+                  "& svg path": {
+                    stroke: "#666666",
+                  },
+                },
+                "@media (min-width: 320px) and (max-width: 480px)": {
+                  width: "40px",
+
+                  gap: "2px",
+                },
               }}
             >
-              Edit
-            </Typography>
-          </Button>
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 20 20"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M10 2.5H4.16667C3.72464 2.5 3.30072 2.67559 2.98816 2.98816C2.67559 3.30072 2.5 3.72464 2.5 4.16667V15.8333C2.5 16.2754 2.67559 16.6993 2.98816 17.0118C3.30072 17.3244 3.72464 17.5 4.16667 17.5H15.8333C16.2754 17.5 16.6993 17.3244 17.0118 17.0118C17.3244 16.6993 17.5 16.2754 17.5 15.8333V10"
+                  stroke="currentColor"
+                  strokeWidth="1.25"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+                <path
+                  d="M15.3132 2.18744C15.6447 1.85592 16.0944 1.66968 16.5632 1.66968C17.0321 1.66968 17.4817 1.85592 17.8132 2.18744C18.1448 2.51897 18.331 2.9686 18.331 3.43744C18.331 3.90629 18.1448 4.35592 17.8132 4.68744L10.3024 12.1991C10.1045 12.3968 9.86007 12.5415 9.59156 12.6199L7.1974 13.3199C7.12569 13.3409 7.04968 13.3421 6.97732 13.3236C6.90496 13.305 6.83892 13.2674 6.7861 13.2146C6.73328 13.1618 6.69564 13.0957 6.6771 13.0234C6.65856 12.951 6.65981 12.875 6.68073 12.8033L7.38073 10.4091C7.4595 10.1408 7.60451 9.89666 7.8024 9.69911L15.3132 2.18744Z"
+                  stroke="currentColor"
+                  strokeWidth="1.25"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+              <Typography
+                sx={{
+                  color: "inherit",
+                  fontFamily: "Calibri",
+                  fontSize: {
+                    xs: "12px",
+                    sm: "14px",
+                    "@media (min-width: 320px) and (max-width: 480px)": {
+                      fontSize: "10px",
+                    },
+                  },
+                  fontStyle: "normal",
+                  fontWeight: 700,
+                  lineHeight: "normal",
+                }}
+              >
+                Edit
+              </Typography>
+            </Button>
+
+          </Box>
+
+
         </Box>
 
 
-        <Box sx={{ display: "flex", alignItems: "center", gap: "8px" }}>
+        <Box sx={{
+          display: "flex",
+          alignItems: "center",
+          gap: "8px",
+          borderRight: "1px solid #BFBFBF",
+          paddingRight: "20px",
+          "@media (min-width: 320px) and (max-width: 480px)": {
+            gap: "4px",
+            paddingRight: "4px",
+          },
+        }}>
           <Button
             disabled={getCancelDisabled()}
             onClick={() => {
@@ -620,27 +692,47 @@ const Footer = (props) => {
               }
             }}
             sx={{
-              height: "45px",
-              padding: "12px 24px",
+              height: "32px",
+              width: "96px",
+              paddingLeft: "16px",
+              paddingRight: "16px",
               borderRadius: "4px",
-              border: getCancelDisabled() ? "1px solid #BFBFBF" : "1px solid #05595B",
+              border: getCancelDisabled() ? "1px solid #BFBFBF" : "1px solid #B41E38",
               backgroundColor: getCancelDisabled() ? "#F5F5F5" : "var(--jw-background-white-textwhite, #FFF)",
+              "& .MuiTypography-root": {
+                color: "#B41E38",
+              },
               "&:hover": {
-                backgroundColor: getCancelDisabled() ? "#F5F5F5" : "#F5F8FF",
+                backgroundColor: "#FFF",
               },
               "&:disabled": {
-                color: "#BFBFBF",
-                backgroundColor: "#F5F5F5",
-                borderColor: "#BFBFBF",
+                color: "#666666",
+                backgroundColor: "#E6E6E6",
+                border: "1px solid #E6E6E6",
+                "& .MuiTypography-root": {
+                  color: "#666666",
+                },
+              },
+              "@media (min-width: 320px) and (max-width: 480px)": {
+                width: "40px",
+
               },
             }}
           >
             <Typography
               sx={{
                 textTransform: "none",
-                color: getCancelDisabled() ? "#BFBFBF" : "#343434",
+                // color: getCancelDisabled() ? "#BFBFBF" : "#343434",
+                textTransform: "none",
+                color: "inherit",
                 fontFamily: "Calibri",
-                fontSize: "16px",
+                fontSize: {
+                  xs: "12px",
+                  sm: "14px",
+                  "@media (min-width: 320px) and (max-width: 480px)": {
+                    fontSize: "10px",
+                  },
+                },
                 fontStyle: "normal",
                 fontWeight: 700,
                 lineHeight: "normal",
@@ -654,25 +746,43 @@ const Footer = (props) => {
             disabled={getSaveDisabled()}
             onClick={handleSaveClick}
             sx={{
-              height: "45px",
-              padding: "12px 24px",
+              height: "32px",
+              width: "96px",
+              paddingLeft: "16px",
+              paddingRight: "16px",
               borderRadius: "4px",
-              backgroundColor: getSaveDisabled() ? "#BFBFBF" : "#05595B",
+              "@media (min-width: 320px) and (max-width: 480px)": {
+                width: "40px",
+
+              },
+              color: "#FFFFFF",
+              backgroundColor: getSaveDisabled() ? "gray" : "#086E71",
               "&:hover": {
-                backgroundColor: getSaveDisabled() ? "#BFBFBF" : "#044A4C",
+                backgroundColor: getSaveDisabled() ? "gray" : "#05595B",
               },
               "&:disabled": {
-                backgroundColor: "#BFBFBF !important",
-                color: "#FFF !important",
+                color: "#666666",
+                backgroundColor: "#E6E6E6",
+                border: "1px solid #E6E6E6",
+
+                "& .MuiTypography-root": {
+                  color: "#666666",
+                },
               },
             }}
           >
             <Typography
               sx={{
                 textTransform: "none",
-                color: "var(--jw-background-white-textwhite, #FFF)",
+
                 fontFamily: "Calibri",
-                fontSize: "16px",
+                fontSize: {
+                  xs: "12px",
+                  sm: "14px",
+                  "@media (min-width: 320px) and (max-width: 480px)": {
+                    fontSize: "10px",
+                  },
+                },
                 fontStyle: "normal",
                 fontWeight: 700,
                 lineHeight: "normal",
@@ -682,80 +792,53 @@ const Footer = (props) => {
             </Typography>
           </Button>
 
-          {/* Copy/Duplicate SVG Icon */}
-          <Box role="button"
-            tabIndex={0}
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              if (props.fsmState === "editing" || props.fsmState === "dirty") return;
 
-              handlePrint(e);
-            }}
-            sx={{
-              "&:hover svg path": {
-                fill: (props.fsmState === "editing" || props.fsmState === "dirty")
-                  ? "#BFBFBF"
-                  : "#E9B238",
-              },
-              cursor: (props.fsmState === "editing" || props.fsmState === "dirty")
-                ? "not-allowed"
-                : "pointer",
-              marginLeft: "8px",
-            }}
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="28"
-              height="28"
-              viewBox="0 0 28 28"
-              fill="none"
+          <Box sx={{
+            display: "flex", alignItems: "center", gap: {
+              sm: "12px",
+              xs: "0px",
+            }
+          }}>
+            <Box
+              sx={{
+                "&:hover svg path": {
+                  fill: "#E9B238",
+                },
+                cursor: "pointer",
+
+              }}
             >
-              <path
-                d="M8.16671 2.33398C7.85729 2.33398 7.56054 2.4569 7.34175 2.67569C7.12296 2.89449 7.00004 3.19123 7.00004 3.50065V8.16732H4.66671C4.04787 8.16732 3.45438 8.41315 3.01679 8.85074C2.57921 9.28832 2.33337 9.88181 2.33337 10.5007V19.834C2.33337 20.4528 2.57921 21.0463 3.01679 21.4839C3.45438 21.9215 4.04787 22.1673 4.66671 22.1673H7.00004V24.5007C7.00004 24.8101 7.12296 25.1068 7.34175 25.3256C7.56054 25.5444 7.85729 25.6673 8.16671 25.6673H19.8334C20.1428 25.6673 20.4395 25.5444 20.6583 25.3256C20.8771 25.1068 21 24.8101 21 24.5007V22.1673H23.3334C23.9522 22.1673 24.5457 21.9215 24.9833 21.4839C25.4209 21.0463 25.6667 20.4528 25.6667 19.834V10.5007C25.6667 9.88181 25.4209 9.28832 24.9833 8.85074C24.5457 8.41315 23.9522 8.16732 23.3334 8.16732H21V3.50065C21 3.19123 20.8771 2.89449 20.6583 2.67569C20.4395 2.4569 20.1428 2.33398 19.8334 2.33398H8.16671ZM19.8334 16.334H8.16671C7.85729 16.334 7.56054 16.4569 7.34175 16.6757C7.12296 16.8945 7.00004 17.1912 7.00004 17.5007V19.834H4.66671V10.5007H23.3334V19.834H21V17.5007C21 17.1912 20.8771 16.8945 20.6583 16.6757C20.4395 16.4569 20.1428 16.334 19.8334 16.334ZM18.6667 8.16732H9.33337V4.66732H18.6667V8.16732ZM5.83337 11.6673V14.0007H9.33337V11.6673H5.83337ZM18.6667 18.6673V23.334H9.33337V18.6673H18.6667Z"
-                fill={(props.fsmState === "editing" || props.fsmState === "dirty") ? "#BFBFBF" : "#05595B"}
-              />
-            </svg>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M19.75 7.75H15.25C14.9848 7.75 14.7304 7.64464 14.5429 7.45711C14.3554 7.26957 14.25 7.01522 14.25 6.75V2.25M19.75 7.75V20.75C19.75 21.0152 19.6446 21.2696 19.4571 21.4571C19.2696 21.6446 19.0152 21.75 18.75 21.75H5.25C4.98478 21.75 4.73043 21.6446 4.54289 21.4571C4.35536 21.2696 4.25 21.0152 4.25 20.75V3.25C4.25 2.98478 4.35536 2.73043 4.54289 2.54289C4.73043 2.35536 4.98478 2.25 5.25 2.25H14.25M19.75 7.75L14.25 2.25" stroke="#666666" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M17.2152 12.2675H14.9692V16.75M14.9692 14.5085H16.4347M6.78468 16.7415V12.2585H8.29318C8.6922 12.2584 9.07493 12.4167 9.35717 12.6988C9.63941 12.9809 9.79805 13.3635 9.79818 13.7625C9.79831 14.1615 9.63993 14.5442 9.35787 14.8265C9.07582 15.1087 8.6932 15.2674 8.29418 15.2675H6.78418M10.8767 16.75V12.25H11.6397C12.2364 12.25 12.8087 12.4871 13.2307 12.909C13.6526 13.331 13.8897 13.9033 13.8897 14.5C13.8897 15.0967 13.6526 15.669 13.2307 16.091C12.8087 16.5129 12.2364 16.75 11.6397 16.75H10.8767Z" stroke="#666666" strokeWidth="0.75" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+
+            </Box>
+
+            <Box
+              onClick={handleExportToExcel}
+              sx={{
+                cursor: "pointer",
+                "&:hover svg path": {
+                  fill: "#00AA3A",
+                },
+
+
+              }}
+            >
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path fillRule="evenodd" clipRule="evenodd" d="M21.5858 3.30392H13.9882V1.51367L1.5 3.44117V20.3364L13.9882 22.4874V19.8339H21.5858C21.8158 19.8456 22.0412 19.7656 22.2125 19.6116C22.3839 19.4576 22.4872 19.242 22.5 19.0119V4.12517C22.487 3.89527 22.3836 3.67985 22.2123 3.52597C22.041 3.37209 21.8157 3.29226 21.5858 3.30392ZM21.7057 19.1484H13.9628L13.95 17.7317H15.8153V16.0817H13.9357L13.9268 15.1067H15.8153V13.4567H13.9125L13.9035 12.4817H15.8153V10.8317H13.8975V9.85667H15.8153V8.20667H13.8975V7.23167H15.8153V5.58167H13.8975V4.08167H21.7057V19.1484Z" fill="#666666" />
+                <path d="M20.1075 5.5791H16.8652V7.2291H20.1075V5.5791Z" fill="#666666" />
+                <path d="M20.1075 8.20508H16.8652V9.85508H20.1075V8.20508Z" fill="#666666" />
+                <path d="M20.1075 10.8311H16.8652V12.4811H20.1075V10.8311Z" fill="#666666" />
+                <path d="M20.1075 13.4561H16.8652V15.1061H20.1075V13.4561Z" fill="#666666" />
+                <path d="M20.1075 16.082H16.8652V17.732H20.1075V16.082Z" fill="#666666" />
+                <path fillRule="evenodd" clipRule="evenodd" d="M4.76007 8.00433L6.36957 7.91208L7.38132 10.6938L8.57682 7.79733L10.1863 7.70508L8.23182 11.6546L10.1863 15.6138L8.48457 15.4991L7.33557 12.4811L6.18582 15.3843L4.62207 15.2463L6.43857 11.7491L4.76007 8.00433Z" fill="white" />
+              </svg>
+
+            </Box>
           </Box>
 
-          {/* Excel Export SVG Icon */}
-          <Box
-
-
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              if (props.fsmState === "editing" || props.fsmState === "dirty") return;
-
-              handleExportToExcel();
-            }}
-
-
-            sx={{
-              "&:hover svg path": {
-                fill: (props.fsmState === "editing" || props.fsmState === "dirty")
-                  ? "#BFBFBF"
-                  : "#E9B238",
-              },
-              cursor: (props.fsmState === "editing" || props.fsmState === "dirty")
-                ? "not-allowed"
-                : "pointer",
-              marginRight: "32px",
-            }}
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="25"
-              height="25"
-              viewBox="0 0 25 25"
-              fill="none"
-            >
-              <path
-                d="M19.4175 1.7L17.8862 0H5.8275C4.9575 0 4.62125 0.645 4.62125 1.14875V5.68625H6.3125V2.06625C6.3125 1.87375 6.475 1.71125 6.6625 1.71125H15.2913C15.4812 1.71125 15.5763 1.745 15.5763 1.90125V7.92625H21.7175C21.9587 7.92625 22.0525 8.05125 22.0525 8.23375V22.9463C22.0525 23.2537 21.9275 23.3 21.74 23.3H6.6625C6.56952 23.2977 6.48106 23.2595 6.41576 23.1932C6.35047 23.127 6.31345 23.038 6.3125 22.945V21.6H4.6325V23.7188C4.61 24.4688 5.01 25 5.8275 25H22.575C23.45 25 23.7488 24.3663 23.7488 23.7887V6.48375L23.3113 6.00875L19.4175 1.7ZM17.295 1.9L17.7787 2.4425L21.0238 6.00875L21.2025 6.225H17.8862C17.6362 6.225 17.4775 6.18375 17.4112 6.1C17.345 6.01875 17.3062 5.8875 17.295 5.70875V1.9ZM15.9325 13.3337H21.6537V15.0013H15.9312L15.9325 13.3337ZM15.9325 10.0013H21.6537V11.6675H15.9312L15.9325 10.0013ZM15.9325 16.6675H21.6537V18.335H15.9312L15.9325 16.6675ZM1.25 7.0325V20.3662H14.3313V7.0325H1.25ZM7.79125 14.7875L6.99125 16.01H7.79125V17.5H3.77L6.6875 13.1125L4.1025 9.1675H6.2625L7.7925 11.4625L9.32125 9.1675H11.48L8.89 13.1125L11.8113 17.5H9.57L7.79125 14.7875Z"
-                fill={(props.fsmState === "editing" || props.fsmState === "dirty") ? "#BFBFBF" : "#05595B"}
-              />
-            </svg>
-          </Box>
         </Box>
 
         {/* Confirmation Dialog */}

@@ -59,6 +59,7 @@ const CustomConfirmDialog = ({
             xs: "16px 0px",
             x1024: "20px 0px",
             x1280: "24px 0px"
+
           }
         }}
       >
@@ -118,6 +119,7 @@ const CustomConfirmDialog = ({
             fontFamily: "Calibri",
             borderRadius: "4px",
             minWidth: "96px",
+            // padding: "6px 16px",
             backgroundColor: "#FFF",
             "&:hover": {
               backgroundColor: "#FFFFFF",
@@ -138,6 +140,7 @@ const CustomConfirmDialog = ({
             color: "#FFF",
             fontWeight: 700,
             minWidth: "96px",
+            // padding: "6px 18px",
             "&:hover": {
               backgroundColor: "#05595B",
             },
@@ -146,7 +149,7 @@ const CustomConfirmDialog = ({
           Save
         </Button>
       </Box>
-    </Dialog>
+    </Dialog >
   );
 };
 

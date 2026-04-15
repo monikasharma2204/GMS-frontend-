@@ -14,7 +14,8 @@ import {
   Checkbox,
   Button,
   Paper,
-  IconButton
+  IconButton,
+  Skeleton
 } from "@mui/material";
 import apiRequest from "../../../helpers/apiHelper";
 import { API_URL } from "../../../config/config.js";
@@ -28,14 +29,19 @@ const StockSelectionModal = ({ open, onClose, onSelect }) => {
   useEffect(() => {
     if (open) {
       fetchStocks();
+    } else {
+
+      setSelectedIds([]);
     }
   }, [open]);
 
   const fetchStocks = async () => {
     try {
       setLoading(true);
+
+      await new Promise(resolve => setTimeout(resolve, 1000));
       const data = await apiRequest("GET", "/stocks");
-      setStocks(data);
+      setStocks(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error("Failed to fetch stocks:", error);
     } finally {
@@ -61,7 +67,20 @@ const StockSelectionModal = ({ open, onClose, onSelect }) => {
 
   const handleSelectAll = (event) => {
     if (event.target.checked) {
-      setSelectedIds(filteredStocks.map(s => s._id));
+      if (filteredStocks.length === 0) return;
+
+      let stoneToMatch = firstSelectedStone;
+
+
+      if (!stoneToMatch) {
+        stoneToMatch = filteredStocks[0].stone;
+      }
+
+      const validIds = filteredStocks
+        .filter(s => s.stone === stoneToMatch)
+        .map(s => s._id);
+
+      setSelectedIds(validIds);
     } else {
       setSelectedIds([]);
     }
@@ -268,28 +287,11 @@ const StockSelectionModal = ({ open, onClose, onSelect }) => {
                   </Box>
 
                   <Box sx={{ paddingLeft: "4px", paddingRight: "8px" }}>
-                    <svg
-                      width="20"
-                      height="20"
-                      viewBox="0 0 20 20"
-                      fill="none"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <path
-                        d="M16.4582 6.45833H12.7082C12.4872 6.45833 12.2752 6.37054 12.1189 6.21426C11.9626 6.05798 11.8748 5.84601 11.8748 5.625V1.875M16.4582 6.45833V17.2917C16.4582 17.5127 16.3704 17.7246 16.2141 17.8809C16.0578 18.0372 15.8459 18.125 15.6248 18.125H4.37484C4.15382 18.125 3.94186 18.0372 3.78558 17.8809C3.6293 17.7246 3.5415 17.5127 3.5415 17.2917V2.70833C3.5415 2.48732 3.6293 2.27536 3.78558 2.11908C3.94186 1.9628 4.15382 1.875 4.37484 1.875H11.8748M16.4582 6.45833L11.8748 1.875"
-                        stroke="#666666"
-                        strokeWidth="1.25"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                      <path
-                        d="M14.3463 10.2226H12.4746V13.958M12.4746 12.0901H13.6959M5.65423 13.9509V10.2151H6.91131C7.24382 10.215 7.56276 10.347 7.79797 10.582C8.03317 10.8171 8.16536 11.1359 8.16548 11.4684C8.16559 11.8009 8.0336 12.1199 7.79855 12.3551C7.56351 12.5903 7.24466 12.7225 6.91214 12.7226H5.65381M9.06423 13.958V10.208H9.70006C10.1973 10.208 10.6743 10.4056 11.0259 10.7572C11.3775 11.1088 11.5751 11.5857 11.5751 12.083C11.5751 12.5803 11.3775 13.0572 11.0259 13.4088C10.6743 13.7605 10.1973 13.958 9.70006 13.958H9.06423Z"
-                        stroke="#666666"
-                        strokeWidth="0.75"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M16.4596 6.45833H12.7096C12.4886 6.45833 12.2767 6.37054 12.1204 6.21426C11.9641 6.05798 11.8763 5.84601 11.8763 5.625V1.875M16.4596 6.45833V17.2917C16.4596 17.5127 16.3718 17.7246 16.2156 17.8809C16.0593 18.0372 15.8473 18.125 15.6263 18.125H4.3763C4.15529 18.125 3.94333 18.0372 3.78705 17.8809C3.63077 17.7246 3.54297 17.5127 3.54297 17.2917V2.70833C3.54297 2.48732 3.63077 2.27536 3.78705 2.11908C3.94333 1.9628 4.15529 1.875 4.3763 1.875H11.8763M16.4596 6.45833L11.8763 1.875" stroke="#666666" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" />
+                      <path d="M14.3448 10.223H12.4732V13.9584M12.4732 12.0905H13.6944M5.65276 13.9513V10.2155H6.90984C7.24236 10.2153 7.5613 10.3473 7.7965 10.5824C8.0317 10.8174 8.1639 11.1363 8.16401 11.4688C8.16412 11.8013 8.03214 12.1202 7.79709 12.3554C7.56204 12.5906 7.24319 12.7228 6.91068 12.723H5.65234M9.06276 13.9584V10.2084H9.69859C10.1959 10.2084 10.6728 10.4059 11.0244 10.7575C11.376 11.1092 11.5736 11.5861 11.5736 12.0834C11.5736 12.5807 11.376 13.0576 11.0244 13.4092C10.6728 13.7608 10.1959 13.9584 9.69859 13.9584H9.06276Z" stroke="#666666" stroke-width="0.75" stroke-linecap="round" stroke-linejoin="round" />
                     </svg>
+
                   </Box>
 
                   <Box sx={{ paddingLeft: "8px", paddingRight: "8px" }} >
@@ -373,10 +375,17 @@ const StockSelectionModal = ({ open, onClose, onSelect }) => {
                   <TableRow>
                     <TableCell padding="checkbox" sx={{ bgcolor: "#F5F5F5" }}>
                       <Checkbox
-                        indeterminate={selectedIds.length > 0 && selectedIds.length < filteredStocks.length}
-                        checked={filteredStocks.length > 0 && selectedIds.length === filteredStocks.length}
+                        indeterminate={selectedIds.length > 0 && selectedIds.length < (
+                          firstSelectedStone 
+                            ? filteredStocks.filter(s => s.stone === firstSelectedStone).length 
+                            : filteredStocks.length
+                        )}
+                        checked={
+                          filteredStocks.length > 0 && 
+                          selectedIds.length > 0 &&
+                          selectedIds.length === filteredStocks.filter(s => s.stone === (firstSelectedStone || filteredStocks[0].stone)).length
+                        }
                         onChange={handleSelectAll}
-                        disabled={!!firstSelectedStone}
                       />
                     </TableCell>
                     {["#", "Stock ID", "Doc Date", "Lot", "Stone Code", "Stone", "Shape", "Size", "Color", "Cutting", "Quality", "Clarity", "Cer Type", "Cer No.", "Pcs", "Weight", "Price", "Unit", "Amount"].map(h => (
@@ -386,7 +395,48 @@ const StockSelectionModal = ({ open, onClose, onSelect }) => {
                 </TableHead>
                 <TableBody>
                   {loading ? (
-                    <TableRow><TableCell colSpan={20} align="center">Loading...</TableCell></TableRow>
+                    Array.from(new Array(10)).map((_, index) => (
+                      <TableRow key={index}>
+                        <TableCell padding="checkbox">
+                          <Skeleton
+                            variant="rounded"
+                            width={16}
+                            height={24}
+                            sx={{
+                              borderRadius: "20px",
+                              background: "linear-gradient(90deg, #DBDBDB 0%, #F3F3F3 100%)",
+                              mx: "auto"
+                            }}
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Skeleton
+                            variant="rounded"
+                            width={16}
+                            height={24}
+                            sx={{
+                              borderRadius: "20px",
+                              background: "linear-gradient(90deg, #DBDBDB 0%, #F3F3F3 100%)",
+                              mx: "auto"
+                            }}
+                          />
+                        </TableCell>
+                        {[...Array(18)].map((_, i) => (
+                          <TableCell key={i}>
+                            <Skeleton
+                              variant="rounded"
+                              width={100}
+                              height={24}
+                              sx={{
+                                borderRadius: "20px",
+                                background: "linear-gradient(90deg, #DBDBDB 0%, #F3F3F3 100%)",
+                                animation: "pulse 1.5s ease-in-out infinite"
+                              }}
+                            />
+                          </TableCell>
+                        ))}
+                      </TableRow>
+                    ))
                   ) : filteredStocks.length === 0 ? (
                     <TableRow><TableCell colSpan={20} align="center">No stocks found</TableCell></TableRow>
                   ) : filteredStocks.map((stock, idx) => {

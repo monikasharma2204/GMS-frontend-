@@ -1,9 +1,9 @@
 import React from "react";
-import { Box, Typography, Table, TableBody, TableContainer, Paper, Button, TableHead, TableCell, TableRow, TableFooter } from "@mui/material";
+import { Box, Typography, Table, TableBody, TableContainer, Paper, Button, TableHead, TableCell, TableRow, TableFooter, Skeleton } from "@mui/material";
 import { MERGE_SPLIT_SOURCE_HEADERS } from "./constants/mergeSplitHeaders";
 import MergeSplitSourceTableRow from "./items/MergeSplitSourceTableRow";
 
-const MergeSplitSourceTable = ({ rows, onRemove, onStockClick, totals, disabled = false }) => {
+const MergeSplitSourceTable = ({ rows, onRemove, onStockClick, onSearchClick, onUpdate, totals, disabled = false, isLoading = false }) => {
   const tableWidth = MERGE_SPLIT_SOURCE_HEADERS.reduce((sum, h) => sum + parseInt(h.width || "100"), 0);
 
   const headerStyle = {
@@ -14,7 +14,10 @@ const MergeSplitSourceTable = ({ rows, onRemove, onStockClick, totals, disabled 
     position: "sticky",
     top: 0,
     zIndex: 2,
-    height: "42px"
+    height: "32px",
+    minHeight: "32px",
+    maxHeight: "32px",
+    padding: 0
   };
 
   const headerCellStyle = {
@@ -25,17 +28,18 @@ const MergeSplitSourceTable = ({ rows, onRemove, onStockClick, totals, disabled 
     borderBottom: "1px solid #EDEDED",
     fontFamily: "Calibri",
     fontSize: "14px",
-    fontWeight: 600,
+    fontWeight: 700,
     color: "#343434",
-    px: 1,
+    px: "8px",
+    lineHeight: "1",
     textAlign: "center"
   };
 
   const footerStyle = {
     display: "flex",
     alignItems: "center",
-    bgcolor: "#F2F2F2",
-    height: "32px",
+    bgcolor: "#FFFFFF",
+    height: "38px",
     position: "sticky",
     bottom: 0,
     zIndex: 1
@@ -48,14 +52,15 @@ const MergeSplitSourceTable = ({ rows, onRemove, onStockClick, totals, disabled 
     justifyContent: "center",
     borderTop: "1px solid #EDEDED",
     fontFamily: "Calibri",
-    fontSize: "14px",
+    fontSize: "16px",
     fontWeight: 700,
-    color: "#343434",
+    color: "#666666",
     px: 1,
+    flex: "0 0 auto",
   };
 
   return (
-    <Box sx={{ paddingBottom: "24px" }}>
+    <Box>
       <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
         <Box sx={{ width: "100%", display: "flex", alignItems: "center", gap: "16px", justifyContent: "space-between", flexDirection: "row" }}>
           <Box sx={{ display: "flex", alignItems: "center", gap: "16px" }}>
@@ -78,6 +83,11 @@ const MergeSplitSourceTable = ({ rows, onRemove, onStockClick, totals, disabled 
                 color: "#FFF",
                 textTransform: "none",
                 borderRadius: "4px",
+
+                "&:hover": {
+                  bgcolor: "#000",
+                  boxShadow: "none"
+                }
               }}
             >
               Stock
@@ -87,11 +97,13 @@ const MergeSplitSourceTable = ({ rows, onRemove, onStockClick, totals, disabled 
 
 
           <Box sx={{ display: "flex", gap: "16px" }}>
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M20.9963 21L16.6562 16.66L20.9963 21Z" fill="#666666" />
-              <path d="M20.9963 21L16.6562 16.66" stroke="#666666" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" />
-              <path d="M11 19C15.4183 19 19 15.4183 19 11C19 6.58172 15.4183 3 11 3C6.58172 3 3 6.58172 3 11C3 15.4183 6.58172 19 11 19Z" stroke="#666666" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" />
-            </svg>
+            <Box onClick={onSearchClick} sx={{ cursor: "pointer", display: "flex", alignItems: "center" }}>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M20.9963 21L16.6562 16.66L20.9963 21Z" fill="#666666" />
+                <path d="M20.9963 21L16.6562 16.66" stroke="#666666" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" />
+                <path d="M11 19C15.4183 19 19 15.4183 19 11C19 6.58172 15.4183 3 11 3C6.58172 3 3 6.58172 3 11C3 15.4183 6.58172 19 11 19Z" stroke="#666666" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+            </Box>
 
 
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -104,15 +116,29 @@ const MergeSplitSourceTable = ({ rows, onRemove, onStockClick, totals, disabled 
       </Box>
 
       <Box sx={{ border: "1px solid #EDEDED", borderRadius: "5px", bgcolor: "#FFF", overflow: "hidden" }}>
-        <Box sx={{ overflowX: "auto", "&::-webkit-scrollbar": { height: "5px" }, "&::-webkit-scrollbar-thumb": { background: "#919191", borderRadius: "5px" } }}>
+        <Box
+          sx={{
+            overflowX: "auto",
+            overflowY: "hidden",
+            maxWidth: "100%",
+            "&::-webkit-scrollbar": { height: "6px" },
+            "&::-webkit-scrollbar-thumb": {
+              background: "#919191",
+              borderRadius: "5px"
+            }
+          }}>
           <Box sx={{ width: `${tableWidth}px` }}>
             {/* Table Header */}
             <Box sx={headerStyle}>
               {MERGE_SPLIT_SOURCE_HEADERS.map((h, i) => (
                 <Box key={i} sx={{
                   ...headerCellStyle,
+                  flex: "0 0 auto",
                   width: h.width,
-                  borderRight: (h.label === "Lot" || h.label === "Weight") ? "1px solid #C6C6C8" : "1px solid #EDEDED"
+                  minWidth: h.width,
+                  maxWidth: h.width,
+                  boxSizing: "border-box",
+                  borderRight: (h.label === "Weight" || h.label === "Cer No.") ? "1px solid #C6C6C8" : "1px solid #EDEDED"
                 }}>
                   {h.label}
                 </Box>
@@ -120,23 +146,95 @@ const MergeSplitSourceTable = ({ rows, onRemove, onStockClick, totals, disabled 
             </Box>
 
             {/* Table Body */}
-            <Box sx={{ height: "184px", overflowY: "auto" }}>
-              {rows.length === 0 ? (
+            <Box sx={{
+              height: "114px",
+              overflowY: "auto",
+              overflowX: "hidden",
+
+
+              scrollbarWidth: "none",
+              msOverflowStyle: "none",
+              "&::-webkit-scrollbar": {
+                display: "none"
+              }
+            }}>
+              {isLoading ? (
+                [...Array(3)].map((_, i) => (
+                  <Box key={i} sx={{ display: "flex", alignItems: "center", height: "38px", borderBottom: "1px solid #EDEDED" }}>
+                    {MERGE_SPLIT_SOURCE_HEADERS.map((h, j) => {
+                      let sw = 72;
+                      const label = h.label.trim();
+                      if (label === "") sw = 18;
+                      else if (label === "#" || label === "Img") sw = 16;
+                      else if (["Stock ID", "Cer No.", "Cer Type", "Weight", "Color", "Cutting", "Quality", "Clarity"].includes(label)) sw = 72;
+                      else if (["Stone Code", "Stone", "Shape", "Location", "Price", "Amount"].includes(label)) sw = 96;
+                      else if (["Lot", "Pcs", "Unit"].includes(label)) sw = 56;
+                      else if (label === "Size") sw = 112;
+                      else if (label === "Remark") sw = 150;
+                      else sw = 72;
+
+                      return (
+                        <Box key={j} sx={{
+                          width: h.width,
+                          minWidth: h.width,
+                          maxWidth: h.width,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          px: 1
+                        }}>
+                          <Skeleton
+                            variant="rounded"
+                            width={sw}
+                            height={24}
+                            sx={{
+                              borderRadius: "20px",
+                              background: "linear-gradient(270deg, rgba(243, 243, 243, 0.05) 0%, #DBDBDB 50%)",
+                              animation: "pulse 1.5s ease-in-out infinite"
+                            }}
+                          />
+                        </Box>
+                      );
+                    })}
+                  </Box>
+                ))
+              ) : rows.length === 0 ? (
                 <Box sx={{ height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "#999", fontFamily: "Calibri", textAlign: "center", px: 2 }}>
-                  <Box>
-                    <Typography sx={{ fontWeight: 700, mb: 1 }}>No data</Typography>
-                    <Typography sx={{ fontSize: "12px" }}>Please add items by clicking on "Stock" button</Typography>
+                  <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", }}>
+                    <Box>  <svg width="47" height="36" viewBox="0 0 47 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M46.5 13.1653L36.354 1.74866C35.867 0.970482 35.156 0.5 34.407 0.5H12.593C11.844 0.5 11.133 0.970482 10.646 1.74767L0.5 13.1663V22.3367H46.5V13.1653Z" stroke="#D9D9D9" />
+                      <path d="M33.113 16.3128C33.113 14.7197 34.107 13.4046 35.34 13.4036H46.5V31.4059C46.5 33.5132 45.18 35.2402 43.55 35.2402H3.45C1.82 35.2402 0.5 33.5122 0.5 31.4059V13.4036H11.66C12.893 13.4036 13.887 14.7167 13.887 16.3098V16.3317C13.887 17.9248 14.892 19.2111 16.124 19.2111H30.876C32.108 19.2111 33.113 17.9128 33.113 16.3198V16.3128Z" fill="#FAFAFA" stroke="#D9D9D9" />
+                    </svg>
+                    </Box>
+                    <Typography sx={{ marginTop: "10px", marginBottom: "5px", fontWeight: 700, fontSize: "16px", fontFamily: "Calibri", color: "#343434" }}>No data</Typography>
+                    <Typography
+                      sx={{
+                        fontSize: "12px",
+                        fontFamily: "Calibri",
+                        color: "#9A9A9A",
+                        fontWeight: 700,
+                      }}
+                    >
+                      Please add items by clicking on{" "}
+                      <Box component="span" sx={{ lineHeight: "normal", fontWeight: 700, color: "#666666", fontSize: "12px", fontFamily: "Calibri" }}>
+                        "Stock"
+                      </Box>{" "}
+                      button
+                    </Typography>
                   </Box>
                 </Box>
               ) : (
                 rows.map((row, idx) => (
-                  <MergeSplitSourceTableRow key={row.id || idx} item={row} index={idx} onRemove={onRemove} disabled={disabled} />
+                  <MergeSplitSourceTableRow key={row.id || idx} item={row} index={idx} onRemove={onRemove} disabled={disabled} onUpdate={onUpdate} />
                 ))
               )}
             </Box>
 
             {/* Table Footer */}
-            <Box sx={footerStyle}>
+            <Box sx={{
+              ...footerStyle,
+              borderTop: isLoading ? "none" : footerStyle.borderTop,
+            }}>
               {MERGE_SPLIT_SOURCE_HEADERS.map((h, i) => {
                 let content = "";
                 if (h.label === "Pcs") content = totals.pcs;
@@ -147,9 +245,37 @@ const MergeSplitSourceTable = ({ rows, onRemove, onStockClick, totals, disabled 
                   <Box key={i} sx={{
                     ...footerCellStyle,
                     width: h.width,
-                    borderRight: (h.label === "Lot" || h.label === "Weight") ? "1px solid #C6C6C8" : "1px solid #EDEDED"
+                    minWidth: h.width,
+                    maxWidth: h.width,
+                    borderTop: isLoading ? "none" : footerCellStyle.borderTop,
+                    borderBottom: isLoading ? "1px solid #EDEDED" : "none",
                   }}>
-                    {content}
+                    {isLoading ? (
+                      (() => {
+                        let sw = 72;
+                        const label = h.label.trim();
+                        if (label === "") sw = 18;
+                        else if (label === "#" || label === "Img") sw = 16;
+                        else if (["Stock ID", "Cer No.", "Cer Type", "Weight", "Color", "Cutting", "Quality", "Clarity"].includes(label)) sw = 72;
+                        else if (["Stone Code", "Stone", "Shape", "Location", "Price", "Amount"].includes(label)) sw = 96;
+                        else if (["Lot", "Pcs", "Unit"].includes(label)) sw = 56;
+                        else if (label === "Size") sw = 112;
+                        else if (label === "Remark") sw = 150;
+                        else sw = 72;
+                        return (
+                          <Skeleton
+                            variant="rounded"
+                            width={sw}
+                            height={24}
+                            sx={{
+                              borderRadius: "20px",
+                              background: "linear-gradient(270deg, rgba(243, 243, 243, 0.05) 0%, #DBDBDB 50%)",
+                              animation: "pulse 1.5s ease-in-out infinite"
+                            }}
+                          />
+                        );
+                      })()
+                    ) : content}
                   </Box>
                 );
               })}

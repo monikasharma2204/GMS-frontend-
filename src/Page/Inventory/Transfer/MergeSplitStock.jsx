@@ -13,6 +13,9 @@ import ValidationWarningBanner from "../../../component/Commons/ValidationWarnin
 import dayjs from "dayjs";
 import apiRequest from "../../../helpers/apiHelper";
 import { useDropdownOptions } from "../../../component/Inventory/hooks/useDropdownOptions";
+import DaybookDrawer from "../../../component/Inventory/Transfer/DaybookDrawer";
+import MergeSplitModalDayBook from "../../../component/Inventory/Transfer/MergeSplitModalDayBook";
+import ApprovalModal from "../../../component/Commons/ApprovalModal";
 
 const MergeSplitStock = () => {
   const [docDate, setDocDate] = useState(dayjs());
@@ -34,6 +37,11 @@ const MergeSplitStock = () => {
   const [openSaveConfirm, setOpenSaveConfirm] = useState(false);
   const [showWarningBanner, setShowWarningBanner] = useState(false);
   const [warningMessage, setWarningMessage] = useState("Please complete all required fields.");
+  const [isDaybookDrawerOpen, setIsDaybookDrawerOpen] = useState(false);
+  const [isDaybookModalOpen, setIsDaybookModalOpen] = useState(false);
+  const [openApproveConfirm, setOpenApproveConfirm] = useState(false);
+  const [showErrors, setShowErrors] = useState(false);
+  const [isBodyLoading, setIsBodyLoading] = useState(false);
   const { dropdownOptions } = useDropdownOptions();
   const isViewMode = (fsmState === "saved" && !isEditMode) || isApproved;
 
@@ -58,6 +66,7 @@ const MergeSplitStock = () => {
     cer_type: s.cer_type || "",
     cer_no: s.cer_no || "",
     pcs: Number(s.pcs) || 0,
+    availablePcs: Number(s.pcs) || 0,
     weight: Number(s.weight) || 0,
     price: Number(s.price) || 0,
     unit: s.unit || "pcs",
@@ -143,6 +152,27 @@ const MergeSplitStock = () => {
     return parseFloat(amount.toFixed(2));
   };
 
+  const handleUpdateSourceRow = (id, field, value) => {
+    if (isViewMode) return;
+    setSourceRows(sourceRows.map(row => {
+      if (row.id === id) {
+        const updatedRow = { ...row, [field]: value };
+        if (field === "pcs") {
+          const val = Number(value) || 0;
+          if (val > row.availablePcs) {
+            showWarning(`PCS cannot exceed available stock (Max: ${row.availablePcs})`);
+            return row;
+          }
+        }
+        if (["pcs", "weight", "price", "unit"].includes(field)) {
+          updatedRow.amount = calculateRowAmount(updatedRow);
+        }
+        return updatedRow;
+      }
+      return row;
+    }));
+  };
+
   const handleUpdateTargetRow = (id, field, value) => {
     if (isViewMode) return;
     setTargetRows(targetRows.map(row => {
@@ -181,6 +211,11 @@ const MergeSplitStock = () => {
       setSourceRows([]);
       return;
     }
+
+    setIsBodyLoading(true);
+    setTimeout(() => {
+      setIsBodyLoading(false);
+    }, 9000);
 
     const first = selectedStocks[0];
     const formattedStocks = selectedStocks.map(s => ({
@@ -329,9 +364,15 @@ const MergeSplitStock = () => {
     if (!targetRows.length) return "Please add merge/split row(s) first.";
     const hasInvalidTarget = targetRows.some((row) => !row.location || Number(row.pcs) <= 0 || Number(row.weight) <= 0 || Number(row.price) <= 0 || !row.unit);
     if (hasInvalidTarget) return "Please fill all required fields in Merge/Split rows.";
+
     const sourceTotalPcs = sourceRows.reduce((sum, row) => sum + (Number(row.pcs) || 0), 0);
     const targetTotalPcs = targetRows.reduce((sum, row) => sum + (Number(row.pcs) || 0), 0);
-    if (sourceTotalPcs !== targetTotalPcs) return "The total pcs consumed must equal the required total pcs.";
+    if (sourceTotalPcs !== targetTotalPcs) {
+      return `Total must be ${sourceTotalPcs} pcs (current: ${targetTotalPcs})`;
+    }
+
+
+
     return "";
   }, [sourceRows, targetRows]);
 
@@ -339,8 +380,10 @@ const MergeSplitStock = () => {
     const validationMessage = validateBeforeSave();
     if (validationMessage) {
       showWarning(validationMessage);
+      setShowErrors(true);
       return;
     }
+    setShowErrors(false);
     setOpenSaveConfirm(true);
   }, [showWarning, validateBeforeSave]);
 
@@ -403,6 +446,7 @@ const MergeSplitStock = () => {
     setRef2("");
     setNote("");
     setDocDate(dayjs());
+    setShowErrors(false);
     setIsEditMode(false);
     setFsmState("initial");
     setOriginalData(null);
@@ -415,8 +459,15 @@ const MergeSplitStock = () => {
     if (hasUnsavedData()) setFsmState((prev) => (prev === "initial" || prev === "saved" ? "dirty" : prev));
   }, [docDate, ref1, ref2, note, sourceRows, targetRows, hasUnsavedData, fsmState, isEditMode]);
 
-  const handleApprove = useCallback(async () => {
+  const handleApprove = useCallback(() => {
     if (!currentMergeSplitId || isApproved) return;
+    setOpenApproveConfirm(true);
+  }, [currentMergeSplitId, isApproved]);
+
+  const onConfirmApprove = useCallback(async (confirmed) => {
+    setOpenApproveConfirm(false);
+    if (!confirmed) return;
+
     try {
       await apiRequest("PUT", `/mergeandsplit/${currentMergeSplitId}/approve`, {});
       setIsApproved(true);
@@ -427,16 +478,46 @@ const MergeSplitStock = () => {
       setErrorMessage(error?.response?.data?.error || error?.message || "Unsuccessfully!");
       setOpenErrorModal(true);
     }
-  }, [currentMergeSplitId, isApproved]);
+  }, [currentMergeSplitId]);
+
+  const fetchMergeSplitRecord = useCallback(async (id) => {
+    try {
+      const data = await apiRequest("GET", `/mergeandsplit/${id}`);
+      const record = data?.mergeAndSplit || data;
+      if (record) {
+        setCurrentMergeSplitId(record._id);
+        setInvoiceNo(record.invoice_no);
+        setDocDate(dayjs(record.doc_date));
+        setRef1(record.ref_1 || "");
+        setRef2(record.ref_2 || "");
+        setNote(record.note || "");
+        setIsApproved(record.status?.toLowerCase() === "approved");
+
+        if (Array.isArray(record.stock_items)) {
+          setSourceRows(record.stock_items.map(normalizeSourceRow));
+        }
+        if (Array.isArray(record.merge_and_split_items)) {
+          setTargetRows(record.merge_and_split_items.map((it, idx) => normalizeTargetRow(it, idx)));
+        }
+
+        setFsmState("saved");
+        setIsEditMode(false);
+      }
+    } catch (error) {
+      console.error("Error fetching record:", error);
+      setErrorMessage("Failed to load record.");
+      setOpenErrorModal(true);
+    }
+  }, [normalizeSourceRow, normalizeTargetRow]);
 
   const handleDayBook = () => {
-    console.log("Opening Day Book...");
+    setIsDaybookModalOpen(true);
   };
 
   return (
     <Box sx={{ display: "flex", backgroundColor: "#F4F7F7", minHeight: "100vh" }}>
       <NavBar />
-      <Box sx={{ marginLeft: "220px", flexGrow: 1, display: "flex", flexDirection: "column", paddingBottom: "130px" }}>
+      <Box sx={{ marginLeft: "220px", flexGrow: 1, display: "flex", flexDirection: "column", paddingBottom: "60px" }}>
         <Header />
         <Box sx={{ display: "flex", flexDirection: "column", width: "100%" }}>
           <MergeSplitHeader
@@ -444,6 +525,7 @@ const MergeSplitStock = () => {
             onApprove={handleApprove}
             onDayBook={handleDayBook}
             disableApprove={!currentMergeSplitId || isApproved || fsmState === "editing" || fsmState === "dirty"}
+            isApproved={isApproved}
           />
           <MergeSplitBody
             docDate={docDate}
@@ -461,9 +543,14 @@ const MergeSplitStock = () => {
             setNote={setNote}
             onStockClick={() => !isViewMode && setIsStockModalOpen(true)}
             onRemoveSourceRow={handleRemoveSourceRow}
+            onUpdateSourceRow={handleUpdateSourceRow}
             onRemoveTargetRow={handleRemoveTargetRow}
             dropdownOptions={dropdownOptions}
             disabled={isViewMode}
+            onDaybookIconClick={() => setIsDaybookDrawerOpen(true)}
+            showWarning={showWarning}
+            showErrors={showErrors}
+            isLoading={isBodyLoading}
           />
         </Box>
       </Box>
@@ -501,10 +588,30 @@ const MergeSplitStock = () => {
         onConfirm={onConfirmSave}
         title="Confirm save"
       />
+      <ApprovalModal
+        open={openApproveConfirm}
+        onConfirm={onConfirmApprove}
+        onClose={() => setOpenApproveConfirm(false)}
+        title="Approve Confirmation"
+      />
       <ValidationWarningBanner
         show={showWarningBanner}
         message={warningMessage}
         sx={{ position: "fixed", top: "100px", right: "25px", zIndex: 99999 }}
+      />
+      <DaybookDrawer
+        open={isDaybookDrawerOpen}
+        onClose={() => setIsDaybookDrawerOpen(false)}
+        onSelect={(id) => {
+          fetchMergeSplitRecord(id);
+        }}
+      />
+      <MergeSplitModalDayBook
+        open={isDaybookModalOpen}
+        onClose={() => setIsDaybookModalOpen(false)}
+        onSelect={(id) => {
+          fetchMergeSplitRecord(id);
+        }}
       />
     </Box>
   );

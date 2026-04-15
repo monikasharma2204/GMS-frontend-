@@ -1,11 +1,9 @@
 import React, { useEffect } from "react";
-import { Box, Typography, Dialog } from "@mui/material";
+import { Box, Typography, Portal, ClickAwayListener } from "@mui/material";
 
 
+const SuccessModal = ({ open, onClose, message = "Successfully!", autoCloseDelay = 800 }) => {
 
-
-const SuccessModal = ({ open, onClose, message = "Successfully!", autoCloseDelay = 2000 }) => {
-  // Auto-close after delay when modal opens
   useEffect(() => {
     if (open) {
       const timer = setTimeout(() => {
@@ -18,40 +16,46 @@ const SuccessModal = ({ open, onClose, message = "Successfully!", autoCloseDelay
     }
   }, [open, autoCloseDelay, onClose]);
 
+  if (!open) return null;
+
   return (
-    <Dialog
-      open={open}
-      onClose={onClose}
-      PaperProps={{
-        sx: {
-          borderRadius: "15px",
-          width: "590px",
-          height: "361px",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-        },
-      }}
-    >
-      <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-        <Box sx={{ marginBottom: "24px" }}>
-          <svg xmlns="http://www.w3.org/2000/svg" width="113" height="112" viewBox="0 0 113 112" fill="none">
-            <g clipPath="url(#clip0_472_206422)">
-              <path d="M56.5 0C25.5722 0 0.5 25.0722 0.5 56C0.5 86.9295 25.5722 112 56.5 112C87.4295 112 112.5 86.9295 112.5 56C112.5 25.0722 87.4295 0 56.5 0ZM56.5 105.11C29.4817 105.11 7.5 83.0182 7.5 55.9998C7.5 28.9815 29.4817 6.99978 56.5 6.99978C83.5182 6.99978 105.5 28.9816 105.5 55.9998C105.5 83.0179 83.5182 105.11 56.5 105.11ZM78.8493 35.5093L45.9929 68.572L31.1966 53.7757C29.8299 52.409 27.6144 52.409 26.2459 53.7757C24.8791 55.1425 24.8791 57.358 26.2459 58.7247L43.5691 76.0498C44.9359 77.4147 47.1514 77.4147 48.5199 76.0498C48.6774 75.8923 48.8122 75.7206 48.9347 75.5423L83.8018 40.4599C85.1668 39.0931 85.1668 36.8776 83.8018 35.5093C82.4333 34.1425 80.2178 34.1425 78.8493 35.5093Z" fill="#17C653"/>
-            </g>
-            <defs>
-              <clipPath id="clip0_472_206422">
-                <rect width="112" height="112" fill="white" transform="translate(0.5)"/>
-              </clipPath>
-            </defs>
+    <Portal>
+      <ClickAwayListener onClickAway={() => { if (open && onClose) onClose(); }}>
+        <Box
+          sx={{
+            position: "fixed",
+            top: "100px",
+            right: "25px",
+            width: "395px",
+            height: "42px",
+            backgroundColor: "#30A84F",
+            borderRadius: "2px",
+            display: "flex",
+            alignItems: "center",
+            padding: "0 16px",
+            gap: "10px",
+            boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.1)",
+            zIndex: 99999,
+          }}
+        >
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M15 4.5L6.75 12.75L3 9" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
+
+          <Typography
+            sx={{
+              color: "#FFFFFF",
+              fontFamily: "Calibri",
+              fontSize: "16px",
+              fontWeight: 700,
+              lineHeight: "normal",
+            }}
+          >
+            {message}
+          </Typography>
         </Box>
-        <Typography sx={{ marginBottom: "24px", color: "#343434", textAlign: "center", fontFamily: "Calibri", fontSize: "24px", fontWeight: 700 }}>
-          {message}
-        </Typography>
-      </Box>
-    </Dialog>
+      </ClickAwayListener>
+    </Portal>
   );
 };
 

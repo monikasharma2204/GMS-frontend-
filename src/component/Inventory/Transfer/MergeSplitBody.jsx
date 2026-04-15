@@ -1,5 +1,5 @@
 import React, { useMemo } from "react";
-import { Box, Typography, Grid, TextField } from "@mui/material";
+import { Box, Typography, Grid, TextField, Skeleton } from "@mui/material";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
@@ -29,9 +29,14 @@ const MergeSplitBody = ({
   setNote,
   onStockClick,
   onRemoveSourceRow,
+  onUpdateSourceRow,
   onRemoveTargetRow,
   dropdownOptions,
-  disabled = false
+  disabled = false,
+  onDaybookIconClick,
+  showWarning,
+  showErrors,
+  isLoading
 }) => {
   const sourceTotals = useMemo(() => ({
     pcs: sourceRows.reduce((sum, row) => sum + (Number(row.pcs) || 0), 0),
@@ -46,15 +51,15 @@ const MergeSplitBody = ({
   }), [targetRows]);
 
   return (
-    <Box sx={{ width: "100%", maxWidth: "1632px", padding: "22px 24px" }}>
+    <Box sx={{ width: "100%", maxWidth: "1632px", padding: "12px 24px 22px 24px", marginTop: "10px" }}>
       <Box sx={{ width: "100%", maxWidth: "1640px" }}>
 
         {/* Transaction Info - Following Load Structure */}
         <Box sx={{ display: "flex", justifyContent: "flex-end", paddingRight: "4px" }}>
-          <Typography sx={{ color: "#9A9A9A", fontFamily: "Calibri", fontSize: "12px", fontWeight: 400 }}>
+          <Typography sx={{ lineHeight: "normal", color: "#9A9A9A", fontFamily: "Calibri", fontSize: "12px", fontWeight: 400 }}>
             Transaction Date : {dayjs().format("DD/MM/YYYY")} By : Super Admin
           </Typography>
-          <Typography sx={{ color: "#9A9A9A", fontFamily: "Calibri", fontSize: "12px", fontWeight: 400, }}>
+          <Typography sx={{ lineHeight: "normal", color: "#9A9A9A", fontFamily: "Calibri", fontSize: "12px", fontWeight: 400, }}>
             Last Update : {dayjs().format("DD/MM/YYYY")} By : Super Admin
           </Typography>
         </Box>
@@ -72,14 +77,16 @@ const MergeSplitBody = ({
             bgcolor: "#F8F8F8",
           }}>
 
-            <Grid sx={{ width: "100%", maxWidth: "1650px", padding: "16px 24px", borderRadius: "5px 5px 0px 0px", bgcolor: "#FFF", borderBottom: "1px solid #C6C6C8" }}>
+            <Grid sx={{ width: "100%", maxWidth: "1650px", padding: "16px 24px 15px 24px", borderRadius: "5px 5px 0px 0px", bgcolor: "#FFF", borderBottom: "1px solid #C6C6C8" }}>
               <Box sx={{ display: "flex" }}>
                 <Box sx={{ display: "flex", flexDirection: "column", justifyContent: "center" }}>
                   <Typography sx={{ color: "#666", fontFamily: "Calibri", fontSize: "16px", lineHeight: "normal", fontWeight: 400 }}>
                     Merge/Split No. :
                   </Typography>
                   <Typography sx={{ color: "#05595B", fontFamily: "Calibri", fontSize: "28px", fontWeight: 400, lineHeight: "normal", marginTop: "2px" }}>
-                    {invoiceNo}
+                    {isLoading ? (
+                      <Skeleton variant="rounded" width={192} height={24} sx={{ borderRadius: "20px", background: "linear-gradient(270deg, rgba(243, 243, 243, 0.05) 0%, #DBDBDB 50%)", animation: "pulse 1.5s ease-in-out infinite" }} />
+                    ) : invoiceNo}
                   </Typography>
                 </Box>
 
@@ -146,27 +153,38 @@ const MergeSplitBody = ({
               </Box>
             </Grid>
 
-            <Box sx={{ padding: "24px" }}>
-              <MergeSplitSourceTable
-                rows={sourceRows}
-                onRemove={onRemoveSourceRow}
-                onStockClick={onStockClick}
-                totals={sourceTotals}
-                disabled={disabled}
-              />
+            <Box sx={{ padding: "24px" }} >
 
-              <Box sx={{}}>
-                <MergeSplitTargetTable
-                  rows={targetRows}
-                  onUpdate={onUpdateTargetRow}
-                  onRemove={onRemoveTargetRow}
-                  onAddRow={onAddTargetRow}
-                  sourceTotals={sourceTotals}
-                  targetTotals={targetTotals}
-                  dropdownOptions={dropdownOptions}
-                  disabled={disabled}
-                />
+
+              <Box sx={{ display: "flex", flexDirection: "column", gap: "24px" }}>
+                <Box>
+                  <MergeSplitSourceTable
+                    rows={sourceRows}
+                    onUpdate={onUpdateSourceRow}
+                    onRemove={onRemoveSourceRow}
+                    onStockClick={onStockClick}
+                    onSearchClick={onDaybookIconClick}
+                    totals={sourceTotals}
+                    disabled={disabled}
+                    isLoading={isLoading}
+                  />
+                </Box>
+                <Box>
+                  <MergeSplitTargetTable
+                    rows={targetRows}
+                    onUpdate={onUpdateTargetRow}
+                    onRemove={onRemoveTargetRow}
+                    onAddRow={onAddTargetRow}
+                    sourceTotals={sourceTotals}
+                    targetTotals={targetTotals}
+                    dropdownOptions={dropdownOptions}
+                    disabled={disabled}
+                    showErrors={showErrors}
+                    isLoading={isLoading}
+                  />
+                </Box>
               </Box>
+
               {/* Footer Section: Remark & Price Calculations */}
               <Box sx={{
                 display: "flex",
@@ -191,9 +209,10 @@ const MergeSplitBody = ({
                       padding: "8px 12px",
                       width: "395px",
                       fontFamily: "Calibri",
-
-                      fontSize: "14px",
-                      color: "#666"
+                      height: " 105px",
+                      fontSize: "16px",
+                      color: "#666666",
+                      fontWeight: 400
                     },
                   }}
                 />
@@ -201,49 +220,65 @@ const MergeSplitBody = ({
 
                 {/* Price Calculations Section */}
                 <Box sx={{ border: "1px solid #EDEDED", padding: "16px" }}>
-                  <Typography sx={{ color: "#05595B", fontSize: "14px", fontWeight: 700, marginBottom: "12px", fontFamily: "Calibri" }}>
+                  <Typography sx={{ color: "#05595B", fontSize: "14px", fontWeight: 700, marginBottom: "8px", fontFamily: "Calibri", lineHeight: "normal" }}>
                     Average Price Per Unit
                   </Typography>
 
-                  <Box sx={{ display: "flex", gap: "24px", justifyContent: "flex-end" }}>
+                  <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
                     {/* Original Price Stats */}
-                    <Box sx={{ display: "flex", gap: "8px" }}>
+                    <Box sx={{ display: "flex", gap: "8px", paddingRight: "24px ", borderRight: "1px solid #EDEDED" }}>
                       <Typography sx={{ color: "#333", fontSize: "14px", fontFamily: "Calibri", fontWeight: 400 }}>
                         Original Price
                       </Typography>
-                      <Box sx={{ width: "160px", paddingRight: "24px", borderRight: "1px solid #EDEDED" }}>
-                        <Box sx={{ display: "flex", justifyContent: "space-between", marginBottom: "4px" }}>
-                          <Typography sx={{ color: "#666", fontSize: "14px", fontFamily: "Calibri" }}>Per Pcs</Typography>
-                          <Typography sx={{ color: "#000", fontSize: "14px", fontWeight: 700, fontFamily: "Calibri" }}>
-                            {(sourceTotals.amount / (sourceTotals.pcs || 1)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      <Box sx={{ width: "160px", }}>
+                        <Box sx={{ display: "flex", justifyContent: "space-between", padding: "0px 14px" }}>
+                          <Typography sx={{ fontWeight: 400, lineHeight: "24px", color: "#343434", fontSize: "14px", fontFamily: "Calibri" }}>Per Pcs</Typography>
+                          <Typography sx={{ lineHeight: "normal", color: "#343434", fontSize: "18px", fontWeight: 700, fontFamily: "Calibri" }}>
+                            {isLoading ? (
+                              <Skeleton variant="rounded" width={60} height={24} sx={{ borderRadius: "20px", background: "linear-gradient(270deg, rgba(243, 243, 243, 0.05) 0%, #DBDBDB 50%)", animation: "pulse 1.5s ease-in-out infinite" }} />
+                            ) : (
+                              (sourceTotals.pcs > 0 ? (sourceTotals.amount / sourceTotals.pcs) : 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+                            )}
                           </Typography>
                         </Box>
-                        <Box sx={{ display: "flex", justifyContent: "space-between" }}>
-                          <Typography sx={{ color: "#666", fontSize: "14px", fontFamily: "Calibri" }}>Per Cts</Typography>
-                          <Typography sx={{ color: "#000", fontSize: "14px", fontWeight: 700, fontFamily: "Calibri" }}>
-                            {(sourceTotals.amount / (sourceTotals.weight || 1)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        <Box sx={{ display: "flex", justifyContent: "space-between", padding: "0px 14px" }}>
+                          <Typography sx={{ fontWeight: 400, lineHeight: "24px", color: "#343434", fontSize: "14px", fontFamily: "Calibri" }}>Per Cts</Typography>
+                          <Typography sx={{ lineHeight: "normal", color: "#343434", fontSize: "18px", fontWeight: 700, fontFamily: "Calibri" }}>
+                            {isLoading ? (
+                              <Skeleton variant="rounded" width={60} height={24} sx={{ borderRadius: "20px", background: "linear-gradient(270deg, rgba(243, 243, 243, 0.05) 0%, #DBDBDB 50%)", animation: "pulse 1.5s ease-in-out infinite" }} />
+                            ) : (
+                              (sourceTotals.weight > 0 ? (sourceTotals.amount / sourceTotals.weight) : 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+                            )}
                           </Typography>
                         </Box>
                       </Box>
                     </Box>
 
                     {/* New Stock Price Stats */}
-                    <Box sx={{ display: "flex", gap: "20px" }}>
+                    <Box sx={{ display: "flex", paddingLeft: "24px " }}>
                       <Box sx={{ textAlign: "left" }}>
                         <Typography sx={{ color: "#343434", fontSize: "14px", fontFamily: "Calibri", fontWeight: 400 }}>New Stock</Typography>
                         <Typography sx={{ color: "#343434", fontSize: "14px", fontFamily: "Calibri", fontWeight: 400 }}>Price</Typography>
                       </Box>
                       <Box sx={{ width: "160px" }}>
-                        <Box sx={{ display: "flex", justifyContent: "space-between", marginBottom: "4px" }}>
-                          <Typography sx={{ color: "#666", fontSize: "14px", fontFamily: "Calibri" }}>Per Pcs</Typography>
-                          <Typography sx={{ color: "#000", fontSize: "14px", fontWeight: 700, fontFamily: "Calibri" }}>
-                            {(targetTotals.amount / (targetTotals.pcs || 1)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        <Box sx={{ display: "flex", justifyContent: "space-between", padding: "0px 14px" }}>
+                          <Typography sx={{ fontWeight: 400, lineHeight: "24px", color: "#343434", fontSize: "14px", fontFamily: "Calibri" }}>Per Pcs</Typography>
+                          <Typography sx={{ lineHeight: "normal", color: "#343434", fontSize: "18px", fontWeight: 700, fontFamily: "Calibri" }}>
+                            {isLoading ? (
+                              <Skeleton variant="rounded" width={60} height={24} sx={{ borderRadius: "20px", background: "linear-gradient(270deg, rgba(243, 243, 243, 0.05) 0%, #DBDBDB 50%)", animation: "pulse 1.5s ease-in-out infinite" }} />
+                            ) : (
+                              (targetTotals.pcs > 0 ? (targetTotals.amount / targetTotals.pcs) : 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+                            )}
                           </Typography>
                         </Box>
-                        <Box sx={{ display: "flex", justifyContent: "space-between" }}>
-                          <Typography sx={{ color: "#666", fontSize: "14px", fontFamily: "Calibri" }}>Per Cts</Typography>
-                          <Typography sx={{ color: "#000", fontSize: "14px", fontWeight: 700, fontFamily: "Calibri" }}>
-                            {(targetTotals.amount / (targetTotals.weight || 1)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        <Box sx={{ display: "flex", justifyContent: "space-between", padding: "0px 14px" }}>
+                          <Typography sx={{ fontWeight: 400, lineHeight: "24px", color: "#343434", fontSize: "14px", fontFamily: "Calibri" }}>Per Cts</Typography>
+                          <Typography sx={{ lineHeight: "normal", color: "#343434", fontSize: "18px", fontWeight: 700, fontFamily: "Calibri" }}>
+                            {isLoading ? (
+                              <Skeleton variant="rounded" width={60} height={24} sx={{ borderRadius: "20px", background: "linear-gradient(270deg, rgba(243, 243, 243, 0.05) 0%, #DBDBDB 50%)", animation: "pulse 1.5s ease-in-out infinite" }} />
+                            ) : (
+                              (targetTotals.weight > 0 ? (targetTotals.amount / targetTotals.weight) : 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+                            )}
                           </Typography>
                         </Box>
                       </Box>
@@ -251,17 +286,19 @@ const MergeSplitBody = ({
                   </Box>
                 </Box>
               </Box>
+
             </Box>
-
-
-
-
-
-
           </Box>
+
+
+
+
+
+
         </Box>
       </Box>
     </Box>
+
   );
 };
 
