@@ -51,7 +51,7 @@ const MergeSplitBody = ({
   }), [targetRows]);
 
   return (
-    <Box sx={{ width: "100%", maxWidth: "1632px", padding: "12px 24px 22px 24px", marginTop: "10px" }}>
+    <Box sx={{ backgroundColor: "#ffffff", width: "100%", maxWidth: "1632px", padding: "12px 24px 22px 24px", marginTop: "10px" }}>
       <Box sx={{ width: "100%", maxWidth: "1640px" }}>
 
         {/* Transaction Info - Following Load Structure */}

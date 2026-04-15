@@ -215,7 +215,7 @@ const MergeSplitStock = () => {
     setIsBodyLoading(true);
     setTimeout(() => {
       setIsBodyLoading(false);
-    }, 9000);
+    }, 2000);
 
     const first = selectedStocks[0];
     const formattedStocks = selectedStocks.map(s => ({
