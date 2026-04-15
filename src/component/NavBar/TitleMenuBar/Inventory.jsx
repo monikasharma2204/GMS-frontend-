@@ -434,10 +434,10 @@ const Inventory = ({ handleClick, showRedBox, openInventory,
                     sx={DropdownMenuTransfer}
                   >
                     <ProtectedLink
-                      to="/inventory/transfer/stock-check"
+                      to="/inventory/transfer/location-transfer"
                     >
                       <Typography
-                        className={isPathActive("/inventory/transfer/stock-check") ? "active" : ""}
+                        className={isPathActive("/inventory/transfer/location-transfer") ? "active" : ""}
                         sx={TextMainTransfer}
                       >Transfer</Typography>
                     </ProtectedLink>

@@ -54,6 +54,7 @@ import ConsignmentTransferPage from "./Page/Inventory/Transfer/ConsignmentTransf
 import MergeSplitStock from "./Page/Inventory/Transfer/MergeSplitStock.jsx";
 import StockMovementReportPage from "./Page/Inventory/Report/StockMovementReportPage.jsx";
 import ConsignmentCheckPage from "./Page/Inventory/Report/ConsignmentCheckPage.jsx";
+import LocationTransferStock from "./Page/Inventory/Transfer/LocationTransferStock.jsx";
 
 import Currency from "Page/Currency/Currency";
 import MainLocation from "Page/MainLocation/MainLocation";
@@ -303,6 +304,10 @@ const router = createBrowserRouter([
       {
         path: "inventory/transfer/merge-split",
         element: <MergeSplitStock />,
+      },
+      {
+        path: "inventory/transfer/location-transfer",
+        element: <LocationTransferStock />,
       },
 
       {

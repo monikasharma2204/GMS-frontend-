@@ -20,7 +20,7 @@ import {
 import apiRequest from "../../../helpers/apiHelper";
 import { API_URL } from "../../../config/config.js";
 
-const StockSelectionModal = ({ open, onClose, onSelect }) => {
+const StockSelectionModal = ({ open, onClose, onSelect, mode = "merge" }) => {
   const [stocks, setStocks] = useState([]);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
@@ -72,13 +72,15 @@ const StockSelectionModal = ({ open, onClose, onSelect }) => {
       let stoneToMatch = firstSelectedStone;
 
 
-      if (!stoneToMatch) {
+      if (!stoneToMatch && mode !== "transfer") {
         stoneToMatch = filteredStocks[0].stone;
       }
 
-      const validIds = filteredStocks
-        .filter(s => s.stone === stoneToMatch)
-        .map(s => s._id);
+      const validIds = mode === "transfer" 
+        ? filteredStocks.map(s => s._id)
+        : filteredStocks
+          .filter(s => s.stone === stoneToMatch)
+          .map(s => s._id);
 
       setSelectedIds(validIds);
     } else {
@@ -376,14 +378,14 @@ const StockSelectionModal = ({ open, onClose, onSelect }) => {
                     <TableCell padding="checkbox" sx={{ bgcolor: "#F5F5F5" }}>
                       <Checkbox
                         indeterminate={selectedIds.length > 0 && selectedIds.length < (
-                          firstSelectedStone 
+                          (mode !== "transfer" && firstSelectedStone)
                             ? filteredStocks.filter(s => s.stone === firstSelectedStone).length 
                             : filteredStocks.length
                         )}
                         checked={
                           filteredStocks.length > 0 && 
                           selectedIds.length > 0 &&
-                          selectedIds.length === filteredStocks.filter(s => s.stone === (firstSelectedStone || filteredStocks[0].stone)).length
+                          selectedIds.length === (mode === "transfer" ? filteredStocks.length : filteredStocks.filter(s => s.stone === (firstSelectedStone || filteredStocks[0].stone)).length)
                         }
                         onChange={handleSelectAll}
                       />
@@ -441,7 +443,7 @@ const StockSelectionModal = ({ open, onClose, onSelect }) => {
                     <TableRow><TableCell colSpan={20} align="center">No stocks found</TableCell></TableRow>
                   ) : filteredStocks.map((stock, idx) => {
                     const isSelected = selectedIds.includes(stock._id);
-                    const isDisabled = firstSelectedStone && stock.stone !== firstSelectedStone;
+                    const isDisabled = mode !== "transfer" && firstSelectedStone && stock.stone !== firstSelectedStone;
                     return (
                       <TableRow
                         key={stock._id}
