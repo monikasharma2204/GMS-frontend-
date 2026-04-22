@@ -37,6 +37,7 @@ const LocationTransferBody = ({
   showWarning,
   showErrors,
   isLoading,
+  isExistingRecord,
   activeBatchIndex,
   setActiveBatchIndex
 }) => {
@@ -46,18 +47,23 @@ const LocationTransferBody = ({
     amount: sourceRows.reduce((sum, row) => sum + (Number(row.amount) || 0), 0)
   }), [sourceRows]);
 
-  const targetTotals = useMemo(() => ({
-    pcs: targetRows.reduce((sum, row) => sum + (Number(row.pcs) || 0), 0),
-    weight: targetRows.reduce((sum, row) => sum + (Number(row.weight) || 0), 0),
-    amount: targetRows.reduce((sum, row) => sum + (Number(row.amount) || 0), 0)
-  }), [targetRows]);
+  const targetTotals = useMemo(() => {
+    const currentBatch = targetRows[activeBatchIndex] || [];
+    return {
+      pcs: currentBatch.reduce((sum, row) => sum + (Number(row.pcs) || 0), 0),
+      weight: currentBatch.reduce((sum, row) => sum + (Number(row.weight) || 0), 0),
+      amount: currentBatch.reduce((sum, row) => sum + (Number(row.amount) || 0), 0)
+    };
+  }, [targetRows, activeBatchIndex]);
+
+  const activeSourceItem = sourceRows[activeBatchIndex] || null;
 
   return (
-    <Box sx={{ backgroundColor: "#ffffff", width: "100%", maxWidth: "1632px", padding: "12px 24px 22px 24px", marginTop: "10px" }}>
+    <Box sx={{ backgroundColor: "#ffffff", width: "100%", maxWidth: "1632px", padding: "12px 24px 24px", marginTop: "10px" }}>
       <Box sx={{ width: "100%", maxWidth: "1640px" }}>
 
         {/* Transaction Info - Following Load Structure */}
-        <Box sx={{ display: "flex", justifyContent: "flex-end", paddingRight: "4px" }}>
+        <Box sx={{ display: "flex", justifyContent: "flex-end", gap: "16px", paddingRight: "4px", marginBottom: "8px" }}>
           <Typography sx={{ lineHeight: "normal", color: "#9A9A9A", fontFamily: "Calibri", fontSize: "12px", fontWeight: 400 }}>
             Transaction Date : {dayjs().format("DD/MM/YYYY")} By : Super Admin
           </Typography>
@@ -77,10 +83,12 @@ const LocationTransferBody = ({
             width: "100%",
             border: "1px solid var(--Line-Table, #C6C6C8)",
             bgcolor: "#F8F8F8",
+            borderRadius: "5px",
+            overflow: "hidden",
           }}>
 
-            <Grid sx={{ width: "100%", maxWidth: "1650px", padding: "16px 24px 15px 24px", borderRadius: "5px 5px 0px 0px", bgcolor: "#FFF", borderBottom: "1px solid #C6C6C8" }}>
-              <Box sx={{ display: "flex" }}>
+            <Grid sx={{ width: "100%", maxWidth: "1650px", padding: "16px 24px", borderRadius: "5px 5px 0px 0px", bgcolor: "#FFF", }}>
+              <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "24px", flexWrap: "wrap", alignItems: "center" }}>
                 <Box sx={{ display: "flex", flexDirection: "column", justifyContent: "center" }}>
                   <Typography sx={{ color: "#666", fontFamily: "Calibri", fontSize: "16px", lineHeight: "normal", fontWeight: 400 }}>
                     Location Transfer No. :
@@ -92,7 +100,7 @@ const LocationTransferBody = ({
                   </Typography>
                 </Box>
 
-                <Box sx={{ display: "flex", alignItems: "center", gap: "15px", paddingLeft: "24px" }}>
+                <Box sx={{ display: "flex", alignItems: "center", gap: "15px", flexWrap: "wrap" }}>
                   <LocalizationProvider dateAdapter={AdapterDayjs}>
                     <DatePicker
                       label="Doc Date :"
@@ -113,6 +121,7 @@ const LocationTransferBody = ({
                           backgroundColor: "#FFF",
                           width: "220px",
                           height: "42px",
+                          "& fieldset": { borderColor: "#E0E2E4" },
                         },
 
                       }}
@@ -131,6 +140,7 @@ const LocationTransferBody = ({
                         backgroundColor: "#FFF",
                         width: "350px",
                         height: "42px",
+                        "& fieldset": { borderColor: "#E0E2E4" },
                       },
 
                     }}
@@ -148,6 +158,7 @@ const LocationTransferBody = ({
                         backgroundColor: "#FFF",
                         width: "350px",
                         height: "42px",
+                        "& fieldset": { borderColor: "#E0E2E4" },
                       }
                     }}
                   />
@@ -155,10 +166,10 @@ const LocationTransferBody = ({
               </Box>
             </Grid>
 
-            <Box sx={{ padding: "24px" }} >
+            <Box sx={{ padding: "0px 32px" }} >
 
 
-              <Box sx={{ display: "flex", flexDirection: "column", gap: "24px" }}>
+              <Box sx={{ display: "flex", flexDirection: "column", gap: "24px", marginTop: "10px" }}>
                 <Box>
                   <LocationTransferSourceTable
                     rows={sourceRows}
@@ -166,9 +177,11 @@ const LocationTransferBody = ({
                     onRemove={onRemoveSourceRow}
                     onStockClick={onStockClick}
                     onSearchClick={onDaybookIconClick}
-                    totals={sourceTotals}
+                    onSelect={setActiveBatchIndex}
                     disabled={disabled}
                     isLoading={isLoading}
+                    isExistingRecord={isExistingRecord}
+                    activeBatchIndex={activeBatchIndex}
                   />
                 </Box>
                 <Box>
@@ -180,8 +193,6 @@ const LocationTransferBody = ({
                     onUpdate={(id, field, value) => onUpdateTargetRow(activeBatchIndex, id, field, value)}
                     onRemove={(id) => onRemoveTargetRow(activeBatchIndex, id)}
                     onAddRow={() => onAddTargetRow(activeBatchIndex)}
-                    sourceTotals={sourceTotals}
-                    targetTotals={targetTotals}
                     dropdownOptions={dropdownOptions}
                     disabled={disabled}
                     showErrors={showErrors}
@@ -196,7 +207,9 @@ const LocationTransferBody = ({
                 justifyContent: "space-between",
                 alignItems: "flex-start",
                 borderRadius: "4px",
-                bgcolor: "#FFF"
+                bgcolor: "#FFF",
+                gap: "24px",
+                flexWrap: "wrap"
               }}>
                 {/* Remark Section */}
 
@@ -209,22 +222,26 @@ const LocationTransferBody = ({
                   disabled={disabled}
 
                   sx={{
+                    flex: "1 1 395px",
+                    maxWidth: "395px",
                     "& .MuiOutlinedInput-root": {
                       "& fieldset": { border: "1px solid #EDEDED" },
                       padding: "8px 12px",
-                      width: "395px",
+                      width: "100%",
                       fontFamily: "Calibri",
-                      height: " 105px",
+                      minHeight: "105px",
                       fontSize: "16px",
                       color: "#666666",
-                      fontWeight: 400
+                      fontWeight: 400,
+                      borderRadius: "4px",
+                      backgroundColor: "#FFF"
                     },
                   }}
                 />
 
 
                 {/* Price Calculations Section */}
-                <Box sx={{ border: "1px solid #EDEDED", padding: "16px" }}>
+                <Box sx={{ border: "1px solid #EDEDED", padding: "16px", borderRadius: "4px", backgroundColor: "#FFF" }}>
                   <Typography sx={{ color: "#05595B", fontSize: "14px", fontWeight: 700, marginBottom: "8px", fontFamily: "Calibri", lineHeight: "normal" }}>
                     Average Price Per Unit
                   </Typography>
@@ -242,7 +259,7 @@ const LocationTransferBody = ({
                             {isLoading ? (
                               <Skeleton variant="rounded" width={60} height={24} sx={{ borderRadius: "20px", background: "linear-gradient(270deg, rgba(243, 243, 243, 0.05) 0%, #DBDBDB 50%)", animation: "pulse 1.5s ease-in-out infinite" }} />
                             ) : (
-                              (sourceTotals.pcs > 0 ? (sourceTotals.amount / sourceTotals.pcs) : 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+                              (activeSourceItem?.pcs > 0 ? (activeSourceItem.amount / activeSourceItem.pcs) : 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
                             )}
                           </Typography>
                         </Box>
@@ -252,7 +269,7 @@ const LocationTransferBody = ({
                             {isLoading ? (
                               <Skeleton variant="rounded" width={60} height={24} sx={{ borderRadius: "20px", background: "linear-gradient(270deg, rgba(243, 243, 243, 0.05) 0%, #DBDBDB 50%)", animation: "pulse 1.5s ease-in-out infinite" }} />
                             ) : (
-                              (sourceTotals.weight > 0 ? (sourceTotals.amount / sourceTotals.weight) : 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+                              (activeSourceItem?.weight > 0 ? (activeSourceItem.amount / activeSourceItem.weight) : 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
                             )}
                           </Typography>
                         </Box>

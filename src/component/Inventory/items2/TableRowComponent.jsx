@@ -852,7 +852,7 @@ const TableRowComponent = React.memo(
                 disabled={true}
                 sx={{
                   "& .MuiOutlinedInput-root": {
-                    width: "136px",
+                    width: "131px",
                     height: "34px",
                     borderRadius: "4px",
                   },

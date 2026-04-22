@@ -65,7 +65,7 @@ export const SHORTCUT_SECTIONS = [
     items: [
       { value: "Primary", label: "Primary" },
       { value: "Consignment", label: "Consignment" },
-      { value: "Stock Check", label: "Stock Check" },
+      { value: "Movement", label: "Movement" },
       { value: "Consignment Check", label: "Consignment Check" },
     ],
   },

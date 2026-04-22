@@ -22,9 +22,9 @@ const LocationTransferStock = () => {
   const [ref1, setRef1] = useState("");
   const [ref2, setRef2] = useState("");
   const [sourceRows, setSourceRows] = useState([]);
-  
+
   // Changed to 2D array: targetRows[batchIndex] = [rows...]
-  const [targetRows, setTargetRows] = useState([]); 
+  const [targetRows, setTargetRows] = useState([]);
   const [activeBatchIndex, setActiveBatchIndex] = useState(0);
 
   const [invoiceNo, setInvoiceNo] = useState("");
@@ -35,6 +35,7 @@ const LocationTransferStock = () => {
   const [isEditMode, setIsEditMode] = useState(false);
   const [isApproved, setIsApproved] = useState(false);
   const [openSuccessModal, setOpenSuccessModal] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("Successfully!");
   const [openErrorModal, setOpenErrorModal] = useState(false);
   const [errorMessage, setErrorMessage] = useState("Unsuccessfully!");
   const [openSaveConfirm, setOpenSaveConfirm] = useState(false);
@@ -50,38 +51,44 @@ const LocationTransferStock = () => {
 
   const getLocationValue = (row) => row.location_id || row.location || null;
 
-  const normalizeRow = useCallback((s) => ({
-    id: s._id || s.id || `${Date.now()}-${Math.random()}`,
-    db_id: s._id || s.id || null,
-    image: s.image ? (s.image.startsWith("data:") || s.image.startsWith("http") ? s.image : (s.image.startsWith("/") ? s.image : `/${s.image}`)) : "",
-    stock_id: s.stock_id || "",
-    location: s.location?.location_name || s.location_name || "",
-    location_id: s.location?._id || s.location || s.location_id || "",
-    lot: s.lot_no || s.lot || "",
-    stone_code: s.stone_code || "",
-    stone: s.stone || "",
-    shape: s.shape || "",
-    size: s.size || "",
-    color: s.color || "",
-    cutting: s.cutting || "",
-    quality: s.quality || "",
-    clarity: s.clarity || "",
-    cer_type: s.cer_type || "",
-    cer_no: s.cer_no || "",
-    pcs: Number(s.pcs) || 0,
-    availablePcs: Number(s.pcs) || 0,
-    weight: Number(s.weight) || 0,
-    price: Number(s.price) || 0,
-    unit: s.unit || "pcs",
-    amount: Number(s.amount) || 0,
-    remark: s.remark || "",
-    stone_master: s.stone_master,
-    shape_master: s.shape_master,
-    size_master: s.size_master,
-    color_master: s.color_master,
-    quality_master: s.quality_master,
-    clarity_master: s.clarity_master,
-  }), []);
+  const normalizeRow = useCallback((s) => {
+    const locId = s.location?._id || s.location || s.location_id || "";
+    const matchedLoc = (dropdownOptions.location || []).find(opt => opt.value === locId);
+
+    return {
+      id: s._id || s.id || `${Date.now()}-${Math.random()}`,
+      db_id: s._id || s.id || null,
+      image: s.image ? (s.image.startsWith("data:") || s.image.startsWith("http") ? s.image : (s.image.startsWith("/") ? s.image : `/${s.image}`)) : "",
+      stock_id: s.stock_id || s.stock_item?.stock_id || "",
+      location: matchedLoc?.label || s.location?.location_name || s.location_name || "",
+      location_id: locId,
+      lot: s.lot_no || s.lot || "",
+      stone_code: s.stone_code || "",
+      stone: s.stone || "",
+      shape: s.shape || "",
+      size: s.size || "",
+      color: s.color || "",
+      cutting: s.cutting || "",
+      quality: s.quality || "",
+      clarity: s.clarity || "",
+      cer_type: s.cer_type || "",
+      cer_no: s.cer_no || "",
+      pcs: Number(s.pcs) || 0,
+      availablePcs: Number(s.pcs) || 0,
+      weight: Number(s.weight) || 0,
+      price: Number(s.price || s.avg_price) || 0,
+      unit: s.unit || "pcs",
+      amount: Number(s.amount) || ((s.unit?.toLowerCase() === "pcs" ? (Number(s.pcs) || 0) : (Number(s.weight) || 0)) * (Number(s.price || s.avg_price) || 0)) || 0,
+      remark: s.remark || "",
+      source_stock_id: s.source_stock_id || "",
+      stone_master: s.stone_master,
+      shape_master: s.shape_master,
+      size_master: s.size_master,
+      color_master: s.color_master,
+      quality_master: s.quality_master,
+      clarity_master: s.clarity_master,
+    };
+  }, [dropdownOptions.location]);
 
   const genInvoiceNo = useCallback(async () => {
     try {
@@ -102,7 +109,7 @@ const LocationTransferStock = () => {
     const newRow = {
       id: Date.now(),
       image: source?.image || "",
-      stock_id: "",
+      stock_id: source?.stock_id || "",
       location: "",
       lot: "",
       stone_code: source?.stone_code || "",
@@ -124,9 +131,9 @@ const LocationTransferStock = () => {
     };
 
     setTargetRows(prev => {
-        const updated = [...prev];
-        updated[batchIndex] = [...(updated[batchIndex] || []), newRow];
-        return updated;
+      const updated = [...prev];
+      updated[batchIndex] = [...(updated[batchIndex] || []), newRow];
+      return updated;
     });
   };
 
@@ -144,6 +151,13 @@ const LocationTransferStock = () => {
     if (isViewMode) return;
     setSourceRows(sourceRows.map(row => {
       if (row.id === id) {
+        if (field === "pcs") {
+          const val = Number(value) || 0;
+          if (val > row.availablePcs) {
+            showWarning(`PCS cannot exceed available stock (Max: ${row.availablePcs})`);
+            return row;
+          }
+        }
         const updatedRow = { ...row, [field]: value };
         if (["pcs", "weight", "price", "unit"].includes(field)) {
           updatedRow.amount = calculateRowAmount(updatedRow);
@@ -157,35 +171,35 @@ const LocationTransferStock = () => {
   const handleUpdateTargetRow = (batchIndex, id, field, value) => {
     if (isViewMode) return;
     setTargetRows(prev => {
-        const updated = [...prev];
-        const rows = [...updated[batchIndex]];
-        const rowIndex = rows.findIndex(r => r.id === id);
-        if (rowIndex === -1) return prev;
+      const updated = [...prev];
+      const rows = [...updated[batchIndex]];
+      const rowIndex = rows.findIndex(r => r.id === id);
+      if (rowIndex === -1) return prev;
 
-        const updatedRow = { ...rows[rowIndex], [field]: value };
-        if (field === "location") {
-          const matchedLocation = (dropdownOptions.location || []).find(opt => opt.value === value);
-          updatedRow.location = value;
-          updatedRow.location_id = value;
-          if (matchedLocation?.label) {
-            updatedRow.location_name = matchedLocation.label;
-          }
+      const updatedRow = { ...rows[rowIndex], [field]: value };
+      if (field === "location") {
+        const matchedLocation = (dropdownOptions.location || []).find(opt => opt.value === value);
+        updatedRow.location = value;
+        updatedRow.location_id = value;
+        if (matchedLocation?.label) {
+          updatedRow.location_name = matchedLocation.label;
         }
-        if (["pcs", "weight", "price", "unit"].includes(field)) {
-          updatedRow.amount = calculateRowAmount(updatedRow);
-        }
-        rows[rowIndex] = updatedRow;
-        updated[batchIndex] = rows;
-        return updated;
+      }
+      if (["pcs", "weight", "price", "unit"].includes(field)) {
+        updatedRow.amount = calculateRowAmount(updatedRow);
+      }
+      rows[rowIndex] = updatedRow;
+      updated[batchIndex] = rows;
+      return updated;
     });
   };
 
   const handleRemoveTargetRow = (batchIndex, id) => {
     if (isViewMode) return;
     setTargetRows(prev => {
-        const updated = [...prev];
-        updated[batchIndex] = (updated[batchIndex] || []).filter(row => row.id !== id);
-        return updated;
+      const updated = [...prev];
+      updated[batchIndex] = (updated[batchIndex] || []).filter(row => row.id !== id);
+      return updated;
     });
   };
 
@@ -196,12 +210,12 @@ const LocationTransferStock = () => {
 
     setSourceRows(sourceRows.filter(row => row.id !== id));
     setTargetRows(prev => {
-        const updated = [...prev];
-        updated.splice(indexToRemove, 1);
-        return updated;
+      const updated = [...prev];
+      updated.splice(indexToRemove, 1);
+      return updated;
     });
     if (activeBatchIndex >= sourceRows.length - 1) {
-        setActiveBatchIndex(Math.max(0, sourceRows.length - 2));
+      setActiveBatchIndex(Math.max(0, sourceRows.length - 2));
     }
   };
 
@@ -221,26 +235,25 @@ const LocationTransferStock = () => {
     const formattedSource = selectedStocks.map(s => normalizeRow(s));
     setSourceRows(formattedSource);
 
-    // Initialize targetRows with 2D structure
     const initialTargetRows = formattedSource.map(sourceRow => {
-        return [{
-            ...sourceRow,
-            id: `target-${sourceRow.id}-${Math.random()}`,
-            db_id: null,
-            location: "",
-            location_id: "",
-            remark: "",
-            pcs: 0, 
-            weight: 0,
-            amount: 0
-        }];
+      return [{
+        ...sourceRow,
+        id: `target-${sourceRow.id}-${Math.random()}`,
+        db_id: null,
+        location: "",
+        location_id: "",
+        remark: "",
+        pcs: 0,
+        weight: 0,
+        amount: 0
+      }];
     });
     setTargetRows(initialTargetRows);
     setActiveBatchIndex(0);
   };
 
   const buildPayload = useCallback(() => {
-    const source_items = sourceRows.map((row) => ({
+    const stock_items = sourceRows.map((row) => ({
       _id: row.db_id || row.id,
       stock_id: row.stock_id || "",
       location: getLocationValue(row),
@@ -263,32 +276,32 @@ const LocationTransferStock = () => {
       image: row.image || null,
     }));
 
-    const target_items = targetRows.flatMap((batch, index) => {
-        const source = sourceRows[index];
-        return batch.map(row => ({
-          ...(row.db_id ? { _id: row.db_id } : {}),
-          source_stock_id: source?.stock_id || "", 
-          stock_id: row.stock_id || "",
-          location: getLocationValue(row),
-          lot_no: row.lot || "",
-          stone_code: row.stone_code || "",
-          stone: row.stone || "",
-          shape: row.shape || "",
-          size: row.size || "",
-          color: row.color || "",
-          cutting: row.cutting || "",
-          quality: row.quality || "",
-          clarity: row.clarity || "",
-          cer_type: row.cer_type || "",
-          cer_no: row.cer_no || "",
-          pcs: Number(row.pcs) || 0,
-          weight: Number(row.weight) || 0,
-          price: Number(row.price) || 0,
-          unit: row.unit || "pcs",
-          amount: Number(row.amount) || 0,
-          remark: row.remark || "",
-          image: row.image || null,
-        }));
+    const transfer_items = targetRows.flatMap((batch, index) => {
+      const source = sourceRows[index];
+      return batch.map(row => ({
+        ...(row.db_id ? { _id: row.db_id } : {}),
+        source_stock_id: source?.stock_id || "",
+        stock_id: row.stock_id || "",
+        location: getLocationValue(row),
+        lot_no: row.lot || "",
+        stone_code: row.stone_code || "",
+        stone: row.stone || "",
+        shape: row.shape || "",
+        size: row.size || "",
+        color: row.color || "",
+        cutting: row.cutting || "",
+        quality: row.quality || "",
+        clarity: row.clarity || "",
+        cer_type: row.cer_type || "",
+        cer_no: row.cer_no || "",
+        pcs: Number(row.pcs) || 0,
+        weight: Number(row.weight) || 0,
+        price: Number(row.price) || 0,
+        unit: row.unit || "pcs",
+        amount: Number(row.amount) || 0,
+        remark: row.remark || "",
+        image: row.image || null,
+      }));
     });
 
     return {
@@ -296,8 +309,8 @@ const LocationTransferStock = () => {
       ref_1: ref1 || "",
       ref_2: ref2 || "",
       note: note || "",
-      source_items,
-      target_items,
+      stock_items,
+      transfer_items,
     };
   }, [docDate, note, ref1, ref2, sourceRows, targetRows]);
 
@@ -319,7 +332,11 @@ const LocationTransferStock = () => {
 
       setFsmState("saved");
       setIsEditMode(false);
+      setSuccessMessage("Transfer saved successfully!");
       setOpenSuccessModal(true);
+      if (savedId) {
+        await fetchTransferRecord(savedId);
+      }
     } catch (error) {
       setErrorMessage(error?.response?.data?.error || error?.message || "Unsuccessfully!");
       setOpenErrorModal(true);
@@ -335,21 +352,21 @@ const LocationTransferStock = () => {
   }, []);
   const validateBeforeSave = useCallback(() => {
     if (!sourceRows.length) return "Please select stock item(s) first.";
-    
-    for (let i = 0; i < sourceRows.length; i++) {
-        const batch = targetRows[i] || [];
-        const source = sourceRows[i];
-        
-        const sourcePcs = Number(source.pcs);
-        const targetPcs = batch.reduce((sum, r) => sum + (Number(r.pcs) || 0), 0);
-        
-        if (targetPcs !== sourcePcs) {
-            return `Batch ${i + 1}: Total PCS must be ${sourcePcs} (current: ${targetPcs})`;
-        }
 
-        if (batch.some(r => !r.location)) {
-            return `Batch ${i + 1}: Please select location for all rows.`;
-        }
+    for (let i = 0; i < sourceRows.length; i++) {
+      const batch = targetRows[i] || [];
+      const source = sourceRows[i];
+
+      const sourcePcs = Number(source.pcs);
+      const targetPcs = batch.reduce((sum, r) => sum + (Number(r.pcs) || 0), 0);
+
+      if (targetPcs !== sourcePcs) {
+        return `Batch ${i + 1}: Total PCS must be ${sourcePcs} (current: ${targetPcs})`;
+      }
+
+      if (batch.some(r => !r.location)) {
+        return `Batch ${i + 1}: Please select location for all rows.`;
+      }
     }
 
     return "";
@@ -364,6 +381,7 @@ const LocationTransferStock = () => {
       setIsApproved(true);
       setIsEditMode(false);
       setFsmState("saved");
+      setSuccessMessage("Approved successfully!");
       setOpenSuccessModal(true);
     } catch (error) {
       setErrorMessage(error?.response?.data?.error || error?.message || "Unsuccessfully!");
@@ -411,7 +429,7 @@ const LocationTransferStock = () => {
       return;
     }
     if (fsmState === "dirty") {
-        window.location.reload();
+      window.location.reload();
     }
   }, [fsmState]);
 
@@ -432,10 +450,15 @@ const LocationTransferStock = () => {
   }, [docDate, ref1, ref2, note, sourceRows, targetRows, hasUnsavedData, fsmState, isEditMode]);
 
   const fetchTransferRecord = useCallback(async (id) => {
+    setIsBodyLoading(true);
+    console.log("Fetching Transfer ID:", id);
     try {
-      const data = await apiRequest("GET", `/transfers/${id}`);
-      const record = data?.transfer || data?.locationTransfer || data;
-      if (record) {
+      const result = await apiRequest("GET", `/transfers/${id}`);
+      console.log("API Response:", result);
+
+      const record = result?.data || result?.transfer || result?.locationTransfer || result;
+
+      if (record && record.invoice_no) {
         setCurrentTransferId(record._id);
         setInvoiceNo(record.invoice_no);
         setDocDate(dayjs(record.doc_date));
@@ -444,20 +467,51 @@ const LocationTransferStock = () => {
         setNote(record.note || "");
         setIsApproved(record.status?.toLowerCase() === "approved");
 
-        if (Array.isArray(record.source_items)) {
-          setSourceRows(record.source_items.map(normalizeRow));
-        }
-        
-        if (Array.isArray(record.target_items)) {
-            // Placeholder: grouping by source index if available or 1:1
-            setTargetRows(record.target_items.map(r => [normalizeRow(r)]));
+        const stockItems = record.stock_items || record.source_items || [];
+        const transferItemsRaw = record.transfer_items || record.target_items || [];
+
+        if (Array.isArray(stockItems) && stockItems.length > 0) {
+          const sources = stockItems.map(s => ({ ...normalizeRow(s), isSaved: true }));
+          setSourceRows(sources);
+
+          if (Array.isArray(transferItemsRaw)) {
+            const transferItems = transferItemsRaw.map(r => ({ ...normalizeRow(r), isSaved: true }));
+
+            // Reconstruct targetRows 2D array
+            const newTargetRows = sources.map((source) => {
+              const matchedItems = transferItems.filter(ti => ti.source_stock_id === source.stock_id);
+              return matchedItems.length > 0 ? matchedItems : [];
+            });
+
+            if (newTargetRows.every(batch => batch.length === 0)) {
+              if (sources.length === transferItems.length) {
+                setTargetRows(transferItems.map(it => [it]));
+              } else {
+                const fallbackRows = sources.map((_, i) => i === 0 ? transferItems : []);
+                setTargetRows(fallbackRows);
+              }
+            } else {
+              setTargetRows(newTargetRows);
+            }
+          }
+        } else {
+          console.warn("No stock items found in record data");
+          setSourceRows([]);
+          setTargetRows([]);
         }
 
+        setActiveBatchIndex(0);
         setFsmState("saved");
         setIsEditMode(false);
+      } else {
+        console.warn("No valid record found in response");
       }
     } catch (error) {
       console.error("Error fetching record:", error);
+      setErrorMessage("Failed to load record data.");
+      setOpenErrorModal(true);
+    } finally {
+      setTimeout(() => setIsBodyLoading(false), 800);
     }
   }, [normalizeRow]);
 
@@ -466,7 +520,7 @@ const LocationTransferStock = () => {
   };
 
   return (
-    <Box sx={{ display: "flex", backgroundColor: "#F4F7F7", minHeight: "100vh" }}>
+    <Box sx={{ display: "flex", backgroundColor: "#FFF", minHeight: "100vh" }}>
       <NavBar />
       <Box sx={{ marginLeft: "220px", flexGrow: 1, display: "flex", flexDirection: "column", paddingBottom: "60px" }}>
         <Header />
@@ -487,7 +541,7 @@ const LocationTransferStock = () => {
             setRef2={setRef2}
             invoiceNo={invoiceNo}
             sourceRows={sourceRows}
-            targetRows={targetRows} 
+            targetRows={targetRows}
             onAddTargetRow={handleAddTargetRow}
             onUpdateTargetRow={handleUpdateTargetRow}
             note={note}
@@ -502,6 +556,7 @@ const LocationTransferStock = () => {
             showWarning={showWarning}
             showErrors={showErrors}
             isLoading={isBodyLoading}
+            isExistingRecord={!!currentTransferId}
             activeBatchIndex={activeBatchIndex}
             setActiveBatchIndex={setActiveBatchIndex}
           />
@@ -530,6 +585,7 @@ const LocationTransferStock = () => {
       <SuccessModal
         open={openSuccessModal}
         onClose={() => setOpenSuccessModal(false)}
+        message={successMessage}
       />
       <ErrorModal
         open={openErrorModal}
@@ -538,15 +594,13 @@ const LocationTransferStock = () => {
       />
       <CustomConfirmDialog
         open={openSaveConfirm}
-        onClose={(confirmed) => onConfirmSave(!!confirmed)}
         onConfirm={onConfirmSave}
-        title="Confirm save"
+        title="Would you like to save?"
       />
-      <ApprovalModal
+      <CustomConfirmDialog
         open={openApproveConfirm}
         onConfirm={onConfirmApprove}
-        onClose={() => setOpenApproveConfirm(false)}
-        title="Approve Confirmation"
+        title="Would you like to approve?"
       />
       <ValidationWarningBanner
         show={showWarningBanner}

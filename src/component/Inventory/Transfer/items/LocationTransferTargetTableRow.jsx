@@ -1,36 +1,41 @@
 import React from "react";
-import { Box, Typography, TextField, Autocomplete } from "@mui/material";
+import { Box, Typography } from "@mui/material";
 import { formatNumberWithCommas } from "../../../../helpers/numberHelper.js";
 import { LOCATION_TRANSFER_TARGET_HEADERS } from "../constants/locationTransferHeaders";
 import { API_URL } from "../../../../config/config.js";
+import {
+  FIELD_WIDTH,
+  TransferSelectInput,
+  TransferReadonlyField,
+  CustomTextField,
+} from "./TransferRowInputs";
 
 const LocationTransferTargetTableRow = React.memo(({ item, index, onUpdate, onRemove, dropdownOptions = {}, disabled = false, showErrors = false }) => {
-
   const firstColumnWidth = parseInt(LOCATION_TRANSFER_TARGET_HEADERS[0]?.width);
 
   const rowStyle = {
-    height: "38px",
+    height: "42px",
     boxSizing: "border-box",
     display: "flex",
     alignItems: "center",
     flexShrink: 0,
     overflow: "hidden",
-    bgcolor: "#FFF",
-    borderBottom: "1px solid #EDEDED",
+    bgcolor: index % 2 === 0 ? "#F8F8F8" : "#FFF",
+
   };
   const cellStyle = {
-    height: "38px",
-    minHeight: "38px",
-    maxHeight: "38px",
+    height: "42px",
+    minHeight: "42px",
+    maxHeight: "42px",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
     flex: "0 0 auto",
     fontFamily: "Calibri",
-    fontSize: "14px",
+    fontSize: "16px",
     lineHeight: "1",
-    padding: "0 !important",
-    px: "0 !important",
+    padding: "0 2px !important",
+    px: "2px !important",
     color: "#666666",
     fontWeight: 400,
     whiteSpace: "nowrap",
@@ -38,28 +43,6 @@ const LocationTransferTargetTableRow = React.memo(({ item, index, onUpdate, onRe
     textOverflow: "ellipsis",
     textAlign: "center",
     boxSizing: "border-box"
-  };
-
-  const inputStyle = {
-    "& .MuiInputBase-input": {
-      padding: "4px 8px",
-      fontSize: "16px",
-      color: disabled ? "rgba(0, 0, 0, 0.38)" : "#666666",
-      fontWeight: 400,
-      fontFamily: "Calibri",
-      textAlign: "center",
-    },
-    "& .MuiInputBase-input.Mui-disabled": {
-      opacity: 1,
-      "-webkit-text-fill-color": "rgba(0, 0, 0, 0.38)",
-    },
-    "& .MuiOutlinedInput-root": {
-      height: "32px",
-      borderRadius: "4px",
-      "& .MuiOutlinedInput-notchedOutline": {
-        border: "none",
-      },
-    }
   };
 
   const isFieldInvalid = (value, label) => {
@@ -84,7 +67,7 @@ const LocationTransferTargetTableRow = React.memo(({ item, index, onUpdate, onRe
     return header ? parseInt(header.width) : 100;
   };
 
-  const renderEditableCell = (field, label) => (
+  const renderEditableCell = (field, label, isLocked = false) => (
     <Box sx={{
       ...cellStyle,
       flex: "0 0 auto",
@@ -92,66 +75,34 @@ const LocationTransferTargetTableRow = React.memo(({ item, index, onUpdate, onRe
       minWidth: getWidth(label),
       maxWidth: getWidth(label),
       boxSizing: "border-box",
-      borderRight: (label.includes("Cer No.") || label.includes("Size") || label.includes("Weight")) ? "1px solid #C6C6C8" : "1px solid #EDEDED"
+      // borderRight: (label.includes("Cer No.") || label.includes("Size") || label.includes("Weight")) ? "1px solid #D8D8D8" : "1px solid #ECECEC"
     }}>
-      <TextField
-        size="small"
-        fullWidth
+      <CustomTextField
         value={item[field] || ""}
-        disabled={disabled}
-        onChange={(e) => onUpdate(item.id, field, e.target.value)}
-        sx={{ ...inputStyle, ...getErrorSx(field, label) }}
+        disabled={disabled || isLocked}
+        onChange={(value) => onUpdate(item.id, field, value)}
+        width={FIELD_WIDTH}
         placeholder={label.includes("*") ? "..." : ""}
+        sx={getErrorSx(field, label)}
+        hasError={isFieldInvalid(item[field], label)}
       />
     </Box>
   );
 
-  const DropdownIcon = () => (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M11.3307 6.00004L7.9974 9.33337L4.66406 6.00004" stroke="#666666" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-
-  const renderAutocompleteCell = (field, label, options = []) => (
+  const renderAutocompleteCell = (field, label, options = [], isLocked = false) => (
     <Box sx={{
       ...cellStyle,
       width: getWidth(label),
-      borderRight: (label.includes("Cer No.") || label.includes("Color") || label.includes("Size") || label.includes("Weight"))
-        ? "1px solid #C6C6C8"
-        : "1px solid #EDEDED"
+      // borderRight: (label.includes("Cer No.") || label.includes("Color") || label.includes("Size") || label.includes("Weight"))
+      //   ? "1px solid #D8D8D8"
+      //   : "1px solid #ECECEC"
     }}>
-      <Autocomplete
-        size="small"
-        fullWidth
-        disabled={disabled}
+      <TransferSelectInput
+        value={item[field] || ""}
+        onChange={(value) => onUpdate(item.id, field, value)}
+        disabled={disabled || isLocked}
         options={options}
-        getOptionLabel={(option) => option.label || option || ""}
-        value={options.find(opt => opt.value === item[field]) || (item[field] ? { label: item[field], value: item[field] } : null)}
-        onChange={(event, newValue) => {
-          onUpdate(item.id, field, newValue ? newValue.value : "");
-        }}
-        popupIcon={<DropdownIcon />}
-        forcePopupIcon={true}
-        renderInput={(params) => (
-          <TextField
-            {...params}
-            sx={{ ...inputStyle, ...getErrorSx(field, label) }}
-            placeholder="..."
-          />
-        )}
-        renderOption={(props, option) => (
-          <Box component="li" {...props} sx={{ fontSize: "16px !important", color: "#666666 !important", fontWeight: "400 !important", fontFamily: "Calibri !important" }}>
-            {option.label || option || ""}
-          </Box>
-        )}
-        sx={{
-          width: "100%",
-          "& .MuiAutocomplete-endAdornment": {
-            right: "4px",
-            top: "calc(50% - 8px)"
-          },
-        }}
-        disableClearable
+        hasError={isFieldInvalid(item[field], label)}
       />
     </Box>
   );
@@ -160,28 +111,20 @@ const LocationTransferTargetTableRow = React.memo(({ item, index, onUpdate, onRe
     <Box sx={{
       ...cellStyle,
       width: getWidth(label),
-      borderRight: (label.includes("Cer No.") || label.includes("Color") || label.includes("Size") || label.includes("Weight"))
-        ? "1px solid #C6C6C8"
-        : "1px solid #EDEDED"
+      // borderRight: (label.includes("Cer No.") || label.includes("Color") || label.includes("Size") || label.includes("Weight"))
+      //   ? "1px solid #D8D8D8"
+      //   : "1px solid #ECECEC"
     }}>
-      <Typography sx={{
-        fontSize: "16px",
-        fontFamily: "Calibri",
-        color: disabled ? "rgba(0, 0, 0, 0.38)" : "#666666",
-        fontWeight: 400,
-        textAlign: "center",
-        width: "100%",
-        height: "32px",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        borderRadius: "4px",
-        border: isFieldInvalid(item[field], label) ? "1px solid #B41E38" : "none"
-      }}>
-        {field === "amount"
-          ? (item[field] ? formatNumberWithCommas(Number(item[field]).toFixed(2)) : "")
-          : (item[field] || "")}
-      </Typography>
+      <TransferReadonlyField
+        value={
+          field === "amount"
+            ? (item[field] ? formatNumberWithCommas(Number(item[field]).toFixed(2)) : "")
+            : (field === "stock_id" && !item.isSaved)
+              ? ""
+              : (item[field] || "")
+        }
+        hasError={isFieldInvalid(item[field], label)}
+      />
     </Box>
   );
 
@@ -190,17 +133,15 @@ const LocationTransferTargetTableRow = React.memo(({ item, index, onUpdate, onRe
       {/* Remove Icon */}
       <Box sx={{
         ...cellStyle,
-        height: "38px", width: firstColumnWidth,
+        height: "42px", width: firstColumnWidth,
         minWidth: firstColumnWidth,
         maxWidth: firstColumnWidth, borderRight: "1px solid #EDEDED"
       }}>
         <Box
           onClick={() => !disabled && onRemove(item.id)}
           sx={{
-            width: "24px",
-            height: "24px",
-            borderRadius: "50%",
-            bgcolor: "#FCEBEC",
+            width: "20px",
+            height: "20px",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
@@ -270,15 +211,17 @@ const LocationTransferTargetTableRow = React.memo(({ item, index, onUpdate, onRe
                 height: "28px",
                 objectFit: "cover",
                 borderRadius: "4px",
-                border: "1px solid #EDEDED"
+                border: "1px solid #EDEDED",
+                backgroundColor: "#F2F2F2"
               }}
             />
           ) : (
             <Box sx={{
-              width: "24px",
-              height: "24px",
-              border: "1px dashed #CCC",
+              width: "28px",
+              height: "28px",
+              border: "1px dashed #D0D0D0",
               borderRadius: "4px",
+              backgroundColor: "#F2F2F2",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
@@ -298,20 +241,21 @@ const LocationTransferTargetTableRow = React.memo(({ item, index, onUpdate, onRe
       {renderEditableCell("lot", "Lot")}
       {renderStaticCell("stone_code", "Stone Code")}
       {renderStaticCell("stone", "Stone")}
-      {renderAutocompleteCell("shape", "Shape", dropdownOptions.shape || [])}
-      {renderAutocompleteCell("size", "Size", dropdownOptions.size || [])}
-      {renderAutocompleteCell("color", "Color", dropdownOptions.color || [])}
-      {renderAutocompleteCell("cutting", "Cutting", dropdownOptions.cutting || [])}
-      {renderAutocompleteCell("quality", "Quality", dropdownOptions.quality || [])}
-      {renderAutocompleteCell("clarity", "Clarity", dropdownOptions.clarity || [])}
-      {renderAutocompleteCell("cer_type", "Cer Type", dropdownOptions.cerType || [])}
-      {renderEditableCell("cer_no", "Cer No.")}
+      {/* All stone property fields are now forced to disabled */}
+      {renderAutocompleteCell("shape", "Shape", dropdownOptions.shape || [], true)}
+      {renderAutocompleteCell("size", "Size", dropdownOptions.size || [], true)}
+      {renderAutocompleteCell("color", "Color", dropdownOptions.color || [], true)}
+      {renderAutocompleteCell("cutting", "Cutting", dropdownOptions.cutting || [], true)}
+      {renderAutocompleteCell("quality", "Quality", dropdownOptions.quality || [], true)}
+      {renderAutocompleteCell("clarity", "Clarity", dropdownOptions.clarity || [], true)}
+      {renderAutocompleteCell("cer_type", "Cer Type", dropdownOptions.cerType || [], true)}
+      {renderEditableCell("cer_no", "Cer No.", true)}
       {renderEditableCell("pcs", "Pcs *")}
       {renderEditableCell("weight", "Weight *")}
-      {renderEditableCell("price", "Price *")}
-      {renderAutocompleteCell("unit", "Unit *", dropdownOptions.unit || [])}
+      {renderEditableCell("price", "Price *", true)}
+      {renderAutocompleteCell("unit", "Unit *", dropdownOptions.unit || [], true)}
       {renderStaticCell("amount", "Amount *")}
-      {renderEditableCell("remark", "Remark")}
+      {renderEditableCell("remark", "Remark", true)}
     </Box >
   );
 });

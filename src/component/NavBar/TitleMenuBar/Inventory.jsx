@@ -335,7 +335,7 @@ const Inventory = ({ handleClick, showRedBox, openInventory,
                       <Typography
                         className={isPathActive("/inventory/report/stock-check") ? "active" : ""}
                         sx={TextMainReport}
-                      >Stock Check</Typography>
+                      >Movement</Typography>
                     </ProtectedLink>
                   </Box>
                 </Box>
@@ -346,12 +346,12 @@ const Inventory = ({ handleClick, showRedBox, openInventory,
                     sx={DropdownMenuReport}
                   >
                     <ProtectedLink
-                      to="/inventory/report/cons-check"
+                      to="/inventory/report/stock-adj"
                     >
                       <Typography
-                        className={isPathActive("/inventory/report/cons-check") ? "active" : ""}
+                        className={isPathActive("/inventory/report/stock-adj") ? "active" : ""}
                         sx={TextMainReport}
-                      >Cons Check</Typography>
+                      >Stock ADJ</Typography>
                     </ProtectedLink>
                   </Box>
                 </Box>

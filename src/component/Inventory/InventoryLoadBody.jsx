@@ -100,21 +100,16 @@ const InventoryLoadBody = React.forwardRef(
       console.log('[InventoryLoadBody] fsmState:', fsmState);
 
       if (loadItems && loadItems.length > 0) {
-        console.log('[InventoryLoadBody] Setting secondSectionRows with', loadItems.length, 'items');
-        console.log('[InventoryLoadBody] loadItems pu_item_ids:', loadItems.map(item => item.pu_item_id));
-        setSecondSectionRows(() => {
-          console.log('[InventoryLoadBody] Functional update: setting secondSectionRows to', loadItems.length, 'items');
-          return loadItems;
-        });
-      } else if (loadItems && loadItems.length === 0) {
-        if (fsmState === "saved" && secondSectionRows.length > 0) {
-          console.log('[InventoryLoadBody] loadItems is empty but secondSectionRows has data, preserving (view mode)');
-        } else {
-          console.log('[InventoryLoadBody] Clearing secondSectionRows (add/edit mode, loadItems is empty)');
-          setSecondSectionRows([]);
-        }
+        console.log('[InventoryLoadBody] Syncing secondSectionRows from loadItems');
+        setSecondSectionRows(loadItems);
       }
-    }, [loadItems, isFromDayBook, fsmState]);
+
+      else if (loadItems && loadItems.length === 0 && (fsmState === "saved" || (fsmState === "initial" && (!rows || rows.length === 0)))) {
+        console.log('[InventoryLoadBody] Clearing secondSectionRows because loadItems is empty and reset condition met');
+        setSecondSectionRows([]);
+      }
+    }, [loadItems, rows, fsmState]);
+
 
 
     const handleAddRowSecondSection = () => {
@@ -428,21 +423,26 @@ const InventoryLoadBody = React.forwardRef(
               missingFields.push(`Weight in Load ${loadItemNumber}`);
             }
 
-            // In merge mode, stone is required (only check if stone is actually missing)
-            if (
-              operationType === "merge" &&
-              (!item.stone || item.stone === "")
-            ) {
-              missingFields.push(`Stone`);
+
+            if (!item.stone || item.stone === "") {
+              missingFields.push(`Stone in Load ${loadItemNumber}`);
             }
 
             if (!item.location || item.location === "") {
-              missingFields.push(`location`);
+              missingFields.push(`Location in Load ${loadItemNumber}`);
+            }
+
+            if (!item.stock_price || item.stock_price === "" || Number(item.stock_price) <= 0) {
+              missingFields.push(`Stock Price in Load ${loadItemNumber}`);
+            }
+
+            if (!item.sale_price || item.sale_price === "" || Number(item.sale_price) <= 0) {
+              missingFields.push(`Sale Price in Load ${loadItemNumber}`);
             }
           }
         }
 
-        // 5. If there are missing fields, show them in popup
+
         if (missingFields.length > 0) {
           const uniqueMissingFields = [...new Set(missingFields)];
           return {
@@ -672,13 +672,9 @@ const InventoryLoadBody = React.forwardRef(
                     onStoneChange={onStoneChange}
                     onChange={onChange}
                     rows={
-                      // In view mode (saved), use loadItems directly if available
-                      // Otherwise, use secondSectionRows, but ensure it's empty in add mode when loadItems is empty
                       fsmState === "saved" && loadItems && loadItems.length > 0
                         ? loadItems
-                        : (fsmState !== "saved" && (!loadItems || loadItems.length === 0)
-                          ? []
-                          : secondSectionRows)
+                        : secondSectionRows
                     }
                     setRows={setSecondSectionRows}
                     firstSectionRows={rows}

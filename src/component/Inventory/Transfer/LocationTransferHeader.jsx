@@ -6,7 +6,7 @@ const LocationTransferHeader = ({ onApprove, onDayBook, invoiceNo, disableApprov
     <Box
       sx={{
         width: "calc(100% - 64px)",
-        height: "56px",
+        height: "64px",
         padding: "0px 32px",
         flexShrink: 0,
         backgroundColor: "#FFF",

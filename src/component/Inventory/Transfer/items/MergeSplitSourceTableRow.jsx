@@ -1,36 +1,35 @@
 import React from "react";
-import { TableRow, TableCell, Typography, Box } from "@mui/material";
+import { Typography, Box } from "@mui/material";
 import { formatNumberWithCommas } from "../../../../helpers/numberHelper.js";
 import { MERGE_SPLIT_SOURCE_HEADERS } from "../constants/mergeSplitHeaders";
 import { API_URL } from "../../../../config/config.js";
+import { FIELD_WIDTH, CustomTextField } from "./TransferRowInputs";
 
-const MergeSplitSourceTableRow = React.memo(({ item, index, onRemove, onUpdate, disabled = false }) => {
-
-
+const MergeSplitSourceTableRow = React.memo(({ item, index, onRemove, onUpdate, disabled = false, isExistingRecord = false }) => {
   const firstColumnWidth = parseInt(MERGE_SPLIT_SOURCE_HEADERS[0]?.width);
 
   const rowStyle = {
-    height: "38px",
+    height: "42px",
     boxSizing: "border-box",
     display: "flex",
     alignItems: "center",
     flexShrink: 0,
     overflow: "hidden",
-    bgcolor: "#FFF",
+    bgcolor: index % 2 === 0 ? "#F8F8F8" : "#FFF",
     borderBottom: "1px solid #EDEDED",
-    "&:hover": { bgcolor: "#F5F5F5" }
+    "&:hover": { bgcolor: "#F0F0F0" }
   };
 
   const cellStyle = {
-    height: "38px",
-    minHeight: "38px",
-    maxHeight: "38px",
+    height: "42px",
+    minHeight: "42px",
+    maxHeight: "42px",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
     flex: "0 0 auto",
     fontFamily: "Calibri",
-    fontSize: "14px",
+    fontSize: "16px",
     lineHeight: "1",
     padding: "0 8px",
     color: "#666666",
@@ -40,6 +39,7 @@ const MergeSplitSourceTableRow = React.memo(({ item, index, onRemove, onUpdate, 
     textOverflow: "ellipsis",
     textAlign: "center",
     boxSizing: "border-box"
+
   };
 
   const getWidth = (label) => {
@@ -55,7 +55,7 @@ const MergeSplitSourceTableRow = React.memo(({ item, index, onRemove, onUpdate, 
       minWidth: getWidth(label),
       maxWidth: getWidth(label),
       boxSizing: "border-box",
-      borderRight: (label === "Cer No." || label === "Weight") ? "1px solid #C6C6C8" : "1px solid #EDEDED",
+      // borderRight: (label === "Cer No." || label === "Weight") ? "1px solid #C6C6C8" : "1px solid #D9D9D9",
       ...customStyle
     }}>
       {content}
@@ -67,17 +67,15 @@ const MergeSplitSourceTableRow = React.memo(({ item, index, onRemove, onUpdate, 
       {/* Remove Icon */}
       <Box sx={{
         ...cellStyle,
-        height: "38px", width: firstColumnWidth,
+        height: "42px", width: firstColumnWidth,
         minWidth: firstColumnWidth,
-        maxWidth: firstColumnWidth, borderRight: "1px solid #EDEDED"
+        maxWidth: firstColumnWidth,
       }}>
         <Box
           onClick={() => !disabled && onRemove(item.id)}
           sx={{
-            width: "24px",
-            height: "24px",
-            borderRadius: "50%",
-            bgcolor: "#FCEBEC",
+            width: "20px",
+            height: "20px",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
@@ -112,7 +110,8 @@ const MergeSplitSourceTableRow = React.memo(({ item, index, onRemove, onUpdate, 
             height: "28px",
             objectFit: "cover",
             borderRadius: "4px",
-            border: "1px solid #EDEDED"
+            border: "1px solid #EDEDED",
+            backgroundColor: "#F2F2F2"
           }}
         />
       ) : null)}
@@ -132,33 +131,15 @@ const MergeSplitSourceTableRow = React.memo(({ item, index, onRemove, onUpdate, 
 
       {/* PCS */}
       {renderCell("Pcs",
-        <input
-          type="number"
+        <CustomTextField
           value={item.pcs}
-          disabled={disabled}
-          style={{
-            width: "100%",
-            height: "100%",
-            border: "none",
-            outline: "none",
-            textAlign: "center",
-            background: "transparent",
-
-            fontFamily: "Calibri",
-            fontSize: "14px",
-            lineHeight: "1",
-            padding: "0 8px",
-            color: "#666666",
-            fontWeight: 400,
-
-            appearance: "textfield"
-          }}
-          onChange={(e) => {
-            const val = e.target.value;
-
+          disabled={disabled || !!item.isSaved || isExistingRecord}
+          width={FIELD_WIDTH}
+          type="number"
+          noDecimal
+          onChange={(val) => {
             // only allow numbers & prevent negative
             if (!/^\d*$/.test(val)) return;
-
             onUpdate(item.id, "pcs", val);
           }}
         />
@@ -166,35 +147,17 @@ const MergeSplitSourceTableRow = React.memo(({ item, index, onRemove, onUpdate, 
 
       {/* WEIGHT */}
       {renderCell("Weight",
-        <input
-          type="number"
+        <CustomTextField
           value={item.weight}
-          disabled={disabled}
-          style={{
-            width: "100%",
-            height: "100%",
-            border: "none",
-            outline: "none",
-            textAlign: "center",
-            background: "transparent",
-
-            fontFamily: "Calibri",
-            fontSize: "14px",
-            lineHeight: "1",
-            padding: "0 8px",
-            color: "#666666",
-            fontWeight: 400,
-
-            appearance: "textfield"
-          }}
-          onChange={(e) => {
-            onUpdate(item.id, "weight", e.target.value);
-          }}
+          disabled={disabled || !!item.isSaved || isExistingRecord}
+          width={FIELD_WIDTH}
+          type="number"
+          onChange={(val) => onUpdate(item.id, "weight", val)}
         />
       )}
-      {renderCell("Price", item.price ? formatNumberWithCommas(Number(item.price).toFixed(2)) : "")}
+      {renderCell("Price", (item.price !== undefined && item.price !== null) ? formatNumberWithCommas(Number(item.price).toFixed(2)) : "")}
       {renderCell("Unit", item.unit)}
-      {renderCell("Amount", item.amount ? formatNumberWithCommas(Number(item.amount).toFixed(2)) : "")}
+      {renderCell("Amount", (item.amount !== undefined && item.amount !== null) ? formatNumberWithCommas(Number(item.amount).toFixed(2)) : "")}
 
     </Box>
   );

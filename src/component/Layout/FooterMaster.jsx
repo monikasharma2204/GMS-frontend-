@@ -35,7 +35,7 @@ const Footer = (props) => {
     let _id = "";
 
     if (props.method == "put") {
-    
+
       if (props.selectedData?.bank_name) {
         // Bank data structure
         _id = props.selectedData._id;
@@ -54,8 +54,8 @@ const Footer = (props) => {
 
         if (props.payLoadData) {
           data = { ...props.payLoadData };
-   
-      
+
+
           if (props.method === "put" && !data._id) {
             const idToUse = props.selectedData?._id || props.payLoadData?._id;
             if (idToUse) {
@@ -97,21 +97,21 @@ const Footer = (props) => {
         }
       }
     } else {
-     
+
       const { payLoadData } = props;
 
       if (payLoadData) {
         const { _id, ...restData } = payLoadData;
 
         data = { ...restData };
-        
+
         if (data._id !== undefined) {
           delete data._id;
         }
       } else {
         data = payLoadData;
       }
-    } 
+    }
 
     try {
       let response, statusCode;
@@ -147,11 +147,11 @@ const Footer = (props) => {
         setResponseMessage(`${statusCode}`);
       }
     } catch (error) {
-      console.error("Save error:", error.response?.data || error.message); 
+      console.error("Save error:", error.response?.data || error.message);
       if (error.response && error.response.status) {
         const statusCode = error.response.status;
         setResponseMessage(`${statusCode}`);
-      
+
         if (error.response.data?.msg) {
           setResponseMessage(`${statusCode}: ${error.response.data.msg}`);
         }
@@ -216,7 +216,7 @@ const Footer = (props) => {
   const handleSuccessClose = () => {
     setOpenSuccess(false);
     setOpenUnsuccess(false);
-    setOpenConfirm(false); 
+    setOpenConfirm(false);
     setResponseMessage("");
   };
 
@@ -255,6 +255,7 @@ const Footer = (props) => {
       <Box
         sx={{
           width: "1697px",
+          marginLeft: "222px",
           height: "65px",
           display: "flex",
           justifyContent: "center",

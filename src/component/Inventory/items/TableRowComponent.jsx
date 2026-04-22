@@ -9,7 +9,7 @@ const TableRowComponent = React.memo(
     handleDelete,
     operationType = "merge",
     selectedRowIndex = null,
-    onRowClick = () => {},
+    onRowClick = () => { },
   }) => {
     const isSelected = selectedRowIndex === index && operationType !== "merge";
 
@@ -36,8 +36,8 @@ const TableRowComponent = React.memo(
           backgroundColor: isSelected
             ? "#05595B1A"
             : index === 0
-            ? "#F8F8F8"
-            : "#FFF",
+              ? "#F8F8F8"
+              : "#FFF",
           cursor: operationType !== "merge" ? "pointer" : "default",
           "&:hover": {
             backgroundColor:
@@ -46,8 +46,8 @@ const TableRowComponent = React.memo(
                   ? "#05595B1A"
                   : "#F0F0F0"
                 : index === 0
-                ? "#F8F8F8"
-                : "#FFF",
+                  ? "#F8F8F8"
+                  : "#FFF",
           },
         }}
       >
@@ -142,24 +142,24 @@ const TableRowComponent = React.memo(
         {/* Delete Button */}
         <TableCell sx={{ ...cellStyle, width: "40px" }}>
           <IconButton
-          onClick={() => handleDelete(item._id)}
+            onClick={() => handleDelete(item._id)}
             size="small"
             sx={{ color: "#E00410", padding: "4px" }}
-        >
-          <svg
+          >
+            <svg
               width="15"
               height="15"
               viewBox="0 0 15 15"
               fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
                 d="M0.800049 3.91617H14.3M4.73755 3.91617V3.39694C4.73755 2.70839 5.03386 2.04805 5.56131 1.56118C6.08876 1.0743 6.80413 0.800781 7.55005 0.800781C8.29597 0.800781 9.01134 1.0743 9.53879 1.56118C10.0662 2.04805 10.3625 2.70839 10.3625 3.39694V3.91617M5.86255 7.03259V11.1885M9.23755 7.03259V9.11055V11.1885M2.48755 3.91617H12.6125V13.2623C12.6125 13.5377 12.494 13.8019 12.283 13.9966C12.0721 14.1914 11.7859 14.3008 11.4875 14.3008H3.61255C3.31418 14.3008 3.02803 14.1914 2.81705 13.9966C2.60608 13.8019 2.48755 13.5377 2.48755 13.2623V3.91617Z"
                 stroke="#E00410"
                 strokeLinecap="round"
                 strokeLinejoin="round"
-            />
-          </svg>
+              />
+            </svg>
           </IconButton>
         </TableCell>
       </TableRow>

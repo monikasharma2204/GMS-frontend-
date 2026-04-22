@@ -36,7 +36,8 @@ const MergeSplitBody = ({
   onDaybookIconClick,
   showWarning,
   showErrors,
-  isLoading
+  isLoading,
+  isExistingRecord
 }) => {
   const sourceTotals = useMemo(() => ({
     pcs: sourceRows.reduce((sum, row) => sum + (Number(row.pcs) || 0), 0),
@@ -51,11 +52,11 @@ const MergeSplitBody = ({
   }), [targetRows]);
 
   return (
-    <Box sx={{ backgroundColor: "#ffffff", width: "100%", maxWidth: "1632px", padding: "12px 24px 22px 24px", marginTop: "10px" }}>
+    <Box sx={{ backgroundColor: "#ffffff", width: "100%", maxWidth: "1632px", padding: "12px 24px 24px", marginTop: "10px" }}>
       <Box sx={{ width: "100%", maxWidth: "1640px" }}>
 
         {/* Transaction Info - Following Load Structure */}
-        <Box sx={{ display: "flex", justifyContent: "flex-end", paddingRight: "4px" }}>
+        <Box sx={{ display: "flex", justifyContent: "flex-end", gap: "16px", paddingRight: "4px", marginBottom: "8px" }}>
           <Typography sx={{ lineHeight: "normal", color: "#9A9A9A", fontFamily: "Calibri", fontSize: "12px", fontWeight: 400 }}>
             Transaction Date : {dayjs().format("DD/MM/YYYY")} By : Super Admin
           </Typography>
@@ -73,12 +74,14 @@ const MergeSplitBody = ({
           <Box sx={{
             maxWidth: "1650px",
             width: "100%",
-            border: "1px solid var(--Line-Table, #C6C6C8)",
+
             bgcolor: "#F8F8F8",
+            borderRadius: "5px",
+            overflow: "hidden",
           }}>
 
-            <Grid sx={{ width: "100%", maxWidth: "1650px", padding: "16px 24px 15px 24px", borderRadius: "5px 5px 0px 0px", bgcolor: "#FFF", borderBottom: "1px solid #C6C6C8" }}>
-              <Box sx={{ display: "flex" }}>
+            <Grid sx={{ width: "100%", maxWidth: "1650px", padding: "16px 24px", borderRadius: "5px 5px 0px 0px", bgcolor: "#FFF", }}>
+              <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "24px", flexWrap: "wrap", alignItems: "center" }}>
                 <Box sx={{ display: "flex", flexDirection: "column", justifyContent: "center" }}>
                   <Typography sx={{ color: "#666", fontFamily: "Calibri", fontSize: "16px", lineHeight: "normal", fontWeight: 400 }}>
                     Merge/Split No. :
@@ -90,7 +93,7 @@ const MergeSplitBody = ({
                   </Typography>
                 </Box>
 
-                <Box sx={{ display: "flex", alignItems: "center", gap: "15px", paddingLeft: "24px" }}>
+                <Box sx={{ display: "flex", alignItems: "center", gap: "15px", flexWrap: "wrap" }}>
                   <LocalizationProvider dateAdapter={AdapterDayjs}>
                     <DatePicker
                       label="Doc Date :"
@@ -111,6 +114,7 @@ const MergeSplitBody = ({
                           backgroundColor: "#FFF",
                           width: "220px",
                           height: "42px",
+                          "& fieldset": { borderColor: "#E0E2E4" },
                         },
 
                       }}
@@ -129,6 +133,7 @@ const MergeSplitBody = ({
                         backgroundColor: "#FFF",
                         width: "350px",
                         height: "42px",
+                        "& fieldset": { borderColor: "#E0E2E4" },
                       },
 
                     }}
@@ -146,6 +151,7 @@ const MergeSplitBody = ({
                         backgroundColor: "#FFF",
                         width: "350px",
                         height: "42px",
+                        "& fieldset": { borderColor: "#E0E2E4" },
                       }
                     }}
                   />
@@ -153,10 +159,13 @@ const MergeSplitBody = ({
               </Box>
             </Grid>
 
-            <Box sx={{ padding: "24px" }} >
+            <Box sx={{
+              padding: "0px 32px", borderTop: "1px solid var(--Line-Table, #C6C6C8)", borderLeft: "1px solid var(--Line-Table, #C6C6C8)",
+              borderRight: "1px solid var(--Line-Table, #C6C6C8)"
+            }} >
 
 
-              <Box sx={{ display: "flex", flexDirection: "column", gap: "24px" }}>
+              <Box sx={{ display: "flex", flexDirection: "column", gap: "24px", marginTop: "10px" }}>
                 <Box>
                   <MergeSplitSourceTable
                     rows={sourceRows}
@@ -167,6 +176,7 @@ const MergeSplitBody = ({
                     totals={sourceTotals}
                     disabled={disabled}
                     isLoading={isLoading}
+                    isExistingRecord={isExistingRecord}
                   />
                 </Box>
                 <Box>
@@ -191,7 +201,9 @@ const MergeSplitBody = ({
                 justifyContent: "space-between",
                 alignItems: "flex-start",
                 borderRadius: "4px",
-                bgcolor: "#FFF"
+                bgcolor: "#FFF",
+                gap: "24px",
+                flexWrap: "wrap"
               }}>
                 {/* Remark Section */}
 
@@ -204,22 +216,26 @@ const MergeSplitBody = ({
                   disabled={disabled}
 
                   sx={{
+                    flex: "1 1 395px",
+                    maxWidth: "395px",
                     "& .MuiOutlinedInput-root": {
                       "& fieldset": { border: "1px solid #EDEDED" },
                       padding: "8px 12px",
-                      width: "395px",
+                      width: "100%",
                       fontFamily: "Calibri",
-                      height: " 105px",
+                      minHeight: "105px",
                       fontSize: "16px",
                       color: "#666666",
-                      fontWeight: 400
+                      fontWeight: 400,
+                      borderRadius: "4px",
+                      backgroundColor: "#FFF"
                     },
                   }}
                 />
 
 
                 {/* Price Calculations Section */}
-                <Box sx={{ border: "1px solid #EDEDED", padding: "16px" }}>
+                <Box sx={{ border: "1px solid #EDEDED", padding: "16px", borderRadius: "4px", backgroundColor: "#FFF" }}>
                   <Typography sx={{ color: "#05595B", fontSize: "14px", fontWeight: 700, marginBottom: "8px", fontFamily: "Calibri", lineHeight: "normal" }}>
                     Average Price Per Unit
                   </Typography>
@@ -297,7 +313,7 @@ const MergeSplitBody = ({
 
         </Box>
       </Box>
-    </Box>
+    </Box >
 
   );
 };

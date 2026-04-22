@@ -1,8 +1,23 @@
 import React, { useState, useEffect } from "react";
 import {
-  Box, Typography, Modal, IconButton, TextField, InputAdornment,
-  Button, CircularProgress,
-  Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper
+  Box,
+  Typography,
+  Modal,
+  TextField,
+  InputAdornment,
+  Button,
+  CircularProgress,
+  Checkbox,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+  FormControl,
+  Select,
+  MenuItem,
 } from "@mui/material";
 import moment from "moment";
 import apiRequest from "../../../helpers/apiHelper";
@@ -13,15 +28,10 @@ const style = {
   top: "50%",
   left: "50%",
   transform: "translate(-50%, -50%)",
-  width: "1360px",
-  height: "862px",
+  width: 1360,
+  height: 842,
   bgcolor: "background.paper",
   borderRadius: "8px",
-  boxShadow: 24,
-  outline: "none",
-  display: "flex",
-  flexDirection: "column",
-  overflow: "hidden"
 };
 
 const TransferModalDayBook = ({ open, onClose, onSelect }) => {
@@ -29,11 +39,11 @@ const TransferModalDayBook = ({ open, onClose, onSelect }) => {
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
   const [selectedIds, setSelectedIds] = useState([]);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
 
   const fetchData = async () => {
     setLoading(true);
     try {
-      // Corrected API endpoint for Transfer Daybook
       const result = await apiRequest("GET", "/transfers");
       setData(Array.isArray(result) ? result : (result?.data || []));
     } catch (error) {
@@ -70,141 +80,462 @@ const TransferModalDayBook = ({ open, onClose, onSelect }) => {
     }
   };
 
+  const handleSelectAll = () => {
+    if (filteredData.length === 0) return;
+    const allSelected = filteredData.every(item => selectedIds.includes(item._id));
+    if (allSelected) {
+      setSelectedIds(prev => prev.filter(id => !filteredData.find(f => f._id === id)));
+    } else {
+      const newIds = filteredData.map(f => f._id);
+      setSelectedIds(prev => [...new Set([...prev, ...newIds])]);
+    }
+  };
+
   return (
-    <Modal open={open} onClose={onClose} hideBackdrop={true}>
+    <Modal open={open} onClose={onClose}>
       <Box sx={style}>
         {/* Header */}
-        <Box sx={{ bgcolor: "#05595B", px: "24px", height: "56px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <Typography sx={{ color: "#FFF", fontSize: "20px", fontWeight: 700, fontFamily: "Calibri" }}>
-            Transfer Daybook
+        <Box
+          sx={{
+            width: "100%",
+            height: "56px",
+            backgroundColor: "var(--HeadPage, #05595B)",
+            borderTopLeftRadius: "8px",
+            borderTopRightRadius: "8px",
+            justifyContent: "space-between",
+            display: "flex",
+          }}
+        >
+          <Typography
+            sx={{
+              color: "#FFF",
+              fontFamily: "Calibri",
+              fontSize: "24px",
+              fontStyle: "normal",
+              fontWeight: 900,
+              marginLeft: "32px",
+              marginTop: "10px",
+            }}
+          >
+            Location Transfer Day Book
           </Typography>
-          <IconButton onClick={onClose} size="small" sx={{ color: "#FFF" }}>
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M18 6L6 18" stroke="white" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round" />
-              <path d="M6 6L18 18" stroke="white" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round" />
+          <Box
+            sx={{
+              marginTop: "16px",
+              marginRight: "16px",
+              cursor: "pointer",
+              "&:hover svg path": {
+                fill: "#E00410",
+              },
+            }}
+            onClick={onClose}
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+            >
+              <path
+                d="M14.1535 12.0008L19.5352 6.61748C19.6806 6.47704 19.7966 6.30905 19.8764 6.12331C19.9562 5.93757 19.9982 5.7378 19.9999 5.53565C20.0017 5.3335 19.9632 5.13303 19.8866 4.94593C19.8101 4.75883 19.697 4.58885 19.5541 4.44591C19.4111 4.30296 19.2412 4.18992 19.0541 4.11337C18.867 4.03682 18.6665 3.9983 18.4644 4.00006C18.2622 4.00181 18.0624 4.04381 17.8767 4.1236C17.691 4.20339 17.523 4.31937 17.3825 4.46478L11.9992 9.84654L6.61748 4.46478C6.47704 4.31937 6.30905 4.20339 6.12331 4.1236C5.93757 4.04381 5.7378 4.00181 5.53565 4.00006C5.3335 3.9983 5.13303 4.03682 4.94593 4.11337C4.75883 4.18992 4.58885 4.30296 4.44591 4.44591C4.30296 4.58885 4.18992 4.75883 4.11337 4.94593C4.03682 5.13303 3.9983 5.3335 4.00006 5.53565C4.00181 5.7378 4.04381 5.93757 4.1236 6.12331C4.20339 6.30905 4.31937 6.47704 4.46478 6.61748L9.84654 11.9992L4.46478 17.3825C4.31937 17.523 4.20339 17.691 4.1236 17.8767C4.04381 18.0624 4.00181 18.2622 4.00006 18.4644C3.9983 18.6665 4.03682 18.867 4.11337 19.0541C4.18992 19.2412 4.30296 19.4111 4.44591 19.5541C4.58885 19.697 4.75883 19.8101 4.94593 19.8866C5.13303 19.9632 5.3335 20.0017 5.53565 19.9999C5.7378 19.9982 5.93757 19.9562 6.12331 19.8764C6.30905 19.7966 6.47704 19.6806 6.61748 19.5352L11.9992 14.1535L17.3825 19.5352C17.523 19.6806 17.691 19.7966 17.8767 19.8764C18.0624 19.9562 18.2622 19.9982 18.4644 19.9999C18.6665 20.0017 18.867 19.9632 19.0541 19.8866C19.2412 19.8101 19.4111 19.697 19.5541 19.5541C19.697 19.4111 19.8101 19.2412 19.8866 19.0541C19.9632 18.867 20.0017 18.6665 19.9999 18.4644C19.9982 18.2622 19.9562 18.0624 19.8764 17.8767C19.7966 17.691 19.6806 17.523 19.5352 17.3825L14.1535 12.0008Z"
+                fill="white"
+              />
             </svg>
-          </IconButton>
+          </Box>
         </Box>
 
         {/* Body */}
-        <Box sx={{ p: "32px 32px 0px 32px", display: "flex", flexDirection: "column", flexGrow: 1 }}>
-          <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: "24px", paddingBottom: "24px" }}>
-            <Typography sx={{ fontSize: "18px", fontWeight: 700, fontFamily: "Calibri", color: "#343434" }}>Daybook List</Typography>
-            <Box sx={{ display: "flex", gap: "12px", alignItems: "center" }}>
-              <TextField
-                placeholder="Search List..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M17.5 17.5005L13.8833 13.8838" stroke="#666666" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round" />
-                        <path d="M9.16667 15.8333C12.8486 15.8333 15.8333 12.8486 15.8333 9.16667C15.8333 5.48477 12.8486 2.5 9.16667 2.5C5.48477 2.5 2.5 5.48477 2.5 9.16667C2.5 12.8486 5.48477 15.8333 9.16667 15.8333Z" stroke="#666666" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
-                    </InputAdornment>
-                  ),
-                  sx: { color: "#9A9A9A", fontFamily: "Segoe UI", fontSize: "15px" }
-                }}
+        <Box
+          sx={{
+            backgroundColor: "#F8F8F8",
+            width: "95.2%",
+            height: "638px",
+            marginLeft: "33px",
+            marginTop: "33px",
+            paddingTop: "32px",
+          }}
+        >
+          {/* Title and Controls */}
+          <Box
+            sx={{
+              width: "1232px",
+              height: "40px",
+              marginLeft: "32px",
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
+            <Box>
+              <Typography
                 sx={{
-                  "& .MuiOutlinedInput-root": {
-                    borderRadius: "8px",
-                    backgroundColor: "#FFF",
-                    width: "354px",
-                    height: "32px"
-                  }
+                  color: "#343434",
+                  fontFamily: "Calibri",
+                  fontSize: "24px",
+                  fontStyle: "normal",
+                  fontWeight: 700,
+                  lineHeight: "normal",
                 }}
-              />
+              >
+              </Typography>
+            </Box>
+            <Box sx={{ display: "flex", gap: "12px" }}>
+              <Box
+                sx={{
+                  width: "113px",
+                  height: "38px",
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "center",
+                }}
+              >
+                <Typography
+                  sx={{
+                    color: "#343434",
+                    fontFamily: "Calibri",
+                    fontSize: "16px",
+                    fontStyle: "normal",
+                    fontWeight: 400,
+                  }}
+                >
+                  Rows per page
+                </Typography>
+              </Box>
+
+              <FormControl
+                sx={{
+                  height: "40px",
+                  width: "69px",
+                  marginRight: "10px",
+                }}
+              >
+                <Select
+                  sx={{
+                    height: "40px",
+                    width: "69px",
+                    backgroundColor: "#FFF",
+                    color: "var(--Main-Text, #343434)",
+                    fontFamily: "Calibri",
+                    fontSize: "16px",
+                    fontStyle: "normal",
+                    fontWeight: 400,
+                  }}
+                  value={rowsPerPage}
+                  onChange={(e) => setRowsPerPage(e.target.value)}
+                >
+                  <MenuItem value={10}>10</MenuItem>
+                  <MenuItem value={20}>20</MenuItem>
+                  <MenuItem value={30}>30</MenuItem>
+                </Select>
+              </FormControl>
+
+              <Box sx={{ "&:hover svg path": { fill: "#E9B238" }, marginTop: "6px", "& svg path": { fill: "#666666" }, cursor: "pointer" }}>
+                <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M8.16671 2.33398C7.85729 2.33398 7.56054 2.4569 7.34175 2.67569C7.12296 2.89449 7.00004 3.19123 7.00004 3.50065V8.16732H4.66671C4.04787 8.16732 3.45438 8.41315 3.01679 8.85074C2.57921 9.28832 2.33337 9.88181 2.33337 10.5007V19.834C2.33337 20.4528 2.57921 21.0463 3.01679 21.4839C3.45438 21.9215 4.04787 22.1673 4.66671 22.1673H7.00004V24.5007C7.00004 24.8101 7.12296 25.1068 7.34175 25.3256C7.56054 25.5444 7.85729 25.6673 8.16671 25.6673H19.8334C20.1428 25.6673 20.4395 25.5444 20.6583 25.3256C20.8771 25.1068 21 24.8101 21 24.5007V22.1673H23.3334C23.9522 22.1673 24.5457 21.9215 24.9833 21.4839C25.4209 21.0463 25.6667 20.4528 25.6667 19.834V10.5007C25.6667 9.88181 25.4209 9.28832 24.9833 8.85074C24.5457 8.41315 23.9522 8.16732 23.3334 8.16732H21V3.50065C21 3.19123 20.8771 2.89449 20.6583 2.67569C20.4395 2.4569 20.1428 2.33398 19.8334 2.33398H8.16671ZM19.8334 16.334H8.16671C7.85729 16.334 7.56054 16.4569 7.34175 16.6757C7.12296 16.8945 7.00004 17.1912 7.00004 17.5007V19.834H4.66671V10.5007H23.3334V19.834H21V17.5007C21 17.1912 20.8771 16.8945 20.6583 16.6757C20.4395 16.4569 20.1428 16.334 19.8334 16.334ZM18.6667 8.16732H9.33337V4.66732H18.6667V8.16732ZM5.83337 11.6673V14.0007H9.33337V11.6673H5.83337ZM18.6667 18.6673V23.334H9.33337V18.6673H18.6667Z" fill="white" /></svg>
+              </Box>
+
+              <Box sx={{ "&:hover svg path": { fill: "#00AA3A" }, marginTop: "6px", "& svg path": { fill: "#666666" }, cursor: "pointer" }}>
+                <svg width="25" height="25" viewBox="0 0 25 25" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M19.4175 1.7L17.8862 0H5.8275C4.9575 0 4.62125 0.645 4.62125 1.14875V5.68625H6.3125V2.06625C6.3125 1.87375 6.475 1.71125 6.6625 1.71125H15.2913C15.4812 1.71125 15.5763 1.745 15.5763 1.90125V7.92625H21.7175C21.9587 7.92625 22.0525 8.05125 22.0525 8.23375V22.9463C22.0525 23.2537 21.9275 23.3 21.74 23.3H6.6625C6.56952 23.2977 6.48106 23.2595 6.41576 23.1932C6.35047 23.127 6.31345 23.038 6.3125 22.945V21.6H4.6325V23.7188C4.61 24.4688 5.01 25 5.8275 25H22.575C23.45 25 23.7488 24.3663 23.7488 23.7887V6.48375L23.3113 6.00875L19.4175 1.7ZM17.295 1.9L17.7787 2.4425L21.0238 6.00875L21.2025 6.225H17.8862C17.6362 6.225 17.4775 6.18375 17.4112 6.1C17.345 6.01875 17.3062 5.8875 17.295 5.70875V1.9ZM15.9325 13.3337H21.6537V15.0013H15.9312L15.9325 13.3337ZM15.9325 10.0013H21.6537V11.6675H15.9312L15.9325 10.0013ZM15.9325 16.6675H21.6537V18.335H15.9312L15.9325 16.6675ZM1.25 7.0325V20.3662H14.3313V7.0325H1.25ZM7.79125 14.7875L6.99125 16.01H7.79125V17.5H3.77L6.6875 13.1125L4.1025 9.1675H6.2625L7.7925 11.4625L9.32125 9.1675H11.48L8.89 13.1125L11.8113 17.5H9.57L7.79125 14.7875Z" fill="white" /></svg>
+              </Box>
             </Box>
           </Box>
 
-          <TableContainer component={Paper} sx={{ border: "1px solid #EDEDED", borderRadius: "4px", flexGrow: 1, boxShadow: "none" }}>
-            <Table stickyHeader size="small">
-              <TableHead>
-                <TableRow sx={{ "& th": { bgcolor: "#F2F2F2", fontWeight: 700, fontFamily: "Calibri", fontSize: "14px", color: "#343434", border: "1px solid #EDEDED" } }}>
-                  <TableCell align="center" sx={{ width: "40px" }}></TableCell>
-                  <TableCell align="center" sx={{ width: "40px" }}>#</TableCell>
-                  <TableCell align="center" sx={{ width: "100px" }}>Status</TableCell>
-                  <TableCell>TranDate</TableCell>
-                  <TableCell>Doc Date</TableCell>
-                  <TableCell>Voucher No.</TableCell>
-                  <TableCell>Ref 1</TableCell>
-                  <TableCell align="right">Pcs</TableCell>
-                  <TableCell align="right">Weight</TableCell>
-                  <TableCell align="right">Amount</TableCell>
-                  <TableCell>Remark</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {loading ? (
-                  <TableRow><TableCell colSpan={11} align="center" sx={{ py: 4 }}><CircularProgress size={32} /></TableCell></TableRow>
-                ) : filteredData.length === 0 ? (
-                  <TableRow><TableCell colSpan={11} align="center" sx={{ py: 8, color: "#999", fontFamily: "Calibri" }}>No records found</TableCell></TableRow>
-                ) : (
-                  filteredData.map((item, idx) => {
-                    const targetItems = item.target_items || [];
-                    const totalPcs = targetItems.reduce((sum, s) => sum + (Number(s.pcs) || 0), 0);
-                    const totalWeight = targetItems.reduce((sum, s) => sum + (Number(s.weight) || 0), 0);
-                    const totalAmount = targetItems.reduce((sum, s) => sum + (Number(s.amount) || 0), 0);
-                    
-                    return (
-                      <TableRow
-                        key={item._id}
-                        hover
-                        onClick={() => handleSelect(item._id)}
-                        sx={{ cursor: "pointer", "& td": { fontFamily: "Calibri", fontSize: "16px", color: "#666666", borderBottom: "1px solid #EDEDED", borderRight: "1px solid #EDEDED" } }}
-                      >
-                        <TableCell align="center" sx={{ width: "40px", padding: 0 }}>
-                          <Box sx={{ display: "flex", justifyContent: "center" }}>
-                            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                              <rect x="0.5" y="0.5" width="19" height="19" rx="3.5" fill={selectedIds.includes(item._id) ? "#086E71" : "white"} stroke={selectedIds.includes(item._id) ? "#086E71" : "#BFBFBF"} />
-                              {selectedIds.includes(item._id) && (
-                                <path d="M5 10L8.5 13.5L15 7" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                              )}
-                            </svg>
-                          </Box>
-                        </TableCell>
-                        <TableCell align="center" sx={{ width: "40px" }}>{idx + 1}</TableCell>
-                        <TableCell align="center" sx={{ width: "100px" }}>
-                          <Box sx={{
-                            width: "82px",
-                            height: "27px",
-                            display: "flex",
-                            borderRadius: "5px",
-                            justifyContent: "center",
-                            bgcolor: item.status?.toLowerCase() === "approved" ? "#00AA3A33" : "#F4EEE1",
-                            color: item.status?.toLowerCase() === "approved" ? "#00AA3A" : "#C6A969",
-                            fontSize: "14px", alignItems: "center", mx: "auto"
-                          }}>
-                            {item.status || "Unapproved"}
-                          </Box>
-                        </TableCell >
-                        <TableCell sx={{ padding: "5px 16px" }} >{moment(item.createdAt).format("DD/MM/YYYY")}</TableCell>
-                        <TableCell sx={{ padding: "5px 16px" }}>{moment(item.doc_date).format("DD/MM/YYYY")}</TableCell>
-                        <TableCell sx={{ padding: "5px 16px" }}>{item.invoice_no}</TableCell>
-                        <TableCell sx={{ padding: "5px 16px" }}>{item.ref_1 || "-"}</TableCell>
-                        <TableCell sx={{ padding: "5px 16px" }} align="right">{totalPcs}</TableCell>
-                        <TableCell sx={{ padding: "5px 16px" }} align="right">{totalWeight.toFixed(4)}</TableCell>
-                        <TableCell sx={{ padding: "5px 16px" }} align="right">{formatNumberWithCommas(totalAmount.toFixed(2))}</TableCell>
-                        <TableCell sx={{ padding: "5px 16px" }}>{item.note || "-"}</TableCell>
-                      </TableRow>
-                    );
-                  })
-                )}
-              </TableBody>
-            </Table>
-          </TableContainer>
-
-          <Box sx={{ display: "flex", justifyContent: "flex-end", height: "56px", alignItems: "center" }}>
-            <Button
-              variant="contained"
-              onClick={handleConfirm}
-              disabled={selectedIds.length !== 1}
-              sx={{ width: "96px ", height: "32px", bgcolor: "#086E71", textTransform: "none", borderRadius: "4px", fontSize: "14px", fontWeight: 700, fontFamily: "Calibri", "&:hover": { bgcolor: "#044a4c" } }}
+          {/* Table */}
+          <Box
+            sx={{
+              width: "1232px",
+              marginTop: "24px",
+              marginLeft: "32px",
+              borderRadius: "5px",
+              border: "1px solid var(--Line-Table, #C6C6C8)",
+              overflowX: "auto",
+              height: "560px",
+              "&::-webkit-scrollbar": {
+                height: "10px",
+                width: "5px",
+              },
+              "&::-webkit-scrollbar-track": {
+                background: "#F8F8F8",
+                borderRadius: "5px",
+              },
+              "&::-webkit-scrollbar-thumb": {
+                background: "#919191",
+                borderRadius: "5px",
+              },
+            }}
+          >
+            <Box
+              sx={{
+                width: "fit-content",
+                height: "42px",
+                bgcolor: "#EDEDED",
+                display: "flex",
+                borderBottom: "1px solid var(--Line-Table, #C6C6C8)",
+              }}
             >
-              OK
-            </Button>
+              <Box
+                sx={{
+                  width: "100px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <Checkbox
+                  checked={filteredData.length > 0 && filteredData.every(item => selectedIds.includes(item._id))}
+                  onChange={handleSelectAll}
+                />
+                <Typography
+                  sx={{
+                    color: "var(--Main-Text, #343434)",
+                    fontFamily: "Calibri",
+                    fontSize: "16px",
+                    fontStyle: "normal",
+                    fontWeight: 700,
+                  }}
+                >
+                  #
+                </Typography>
+              </Box>
+
+              <Box sx={{ width: "120px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <Typography sx={{ color: "var(--Main-Text, #343434)", fontFamily: "Calibri", fontSize: "16px", fontWeight: 700 }}>
+                  Status
+                </Typography>
+              </Box>
+
+              <Box sx={{ width: "140px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <Typography sx={{ color: "var(--Main-Text, #343434)", fontFamily: "Calibri", fontSize: "16px", fontWeight: 700 }}>
+                  TranDate
+                </Typography>
+                <svg xmlns="http://www.w3.org/2000/svg" width="19" height="18" viewBox="0 0 19 18" fill="none">
+                  <path d="M6.5 12H3.5L8 16.5V1.5H6.5V12ZM11 3.75V16.5H12.5V6H15.5L11 1.5V3.75Z" fill="#343434" />
+                </svg>
+              </Box>
+
+              <Box sx={{ width: "140px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <Typography sx={{ color: "var(--Main-Text, #343434)", fontFamily: "Calibri", fontSize: "16px", fontWeight: 700 }}>
+                  Doc Date
+                </Typography>
+                <svg xmlns="http://www.w3.org/2000/svg" width="19" height="18" viewBox="0 0 19 18" fill="none">
+                  <path d="M6.5 12H3.5L8 16.5V1.5H6.5V12ZM11 3.75V16.5H12.5V6H15.5L11 1.5V3.75Z" fill="#343434" />
+                </svg>
+              </Box>
+
+              <Box sx={{ width: "140px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <Typography sx={{ color: "var(--Main-Text, #343434)", fontFamily: "Calibri", fontSize: "16px", fontWeight: 700 }}>
+                  Document No.
+                </Typography>
+              </Box>
+
+              <Box sx={{ width: "140px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <Typography sx={{ color: "var(--Main-Text, #343434)", fontFamily: "Calibri", fontSize: "16px", fontWeight: 700 }}>
+                  Ref 1
+                </Typography>
+              </Box>
+
+              <Box sx={{ width: "80px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <Typography sx={{ color: "var(--Main-Text, #343434)", fontFamily: "Calibri", fontSize: "16px", fontWeight: 700 }}>
+                  Pcs
+                </Typography>
+              </Box>
+
+              <Box sx={{ width: "100px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <Typography sx={{ color: "var(--Main-Text, #343434)", fontFamily: "Calibri", fontSize: "16px", fontWeight: 700 }}>
+                  Weight
+                </Typography>
+              </Box>
+
+              <Box sx={{ width: "100px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <Typography sx={{ color: "var(--Main-Text, #343434)", fontFamily: "Calibri", fontSize: "16px", fontWeight: 700 }}>
+                  Amount
+                </Typography>
+              </Box>
+
+              <Box sx={{ width: "140px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <Typography sx={{ color: "var(--Main-Text, #343434)", fontFamily: "Calibri", fontSize: "16px", fontWeight: 700 }}>
+                  Remark
+                </Typography>
+              </Box>
+            </Box>
+
+            <Box sx={{ height: "518px", overflowY: "auto" }}>
+              {loading ? (
+                <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100px" }}>
+                  <CircularProgress size={32} />
+                </Box>
+              ) : filteredData.length === 0 ? (
+                <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100px", color: "#999", fontFamily: "Calibri" }}>
+                  No records found
+                </Box>
+              ) : (
+                filteredData.map((item, idx) => (
+                  <Box
+                    key={item._id}
+                    onClick={() => handleSelect(item._id)}
+                    sx={{
+                      width: "fit-content",
+                      height: "42px",
+                      bgcolor: "#FFF",
+                      display: "flex",
+                      borderBottom: "1px solid var(--Line-Table, #EDEDED)",
+                      cursor: "pointer",
+                      "&:hover": { bgcolor: "#F0F0F0" },
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        width: "100px",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
+                      <Checkbox
+                        checked={selectedIds.includes(item._id)}
+                        onChange={() => { }} // Managed by Box onClick
+                      />
+                      <Typography
+                        sx={{
+                          color: "var(--Main-Text, #343434)",
+                          fontFamily: "Calibri",
+                          fontSize: "16px",
+                          fontStyle: "normal",
+                          fontWeight: 400,
+                        }}
+                      >
+                        {idx + 1}
+                      </Typography>
+                    </Box>
+
+                    <Box sx={{ width: "120px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <Box
+                        sx={{
+                          backgroundColor: item.status?.toLowerCase() === "approved" ? "#00AA3A33" : "#EDEDED",
+                          color: item.status?.toLowerCase() === "approved" ? "#00AA3A" : "#666666",
+                          padding: "6px 10px",
+                          borderRadius: "5px",
+                          fontFamily: "Calibri",
+                          fontSize: "14px",
+                          fontWeight: 500,
+                          textTransform: "capitalize",
+                          minWidth: "82px",
+                          textAlign: "center",
+                        }}
+                      >
+                        {item.status || "Unapproved"}
+                      </Box>
+                    </Box>
+
+                    <Box sx={{ width: "140px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <Typography sx={{ color: "#666666", fontFamily: "Calibri", fontSize: "16px", fontWeight: 400 }}>
+                        {moment(item.createdAt).format("DD/MM/YYYY")}
+                      </Typography>
+                    </Box>
+
+                    <Box sx={{ width: "140px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <Typography sx={{ color: "#666666", fontFamily: "Calibri", fontSize: "16px", fontWeight: 400 }}>
+                        {moment(item.doc_date).format("DD/MM/YYYY")}
+                      </Typography>
+                    </Box>
+
+                    <Box sx={{ width: "140px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <Typography sx={{ color: "#666666", fontFamily: "Calibri", fontSize: "16px", fontWeight: 400 }}>
+                        {item.invoice_no}
+                      </Typography>
+                    </Box>
+
+                    <Box sx={{ width: "140px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <Typography sx={{ color: "#666666", fontFamily: "Calibri", fontSize: "16px", fontWeight: 400 }}>
+                        {item.ref_1 || "-"}
+                      </Typography>
+                    </Box>
+
+                    <Box sx={{ width: "80px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <Typography sx={{ color: "#666666", fontFamily: "Calibri", fontSize: "16px", fontWeight: 400 }}>
+                        {(item.location_transfer_items || []).reduce((sum, s) => sum + (Number(s.pcs) || 0), 0)}
+                      </Typography>
+                    </Box>
+
+                    <Box sx={{ width: "100px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <Typography sx={{ color: "#666666", fontFamily: "Calibri", fontSize: "16px", fontWeight: 400 }}>
+                        {(item.location_transfer_items || []).reduce((sum, s) => sum + (Number(s.weight) || 0), 0).toFixed(3)}
+                      </Typography>
+                    </Box>
+
+                    <Box sx={{ width: "100px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <Typography sx={{ color: "#666666", fontFamily: "Calibri", fontSize: "16px", fontWeight: 400 }}>
+                        {formatNumberWithCommas((item.location_transfer_items || []).reduce((sum, s) => sum + (Number(s.amount) || 0), 0).toFixed(2))}
+                      </Typography>
+                    </Box>
+
+                    <Box sx={{ width: "140px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <Typography sx={{ color: "#666666", fontFamily: "Calibri", fontSize: "16px", fontWeight: 400 }}>
+                        {item.note || "-"}
+                      </Typography>
+                    </Box>
+                  </Box>
+                ))
+              )}
+            </Box>
           </Box>
+        </Box>
+
+        {/* Save&Cancel */}
+        <Box
+          sx={{
+            display: "flex",
+            padding: "24px 32px",
+            justifyContent: "space-between",
+            alignItems: "center",
+            flexShrink: 0,
+            borderRadius: "0px 0px 8px 8px",
+          }}
+        >
+          <Button
+            onClick={onClose}
+            sx={{
+              width: "79px",
+              height: "35px",
+              padding: "12px 24px",
+              borderRadius: "4px",
+              border: "1px solid #BFBFBF",
+              bgcolor: "#FFF",
+              textTransform: "none",
+            }}
+          >
+            <Typography sx={{ color: "#343434", fontSize: "16px", fontFamily: "Calibri", fontWeight: 700 }}>
+              Cancel
+            </Typography>
+          </Button>
+
+          <Button
+            onClick={handleConfirm}
+            disabled={selectedIds.length !== 1}
+            sx={{
+              width: "79px",
+              height: "35px",
+              padding: "12px 24px",
+              borderRadius: "4px",
+              border: selectedIds.length === 1 ? "1px solid #17C653" : "1px solid #BFBFBF",
+              bgcolor: selectedIds.length === 1 ? "var(--HeadPage, #05595B)" : "#E6E6E6",
+              textTransform: "none",
+              "&:hover": {
+                backgroundColor: selectedIds.length === 1 ? "#17C653" : "#E6E6E6",
+              },
+              "&.Mui-disabled": {
+                backgroundColor: "#E6E6E6",
+                color: "#57646E",
+                border: "1px solid #BFBFBF",
+              },
+            }}
+          >
+            <Typography sx={{ color: selectedIds.length === 1 ? "#FFF" : "#57646E", fontSize: "16px", fontFamily: "Calibri", fontWeight: 700 }}>
+              OK
+            </Typography>
+          </Button>
         </Box>
       </Box>
     </Modal>

@@ -9,14 +9,13 @@ const MergeSplitTargetTable = ({ rows, onUpdate, onRemove, onAddRow, sourceTotal
   const headerStyle = {
     display: "flex",
     alignItems: "center",
-    bgcolor: "#F2F2F2",
-    borderBottom: "1px solid #EDEDED",
+    bgcolor: "#EDEDED",
     position: "sticky",
     top: 0,
     zIndex: 2,
-    height: "32px",
-    minHeight: "32px",
-    maxHeight: "32px",
+    height: "42px",
+    minHeight: "42px",
+    maxHeight: "42px",
     padding: 0
   };
 
@@ -25,9 +24,8 @@ const MergeSplitTargetTable = ({ rows, onUpdate, onRemove, onAddRow, sourceTotal
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    borderBottom: "1px solid #EDEDED",
     fontFamily: "Calibri",
-    fontSize: "14px",
+    fontSize: "16px",
     fontWeight: 700,
     color: "#343434",
     px: 0,
@@ -40,7 +38,7 @@ const MergeSplitTargetTable = ({ rows, onUpdate, onRemove, onAddRow, sourceTotal
     display: "flex",
     alignItems: "center",
     bgcolor: "#FFFFFF",
-    height: "38px",
+    height: "42px",
     position: "sticky",
     bottom: 0,
     zIndex: 1
@@ -51,20 +49,20 @@ const MergeSplitTargetTable = ({ rows, onUpdate, onRemove, onAddRow, sourceTotal
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    borderTop: "1px solid #EDEDED",
     fontFamily: "Calibri",
     fontSize: "16px",
     fontWeight: 700,
     color: "#666666",
-    px: 1,
+    px: 0,
     flex: "0 0 auto",
+    boxSizing: "border-box",
   };
 
 
   return (
     <Box sx={{}}>
       <Box sx={{ display: "flex", alignItems: "center", gap: "24px", paddingBottom: "16px" }}>
-        <Typography sx={{ lineHeight: "26px", fontSize: "18px", fontWeight: 700, fontFamily: "Calibri", color: "#05595B" }}>
+        <Typography sx={{ lineHeight: "26px", fontSize: "18px", fontWeight: 600, fontFamily: "Calibri", color: "#333" }}>
           Merge/Split Stock
         </Typography>
         {sourceTotals.pcs > 0 && (
@@ -74,14 +72,14 @@ const MergeSplitTargetTable = ({ rows, onUpdate, onRemove, onAddRow, sourceTotal
         )}
       </Box>
 
-      <Box sx={{ border: "1px solid #EDEDED", borderRadius: "5px", bgcolor: "#FFF", overflow: "hidden" }}>
+      <Box sx={{ border: "1px solid #C6C6C8", borderRadius: "5px", bgcolor: "#FFF", overflow: "hidden" }}>
         {/* Horizontal Scroll Scrollable Container */}
         <Box sx={{
           overflowX: "auto",
           overflowY: "hidden",
 
           "&::-webkit-scrollbar": {
-            height: "4px"
+            height: "6px"
           },
           "&::-webkit-scrollbar-thumb": {
             background: "#919191",
@@ -99,7 +97,7 @@ const MergeSplitTargetTable = ({ rows, onUpdate, onRemove, onAddRow, sourceTotal
                   minWidth: parseInt(h.width),
                   maxWidth: parseInt(h.width),
                   boxSizing: "border-box",
-                  borderRight: (h.label.includes("Cer No.") || h.label.includes("Color") || h.label.includes("Size") || h.label.includes("Weight")) ? "1px solid #C6C6C8" : "1px solid #EDEDED"
+                  // borderRight: (h.label.includes("Cer No.") || h.label.includes("Color") || h.label.includes("Size") || h.label.includes("Weight")) ? "1px solid #C6C6C8" : "1px solid #D9D9D9"
                 }}>
                   {h.label}
                 </Box>
@@ -108,7 +106,7 @@ const MergeSplitTargetTable = ({ rows, onUpdate, onRemove, onAddRow, sourceTotal
 
             {/* Table Body - Vertical Scroll Container */}
             <Box sx={{
-              height: "162px",
+              height: "168px",
               overflowY: "auto",
               overflowX: "hidden",
               scrollbarWidth: "none",
@@ -121,7 +119,7 @@ const MergeSplitTargetTable = ({ rows, onUpdate, onRemove, onAddRow, sourceTotal
             }}>
               {isLoading ? (
                 [...Array(4)].map((_, i) => (
-                  <Box key={i} sx={{ display: "flex", alignItems: "center", height: "38px", borderBottom: "1px solid #EDEDED" }}>
+                  <Box key={i} sx={{ display: "flex", alignItems: "center", height: "42px", bgcolor: i % 2 === 0 ? "#F8F8F8" : "#FFF" }}>
                     {MERGE_SPLIT_TARGET_HEADERS.map((h, j) => {
                       let sw = 72;
                       const label = h.label.trim().replace(" *", "");
@@ -161,7 +159,7 @@ const MergeSplitTargetTable = ({ rows, onUpdate, onRemove, onAddRow, sourceTotal
                 ))
               ) : rows.length === 0 ? (
                 <Box sx={{ fontSize: "14px", fontWeight: 400, lineHeight: "normal", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "#999", fontFamily: "Calibri" }}>
-                  Please add items to the table above before entering details here.
+
                 </Box>
               ) : (
                 rows.map((row, idx) => (
@@ -182,13 +180,17 @@ const MergeSplitTargetTable = ({ rows, onUpdate, onRemove, onAddRow, sourceTotal
             {/* Table Footer */}
             <Box sx={{
               ...footerStyle,
-              borderTop: isLoading ? "none" : footerStyle.borderTop
             }}>
               {MERGE_SPLIT_TARGET_HEADERS.map((h, i) => {
                 let content = "";
-                if (h.label.trim() === "Pcs *") content = targetTotals.pcs;
-                else if (h.label.trim() === "Weight *") content = targetTotals.weight.toFixed(3);
-                else if (h.label.trim() === "Amount *") content = targetTotals.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                const headerLabel = h.label.trim();
+                const isTotalColumn = headerLabel.includes("Pcs") || headerLabel.includes("Weight") || headerLabel.includes("Amount");
+                const isLabelColumn = headerLabel === "Stock ID";
+
+                if (headerLabel === "Pcs *") content = targetTotals.pcs;
+                else if (headerLabel === "Weight *") content = targetTotals.weight.toFixed(3);
+                else if (headerLabel === "Amount *") content = targetTotals.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                else if (isLabelColumn) content = "Total";
 
                 return (
                   <Box key={i} sx={{
@@ -196,7 +198,7 @@ const MergeSplitTargetTable = ({ rows, onUpdate, onRemove, onAddRow, sourceTotal
                     width: h.width,
                     minWidth: h.width,
                     maxWidth: h.width,
-                    borderTop: isLoading ? "none" : footerCellStyle.borderTop,
+                    borderTop: "1px solid #C6C6C8",
                     borderBottom: isLoading ? "1px solid #EDEDED" : "none",
                   }}>
                     {isLoading ? (
@@ -249,7 +251,7 @@ const MergeSplitTargetTable = ({ rows, onUpdate, onRemove, onAddRow, sourceTotal
             fontFamily: "Calibri",
             color: "#1B84FF",
             fontWeight: 700,
-
+            paddingLeft: 0,
           }}
         >
           Add Row

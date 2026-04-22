@@ -114,11 +114,11 @@ const CustomTextField = ({
 
     if (formatWithCommas && formatNumberWithCommas && newValue !== "") {
       let newCursorPos = cursorPosInUnformatted;
-      
+
       if (!noDecimal && newValue.includes(".")) {
         const decimalIndex = newValue.indexOf(".");
         const integerPart = newValue.substring(0, decimalIndex);
-        
+
         if (cursorPosInUnformatted <= decimalIndex) {
           const digitsBeforeCursor = integerPart.substring(0, cursorPosInUnformatted);
           if (digitsBeforeCursor) {
@@ -134,7 +134,7 @@ const CustomTextField = ({
           newCursorPos = formatNumberWithCommas(parseInt(digitsBeforeCursor)).length;
         }
       }
-      
+
       cursorPositionRef.current = Math.min(Math.max(0, newCursorPos), formattedValue.length);
     }
 
@@ -146,7 +146,7 @@ const CustomTextField = ({
     if (type === "number" && internalValue !== "") {
       const cleanValue = formatWithCommas ? internalValue.replace(/,/g, "") : internalValue;
       const num = parseFloat(cleanValue);
-      
+
       if (!isNaN(num)) {
         if (noDecimal) {
           const rounded = Math.round(num).toString();

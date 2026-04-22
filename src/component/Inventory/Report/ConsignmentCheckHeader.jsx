@@ -1,7 +1,7 @@
 import React from "react";
-import { Box, Typography } from "@mui/material";
+import { Box, Typography, Button } from "@mui/material";
 
-const ConsignmentCheckHeader = ({ onExportExcel }) => {
+const ConsignmentCheckHeader = ({ onExportExcel, onAdjust, onDayBook }) => {
     return (
         <>
             <Box
@@ -38,6 +38,53 @@ const ConsignmentCheckHeader = ({ onExportExcel }) => {
                 </Box>
 
                 <Box sx={{ display: "flex", alignItems: "center" }}>
+
+                    <Box sx={{ display: "flex", alignItems: "center", gap: "12px", marginRight: "32px" }}>
+                        <Button
+                            onClick={onAdjust}
+                            sx={{
+                                textTransform: "none",
+                                height: "35px",
+                                width: "100px",
+                                borderRadius: "4px",
+                                backgroundColor: "#E6E6E6",
+                                color: "#57646E",
+                                fontFamily: "Calibri",
+                                fontSize: "16px",
+                                fontStyle: "normal",
+                                fontWeight: 700,
+                                lineHeight: "normal",
+                                letterSpacing: "1px",
+                                "&:hover": {
+                                    backgroundColor: "#D9D9D9",
+                                }
+                            }}
+                        >
+                            Adjust
+                        </Button>
+                        <Button
+                            onClick={onDayBook}
+                            sx={{
+                                textTransform: "none",
+                                height: "35px",
+                                width: "115px",
+                                borderRadius: "4px",
+                                backgroundColor: "#C6A969",
+                                color: "#FFF",
+                                fontFamily: "Calibri",
+                                fontSize: "16px",
+                                fontStyle: "normal",
+                                fontWeight: 700,
+                                lineHeight: "normal",
+                                letterSpacing: "1px",
+                                "&:hover": {
+                                    backgroundColor: "#B0955B",
+                                }
+                            }}
+                        >
+                            Daybook
+                        </Button>
+                    </Box>
 
                     <Box
                         sx={{

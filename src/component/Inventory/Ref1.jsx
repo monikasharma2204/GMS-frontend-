@@ -1,7 +1,6 @@
 import { TextField } from "@mui/material";
 
-const Ref1 = ({ onRef1Change, ref1, disabled = false }) => {
-
+const Ref1 = ({ onRef1Change, ref1, disabled = false, width = "340px" }) => {
   return (
     <TextField
       id="outlined-required"
@@ -27,7 +26,7 @@ const Ref1 = ({ onRef1Change, ref1, disabled = false }) => {
         "& .MuiOutlinedInput-root": {
           borderRadius: "8px",
           backgroundColor: "#FFF",
-          width: "340px",
+          width: width,
           marginLeft: "20px",
           height: "42px",
           "&:hover .MuiOutlinedInput-notchedOutline": {

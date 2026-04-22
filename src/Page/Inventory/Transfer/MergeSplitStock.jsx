@@ -32,6 +32,7 @@ const MergeSplitStock = () => {
   const [originalData, setOriginalData] = useState(null);
   const [isApproved, setIsApproved] = useState(false);
   const [openSuccessModal, setOpenSuccessModal] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("Successfully!");
   const [openErrorModal, setOpenErrorModal] = useState(false);
   const [errorMessage, setErrorMessage] = useState("Unsuccessfully!");
   const [openSaveConfirm, setOpenSaveConfirm] = useState(false);
@@ -51,7 +52,7 @@ const MergeSplitStock = () => {
     id: s._id || s.id || Date.now(),
     db_id: s._id || s.id || null,
     image: s.image || "",
-    stock_id: s.stock_id || "",
+    stock_id: s.stock_id || s.stock_item?.stock_id || "",
     location: s.location?.location_name || s.location_name || "",
     location_id: s.location?._id || s.location || s.location_id || "",
     lot: s.lot_no || s.lot || "",
@@ -68,9 +69,9 @@ const MergeSplitStock = () => {
     pcs: Number(s.pcs) || 0,
     availablePcs: Number(s.pcs) || 0,
     weight: Number(s.weight) || 0,
-    price: Number(s.price) || 0,
+    price: Number(s.price || s.avg_price) || 0,
     unit: s.unit || "pcs",
-    amount: Number(s.amount) || 0,
+    amount: Number(s.amount) || ((s.unit?.toLowerCase() === "pcs" ? (Number(s.pcs) || 0) : (Number(s.weight) || 0)) * (Number(s.price || s.avg_price) || 0)) || 0,
     remark: s.remark || "",
   }), []);
 
@@ -78,7 +79,7 @@ const MergeSplitStock = () => {
     id: item._id || item.id || `${Date.now()}-${index}`,
     db_id: item._id || null,
     image: item.image || "",
-    stock_id: item.stock_id || "",
+    stock_id: item.stock_id || item.stock_item?.stock_id || "",
     location: item.location || "",
     location_id: item.location || item.location_id || "",
     lot: item.lot_no || item.lot || "",
@@ -94,9 +95,9 @@ const MergeSplitStock = () => {
     cer_no: item.cer_no || "",
     pcs: Number(item.pcs) || 0,
     weight: Number(item.weight) || 0,
-    price: Number(item.price) || 0,
+    price: Number(item.price || item.avg_price) || 0,
     unit: item.unit || "pcs",
-    amount: Number(item.amount) || 0,
+    amount: Number(item.amount) || ((item.unit?.toLowerCase() === "pcs" ? (Number(item.pcs) || 0) : (Number(item.weight) || 0)) * (Number(item.price || item.avg_price) || 0)) || 0,
     remark: item.remark || "",
   }), []);
 
@@ -344,7 +345,11 @@ const MergeSplitStock = () => {
       setOriginalData(snapshot);
       setFsmState("saved");
       setIsEditMode(false);
+      setSuccessMessage("Merge/Split saved successfully!");
       setOpenSuccessModal(true);
+      if (savedId) {
+        await fetchMergeSplitRecord(savedId);
+      }
     } catch (error) {
       setErrorMessage(error?.response?.data?.error || error?.message || "Unsuccessfully!");
       setOpenErrorModal(true);
@@ -473,6 +478,7 @@ const MergeSplitStock = () => {
       setIsApproved(true);
       setIsEditMode(false);
       setFsmState("saved");
+      setSuccessMessage("Approved successfully!");
       setOpenSuccessModal(true);
     } catch (error) {
       setErrorMessage(error?.response?.data?.error || error?.message || "Unsuccessfully!");
@@ -494,10 +500,10 @@ const MergeSplitStock = () => {
         setIsApproved(record.status?.toLowerCase() === "approved");
 
         if (Array.isArray(record.stock_items)) {
-          setSourceRows(record.stock_items.map(normalizeSourceRow));
+          setSourceRows(record.stock_items.map(s => ({ ...normalizeSourceRow(s), isSaved: true })));
         }
         if (Array.isArray(record.merge_and_split_items)) {
-          setTargetRows(record.merge_and_split_items.map((it, idx) => normalizeTargetRow(it, idx)));
+          setTargetRows(record.merge_and_split_items.map((it, idx) => ({ ...normalizeTargetRow(it, idx), isSaved: true })));
         }
 
         setFsmState("saved");
@@ -515,7 +521,7 @@ const MergeSplitStock = () => {
   };
 
   return (
-    <Box sx={{ display: "flex", backgroundColor: "#F4F7F7", minHeight: "100vh" }}>
+    <Box sx={{ display: "flex", backgroundColor: "#FFF", minHeight: "100vh" }}>
       <NavBar />
       <Box sx={{ marginLeft: "220px", flexGrow: 1, display: "flex", flexDirection: "column", paddingBottom: "60px" }}>
         <Header />
@@ -551,6 +557,7 @@ const MergeSplitStock = () => {
             showWarning={showWarning}
             showErrors={showErrors}
             isLoading={isBodyLoading}
+            isExistingRecord={!!currentMergeSplitId}
           />
         </Box>
       </Box>
@@ -576,6 +583,7 @@ const MergeSplitStock = () => {
       <SuccessModal
         open={openSuccessModal}
         onClose={() => setOpenSuccessModal(false)}
+        message={successMessage}
       />
       <ErrorModal
         open={openErrorModal}
@@ -584,15 +592,13 @@ const MergeSplitStock = () => {
       />
       <CustomConfirmDialog
         open={openSaveConfirm}
-        onClose={(confirmed) => onConfirmSave(!!confirmed)}
         onConfirm={onConfirmSave}
-        title="Confirm save"
+        title="Would you like to save?"
       />
-      <ApprovalModal
+      <CustomConfirmDialog
         open={openApproveConfirm}
         onConfirm={onConfirmApprove}
-        onClose={() => setOpenApproveConfirm(false)}
-        title="Approve Confirmation"
+        title="Would you like to approve?"
       />
       <ValidationWarningBanner
         show={showWarningBanner}

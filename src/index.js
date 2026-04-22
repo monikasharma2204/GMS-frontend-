@@ -298,7 +298,7 @@ const router = createBrowserRouter([
         element: <StockMovementReportPage />,
       },
       {
-        path: "inventory/report/cons-check",
+        path: "inventory/report/stock-adj",
         element: <ConsignmentCheckPage />,
       },
       {

@@ -1,6 +1,4 @@
-/**
- * Table header configurations for different components
- */
+
 
 export const FIRST_SECTION_HEADERS = [
   { label: "#", width: "40px" },

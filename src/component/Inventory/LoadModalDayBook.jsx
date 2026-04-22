@@ -112,7 +112,7 @@ const LoadModalDayBook = ({
     try {
       const response = await apiRequest("GET", "/loads", {});
       const dataWithCheckbox = response.map(item => ({
-        ...item, 
+        ...item,
         checked: false
       }));
       setLoadData(dataWithCheckbox);
@@ -135,14 +135,14 @@ const LoadModalDayBook = ({
 
   // Handle checkbox change
   const handleCheckboxChange = (item) => {
-    const updatedData = filteredData.map(load => 
-      load._id === item._id 
+    const updatedData = filteredData.map(load =>
+      load._id === item._id
         ? { ...load, checked: !load.checked }
         : load
     );
     setFilteredData(updatedData);
-    setLoadData(prev => prev.map(load => 
-      load._id === item._id 
+    setLoadData(prev => prev.map(load =>
+      load._id === item._id
         ? { ...load, checked: !load.checked }
         : load
     ));
@@ -267,7 +267,7 @@ const LoadModalDayBook = ({
                   marginTop: "10px",
                 }}
               >
-              Load Day Book
+                Load Day Book
               </Typography>
               <Box
                 sx={{
@@ -332,7 +332,7 @@ const LoadModalDayBook = ({
                       lineHeight: "normal",
                     }}
                   >
-                  
+
                   </Typography>
                 </Box>
                 <Box sx={{ display: "flex", gap: "12px" }}>
@@ -814,7 +814,7 @@ const LoadModalDayBook = ({
                     </Typography>
                   </Box>
 
-                
+
 
                   <Box
                     sx={{
@@ -1120,7 +1120,7 @@ const LoadModalDayBook = ({
                         </Typography>
                       </Box>
 
-                     
+
 
                       <Box
                         sx={{
@@ -1221,7 +1221,7 @@ const LoadModalDayBook = ({
                   flexShrink: 0,
                   borderRadius: "4px",
                   border: isOkButtonEnabled ? "1px solid #17C653" : "1px solid #BFBFBF",
-                 
+
                   bgcolor: isOkButtonEnabled ? "var(--HeadPage, #05595B)" : "#E6E6E6",
                   textTransform: "none",
                   "&:hover": {

@@ -106,7 +106,7 @@ const Homey = () => {
 
   const theme = useTheme();
   const isAbove1600 = useMediaQuery("(min-width:1600px)");
- 
+
 
   const boxConfig = {
     DashBoard: { icon: <DashboardIcon />, text: "Dashboard" },
@@ -146,7 +146,7 @@ const Homey = () => {
     Primary: { icon: <PrimaryIcon />, text: "Primary" },
     Consignment: { icon: <ConsignmentIcon />, text: "Consignment" },
     Load: { icon: <LoadIcon />, text: "Load" },
-    "Stock Check": { icon: <LoadIcon />, text: "Stock Check" },
+    "Movement": { icon: <LoadIcon />, text: "Movement" },
     "Merge & Split": { icon: <LoadIcon />, text: "Merge & Split" },
     Transfer: { icon: <LoadIcon />, text: "Transfer" },
     Sale: { icon: <SaleIcon />, text: "Sale" },
@@ -253,7 +253,7 @@ const Homey = () => {
         setSelected={setCreatedBoxes}
         max={MAX_BOXES}
         // onReset={handleReset}
-        onOk={handleSave} 
+        onOk={handleSave}
       />
 
       <DeleteShortcutModal
@@ -261,8 +261,8 @@ const Homey = () => {
         open={removeDialogOpen}
         onClose={handleCloseRemoveDialog}
         onConfirm={handleConfirmRemove}
-        
-        
+
+
       />
 
       {/* External Boxes Section */}
@@ -279,11 +279,11 @@ const Homey = () => {
             overflow: "hidden",
             // height: "calc(100vh - 72px)",
 
-            height: isAbove1600 ?  "calc(100vh - 72px)" : "100%",
+            height: isAbove1600 ? "calc(100vh - 72px)" : "100%",
             backgroundColor: "#FFFFFF",
             // boxShadow: "0px 4px 20px rgb(0 0 0 / 10%)",
-            
-    
+
+
           }}
         >
           <Box
@@ -311,7 +311,7 @@ const Homey = () => {
               flexWrap: "wrap",
               columnGap: "10px",
               rowGap: "10px",
-              height: isAbove1600 ?  "700px" : "100%",
+              height: isAbove1600 ? "700px" : "100%",
               // rowGap: "62px",
               justifyContent: externalBoxes.length > 0 ? "center" : "center",
               alignContent: "center",

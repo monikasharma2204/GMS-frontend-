@@ -3,20 +3,25 @@ import { Box, Typography, Button, Skeleton } from "@mui/material";
 import { LOCATION_TRANSFER_TARGET_HEADERS } from "./constants/locationTransferHeaders";
 import LocationTransferTargetTableRow from "./items/LocationTransferTargetTableRow";
 
-const LocationTransferTargetTable = ({ rows, onUpdate, onRemove, onAddRow, sourceTotals, targetTotals, dropdownOptions, disabled = false, showErrors = false, isLoading = false, activeBatchIndex, setActiveBatchIndex, sourceRows = [] }) => {
+const LocationTransferTargetTable = ({ rows, onUpdate, onRemove, onAddRow, activeBatchIndex, setActiveBatchIndex, sourceRows = [], dropdownOptions, disabled = false, showErrors = false, isLoading = false }) => {
   const tableWidth = LOCATION_TRANSFER_TARGET_HEADERS.reduce((sum, h) => sum + parseInt(h.width), 0);
+
+  const totals = React.useMemo(() => ({
+    pcs: rows.reduce((sum, row) => sum + (Number(row.pcs) || 0), 0),
+    weight: rows.reduce((sum, row) => sum + (Number(row.weight) || 0), 0),
+    amount: rows.reduce((sum, row) => sum + (Number(row.amount) || 0), 0)
+  }), [rows]);
 
   const headerStyle = {
     display: "flex",
     alignItems: "center",
-    bgcolor: "#F2F2F2",
-    borderBottom: "1px solid #EDEDED",
+    bgcolor: "#EDEDED",
     position: "sticky",
     top: 0,
     zIndex: 2,
-    height: "32px",
-    minHeight: "32px",
-    maxHeight: "32px",
+    height: "42px",
+    minHeight: "42px",
+    maxHeight: "42px",
     padding: 0
   };
 
@@ -25,9 +30,8 @@ const LocationTransferTargetTable = ({ rows, onUpdate, onRemove, onAddRow, sourc
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    borderBottom: "1px solid #EDEDED",
     fontFamily: "Calibri",
-    fontSize: "14px",
+    fontSize: "16px",
     fontWeight: 700,
     color: "#343434",
     px: 0,
@@ -40,7 +44,7 @@ const LocationTransferTargetTable = ({ rows, onUpdate, onRemove, onAddRow, sourc
     display: "flex",
     alignItems: "center",
     bgcolor: "#FFFFFF",
-    height: "38px",
+    height: "42px",
     position: "sticky",
     bottom: 0,
     zIndex: 1
@@ -56,8 +60,9 @@ const LocationTransferTargetTable = ({ rows, onUpdate, onRemove, onAddRow, sourc
     fontSize: "16px",
     fontWeight: 700,
     color: "#666666",
-    px: 1,
+    px: 0,
     flex: "0 0 auto",
+    boxSizing: "border-box"
   };
 
 
@@ -70,15 +75,15 @@ const LocationTransferTargetTable = ({ rows, onUpdate, onRemove, onAddRow, sourc
         mb: "16px"
       }}>
         <Box sx={{ display: "flex", alignItems: "center", gap: "12px" }}>
-          <Typography sx={{ color: "#05595B", fontFamily: "Calibri", fontSize: "18px", fontWeight: 700 }}>
+          <Typography sx={{ color: "#33", fontFamily: "Calibri", fontSize: "18px", fontWeight: 600 }}>
             Location Transfer
           </Typography>
           {sourceRows.length > 0 && (
-            <Typography sx={{ 
-              color: (showErrors && rows.reduce((sum, r) => sum + (Number(r.pcs) || 0), 0) !== Number(sourceRows[activeBatchIndex]?.pcs)) ? "#B41E38" : "#9A9A9A", 
-              fontFamily: "Calibri", 
-              fontSize: "14px", 
-              fontWeight: 400 
+            <Typography sx={{
+              color: (showErrors && rows.reduce((sum, r) => sum + (Number(r.pcs) || 0), 0) !== Number(sourceRows[activeBatchIndex]?.pcs)) ? "#B41E38" : "#9A9A9A",
+              fontFamily: "Calibri",
+              fontSize: "14px",
+              fontWeight: 400
             }}>
               Pcs fields are required ({rows.reduce((sum, r) => sum + (Number(r.pcs) || 0), 0)}/{sourceRows[activeBatchIndex]?.pcs} items)
             </Typography>
@@ -87,41 +92,48 @@ const LocationTransferTargetTable = ({ rows, onUpdate, onRemove, onAddRow, sourc
 
         {/* Batch Tabs */}
         {sourceRows.length > 0 && (
-          <Box sx={{ display: "flex", alignItems: "center", gap: "12px" }}>
-            <Typography sx={{ color: "#666", fontFamily: "Calibri", fontSize: "14px", fontWeight: 400 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            <Typography sx={{ color: "#333", fontFamily: "Calibri", fontSize: "18px", fontWeight: 600 }}>
               Batch :
             </Typography>
-            <Box sx={{ display: "flex", gap: "16px" }}>
+            <Box sx={{ display: "flex", gap: "8px" }}>
               {sourceRows.map((_, idx) => (
-                <Typography
+                <Button
                   key={idx}
                   onClick={() => setActiveBatchIndex(idx)}
                   sx={{
-                    fontSize: "16px",
+                    minWidth: "39px",
+                    height: "39px",
+                    padding: "0",
+                    borderRadius: "3px",
+                    backgroundColor: activeBatchIndex === idx ? "#E0E0E0" : "#F5F5F5",
+                    color: activeBatchIndex === idx ? "#000" : "#666",
                     fontFamily: "Calibri",
-                    cursor: "pointer",
-                    color: activeBatchIndex === idx ? "#05595B" : "#9A9A9A",
-                    fontWeight: activeBatchIndex === idx ? 700 : 400,
-                    borderBottom: activeBatchIndex === idx ? "2px solid #05595B" : "none",
-                    pb: "2px"
+                    fontSize: "14px",
+                    fontWeight: 600,
+                    textTransform: "none",
+                    transition: "all 0.2s",
+                    "&:hover": {
+                      backgroundColor: activeBatchIndex === idx ? "#E0E0E0" : "#E8E8E8",
+                    },
                   }}
                 >
                   {idx + 1}
-                </Typography>
+                </Button>
               ))}
             </Box>
           </Box>
         )}
       </Box>
 
-      <Box sx={{ border: "1px solid #EDEDED", borderRadius: "5px", bgcolor: "#FFF", overflow: "hidden" }}>
+      <Box sx={{ border: "1px solid #C6C6C8", borderRadius: "5px", bgcolor: "#FFF", overflow: "hidden" }}>
         {/* Horizontal Scroll Scrollable Container */}
         <Box sx={{
           overflowX: "auto",
           overflowY: "hidden",
 
           "&::-webkit-scrollbar": {
-            height: "4px"
+            height: "6px"
           },
           "&::-webkit-scrollbar-thumb": {
             background: "#919191",
@@ -139,7 +151,7 @@ const LocationTransferTargetTable = ({ rows, onUpdate, onRemove, onAddRow, sourc
                   minWidth: parseInt(h.width),
                   maxWidth: parseInt(h.width),
                   boxSizing: "border-box",
-                  borderRight: (h.label.includes("Cer No.") || h.label.includes("Color") || h.label.includes("Size") || h.label.includes("Weight")) ? "1px solid #C6C6C8" : "1px solid #EDEDED"
+                  // borderRight: (h.label.includes("Cer No.") || h.label.includes("Color") || h.label.includes("Size") || h.label.includes("Weight")) ? "1px solid #C6C6C8" : "1px solid #D9D9D9"
                 }}>
                   {h.label}
                 </Box>
@@ -148,7 +160,7 @@ const LocationTransferTargetTable = ({ rows, onUpdate, onRemove, onAddRow, sourc
 
             {/* Table Body - Vertical Scroll Container */}
             <Box sx={{
-              height: "162px",
+              height: "168px",
               overflowY: "auto",
               overflowX: "hidden",
               scrollbarWidth: "none",
@@ -161,7 +173,7 @@ const LocationTransferTargetTable = ({ rows, onUpdate, onRemove, onAddRow, sourc
             }}>
               {isLoading ? (
                 [...Array(4)].map((_, i) => (
-                  <Box key={i} sx={{ display: "flex", alignItems: "center", height: "38px", borderBottom: "1px solid #EDEDED" }}>
+                  <Box key={i} sx={{ display: "flex", alignItems: "center", height: "42px", bgcolor: i % 2 === 0 ? "#F8F8F8" : "#FFF" }}>
                     {LOCATION_TRANSFER_TARGET_HEADERS.map((h, j) => {
                       let sw = 72;
                       const label = h.label.trim().replace(" *", "");
@@ -201,7 +213,7 @@ const LocationTransferTargetTable = ({ rows, onUpdate, onRemove, onAddRow, sourc
                 ))
               ) : rows.length === 0 ? (
                 <Box sx={{ fontSize: "14px", fontWeight: 400, lineHeight: "normal", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "#999", fontFamily: "Calibri" }}>
-                  Please add items to the table above before entering details here.
+
                 </Box>
               ) : (
                 rows.map((row, idx) => (
@@ -226,9 +238,10 @@ const LocationTransferTargetTable = ({ rows, onUpdate, onRemove, onAddRow, sourc
             }}>
               {LOCATION_TRANSFER_TARGET_HEADERS.map((h, i) => {
                 let content = "";
-                if (h.label.trim() === "Pcs *") content = targetTotals.pcs;
-                else if (h.label.trim() === "Weight *") content = targetTotals.weight.toFixed(3);
-                else if (h.label.trim() === "Amount *") content = targetTotals.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                const label = h.label.trim();
+                if (label.includes("Pcs")) content = totals.pcs || "0";
+                else if (label.includes("Weight")) content = (totals.weight || 0).toFixed(3);
+                else if (label.includes("Amount")) content = (totals.amount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
                 return (
                   <Box key={i} sx={{
@@ -236,7 +249,7 @@ const LocationTransferTargetTable = ({ rows, onUpdate, onRemove, onAddRow, sourc
                     width: h.width,
                     minWidth: h.width,
                     maxWidth: h.width,
-                    borderTop: isLoading ? "none" : footerCellStyle.borderTop,
+                    borderTop: isLoading ? "none" : "1px solid #C6C6C8",
                     borderBottom: isLoading ? "1px solid #EDEDED" : "none",
                   }}>
                     {isLoading ? (
@@ -273,26 +286,34 @@ const LocationTransferTargetTable = ({ rows, onUpdate, onRemove, onAddRow, sourc
         </Box>
       </Box>
 
-      {/* Add Row Button */}
-      <Box>
+      <Box sx={{ display: "flex", justifyContent: "flex-start", marginTop: "11px" }}>
         <Button
           onClick={onAddRow}
           disabled={disabled}
-          startIcon={<svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-            <path d="M13 8H8V13C8 13.2652 7.89464 13.5196 7.70711 13.7071C7.51957 13.8946 7.26522 14 7 14C6.73478 14 6.48043 13.8946 6.29289 13.7071C6.10536 13.5196 6 13.2652 6 13V8H1C0.734784 8 0.48043 7.89464 0.292893 7.70711C0.105357 7.51957 0 7.26522 0 7C0 6.73478 0.105357 6.48043 0.292893 6.29289C0.48043 6.10536 0.734784 6 1 6H6V1C6 0.734784 6.10536 0.480429 6.29289 0.292893C6.48043 0.105357 6.73478 0 7 0C7.26522 0 7.51957 0.105357 7.70711 0.292893C7.89464 0.480429 8 0.734784 8 1V6H13C13.2652 6 13.5196 6.10536 13.7071 6.29289C13.8946 6.48043 14 6.73478 14 7C14 7.26522 13.8946 7.51957 13.7071 7.70711C13.5196 7.89464 13.2652 8 13 8Z" fill="currentColor" />
-          </svg>
-          }
           sx={{
+            display: "flex",
+            cursor: "pointer",
             textTransform: "none",
-            fontSize: "18px",
-            lineHeight: "normal",
-            fontFamily: "Calibri",
-            color: "#1B84FF",
-            fontWeight: 700,
-
+            padding: 0,
+            "&:hover": { bgcolor: "transparent" }
           }}
         >
-          Add Row
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M18 12.9961H13V17.9961C13 18.2613 12.8946 18.5157 12.7071 18.7032C12.5196 18.8907 12.2652 18.9961 12 18.9961C11.7348 18.9961 11.4804 18.8907 11.2929 18.7032C11.1054 18.5157 11 18.2613 11 17.9961V12.9961H6C5.73478 12.9961 5.48043 12.8907 5.29289 12.7032C5.10536 12.5157 5 12.2613 5 11.9961C5 11.7309 5.10536 11.4765 5.29289 11.289C5.48043 11.1015 5.73478 10.9961 6 10.9961H11V5.99609C11 5.73088 11.1054 5.47652 11.2929 5.28899C11.4804 5.10145 11.7348 4.99609 12 4.99609C12.2652 4.99609 12.5196 5.10145 12.7071 5.28899C12.8946 5.47652 13 5.73088 13 5.99609V10.9961H18C18.2652 10.9961 18.5196 11.1015 18.7071 11.289C18.8946 11.4765 19 11.7309 19 11.9961C19 12.2613 18.8946 12.5157 18.7071 12.7032C18.5196 12.8907 18.2652 12.9961 18 12.9961Z" fill="#1B84FF" />
+          </svg>
+          <Typography
+            sx={{
+              color: "#1B84FF",
+              fontFamily: "Calibri",
+              fontSize: "18px",
+              fontStyle: "normal",
+              fontWeight: 700,
+              lineHeight: "normal",
+              marginLeft: "4px"
+            }}
+          >
+            Add Row
+          </Typography>
         </Button>
       </Box>
     </Box >

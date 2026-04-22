@@ -1,22 +1,27 @@
 import React from "react";
-import { Box, Typography, Table, TableBody, TableContainer, Paper, Button, TableHead, TableCell, TableRow, TableFooter, Skeleton } from "@mui/material";
+import { Box, Typography, Button, Skeleton } from "@mui/material";
 import { LOCATION_TRANSFER_SOURCE_HEADERS } from "./constants/locationTransferHeaders";
 import LocationTransferSourceTableRow from "./items/LocationTransferSourceTableRow";
 
-const LocationTransferSourceTable = ({ rows, onRemove, onStockClick, onSearchClick, onUpdate, totals, disabled = false, isLoading = false }) => {
+const LocationTransferSourceTable = ({ rows, onRemove, onStockClick, onSearchClick, onUpdate, onSelect, disabled = false, isLoading = false, activeBatchIndex = -1, isExistingRecord = false }) => {
   const tableWidth = LOCATION_TRANSFER_SOURCE_HEADERS.reduce((sum, h) => sum + parseInt(h.width || "100"), 0);
+
+  const totals = React.useMemo(() => ({
+    pcs: rows.reduce((sum, row) => sum + (Number(row.pcs) || 0), 0),
+    weight: rows.reduce((sum, row) => sum + (Number(row.weight) || 0), 0),
+    amount: rows.reduce((sum, row) => sum + (Number(row.amount) || 0), 0)
+  }), [rows]);
 
   const headerStyle = {
     display: "flex",
     alignItems: "center",
-    bgcolor: "#F2F2F2",
-    borderBottom: "1px solid #EDEDED",
+    bgcolor: "#EDEDED",
     position: "sticky",
     top: 0,
     zIndex: 2,
-    height: "32px",
-    minHeight: "32px",
-    maxHeight: "32px",
+    height: "42px",
+    minHeight: "42px",
+    maxHeight: "42px",
     padding: 0
   };
 
@@ -25,9 +30,8 @@ const LocationTransferSourceTable = ({ rows, onRemove, onStockClick, onSearchCli
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    borderBottom: "1px solid #EDEDED",
     fontFamily: "Calibri",
-    fontSize: "14px",
+    fontSize: "16px",
     fontWeight: 700,
     color: "#343434",
     px: "8px",
@@ -39,8 +43,10 @@ const LocationTransferSourceTable = ({ rows, onRemove, onStockClick, onSearchCli
     display: "flex",
     alignItems: "center",
     bgcolor: "#FFFFFF",
-    height: "38px",
+    height: "42px",
     position: "sticky",
+    border: "1px solid var(--Line-Table, #C6C6C8)",
+    borderTop: "none",
     bottom: 0,
     zIndex: 1
   };
@@ -55,8 +61,9 @@ const LocationTransferSourceTable = ({ rows, onRemove, onStockClick, onSearchCli
     fontSize: "16px",
     fontWeight: 700,
     color: "#666666",
-    px: 1,
+    px: 0,
     flex: "0 0 auto",
+    boxSizing: "border-box"
   };
 
   return (
@@ -64,7 +71,7 @@ const LocationTransferSourceTable = ({ rows, onRemove, onStockClick, onSearchCli
       <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
         <Box sx={{ width: "100%", display: "flex", alignItems: "center", gap: "16px", justifyContent: "space-between", flexDirection: "row" }}>
           <Box sx={{ display: "flex", alignItems: "center", gap: "16px" }}>
-            <Typography sx={{ lineHeight: "normal", fontSize: "20px", fontWeight: 700, fontFamily: "Calibri", color: "#05595B" }}>
+            <Typography sx={{ lineHeight: "normal", fontSize: "18px", fontWeight: 600, fontFamily: "Calibri", color: "var(--HeadPage,rgb(48, 47, 47))" }}>
               Item
             </Typography>
             <Button
@@ -115,7 +122,7 @@ const LocationTransferSourceTable = ({ rows, onRemove, onStockClick, onSearchCli
         </Box>
       </Box>
 
-      <Box sx={{ border: "1px solid #EDEDED", borderRadius: "5px", bgcolor: "#FFF", overflow: "hidden" }}>
+      <Box sx={{ border: "none", borderRight: "1px solid #C6C6C8", borderRadius: "5px", bgcolor: "#FFF", overflow: "hidden" }}>
         <Box
           sx={{
             overflowX: "auto",
@@ -138,7 +145,7 @@ const LocationTransferSourceTable = ({ rows, onRemove, onStockClick, onSearchCli
                   minWidth: h.width,
                   maxWidth: h.width,
                   boxSizing: "border-box",
-                  borderRight: (h.label === "Weight" || h.label === "Cer No.") ? "1px solid #C6C6C8" : "1px solid #EDEDED"
+                  // borderRight: (h.label === "Weight" || h.label === "Cer No.") ? "1px solid #C6C6C8" : "1px solid #D9D9D9"
                 }}>
                   {h.label}
                 </Box>
@@ -147,7 +154,7 @@ const LocationTransferSourceTable = ({ rows, onRemove, onStockClick, onSearchCli
 
             {/* Table Body */}
             <Box sx={{
-              height: "114px",
+              height: "126px",
               overflowY: "auto",
               overflowX: "hidden",
 
@@ -160,7 +167,7 @@ const LocationTransferSourceTable = ({ rows, onRemove, onStockClick, onSearchCli
             }}>
               {isLoading ? (
                 [...Array(3)].map((_, i) => (
-                  <Box key={i} sx={{ display: "flex", alignItems: "center", height: "38px", borderBottom: "1px solid #EDEDED" }}>
+                  <Box key={i} sx={{ display: "flex", alignItems: "center", height: "42px", borderBottom: "1px solid #EDEDED", bgcolor: i % 2 === 0 ? "#F8F8F8" : "#FFF" }}>
                     {LOCATION_TRANSFER_SOURCE_HEADERS.map((h, j) => {
                       let sw = 72;
                       const label = h.label.trim();
@@ -198,34 +205,10 @@ const LocationTransferSourceTable = ({ rows, onRemove, onStockClick, onSearchCli
                     })}
                   </Box>
                 ))
-              ) : rows.length === 0 ? (
-                <Box sx={{ height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "#999", fontFamily: "Calibri", textAlign: "center", px: 2 }}>
-                  <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", }}>
-                    <Box>  <svg width="47" height="36" viewBox="0 0 47 36" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M46.5 13.1653L36.354 1.74866C35.867 0.970482 35.156 0.5 34.407 0.5H12.593C11.844 0.5 11.133 0.970482 10.646 1.74767L0.5 13.1663V22.3367H46.5V13.1653Z" stroke="#D9D9D9" />
-                      <path d="M33.113 16.3128C33.113 14.7197 34.107 13.4046 35.34 13.4036H46.5V31.4059C46.5 33.5132 45.18 35.2402 43.55 35.2402H3.45C1.82 35.2402 0.5 33.5122 0.5 31.4059V13.4036H11.66C12.893 13.4036 13.887 14.7167 13.887 16.3098V16.3317C13.887 17.9248 14.892 19.2111 16.124 19.2111H30.876C32.108 19.2111 33.113 17.9128 33.113 16.3198V16.3128Z" fill="#FAFAFA" stroke="#D9D9D9" />
-                    </svg>
-                    </Box>
-                    <Typography sx={{ marginTop: "10px", marginBottom: "5px", fontWeight: 700, fontSize: "16px", fontFamily: "Calibri", color: "#343434" }}>No data</Typography>
-                    <Typography
-                      sx={{
-                        fontSize: "12px",
-                        fontFamily: "Calibri",
-                        color: "#9A9A9A",
-                        fontWeight: 700,
-                      }}
-                    >
-                      Please add items by clicking on{" "}
-                      <Box component="span" sx={{ lineHeight: "normal", fontWeight: 700, color: "#666666", fontSize: "12px", fontFamily: "Calibri" }}>
-                        "Stock"
-                      </Box>{" "}
-                      button
-                    </Typography>
-                  </Box>
-                </Box>
+
               ) : (
                 rows.map((row, idx) => (
-                  <LocationTransferSourceTableRow key={row.id || idx} item={row} index={idx} onRemove={onRemove} disabled={disabled} onUpdate={onUpdate} />
+                  <LocationTransferSourceTableRow key={row.id || idx} item={row} index={idx} onRemove={onRemove} onSelect={onSelect} disabled={disabled} onUpdate={onUpdate} isActive={idx === activeBatchIndex} isExistingRecord={isExistingRecord} />
                 ))
               )}
             </Box>
@@ -237,7 +220,8 @@ const LocationTransferSourceTable = ({ rows, onRemove, onStockClick, onSearchCli
             }}>
               {LOCATION_TRANSFER_SOURCE_HEADERS.map((h, i) => {
                 let content = "";
-                if (h.label === "Pcs") content = totals.pcs;
+                if (h.label === "Stock ID") content = "";
+                else if (h.label === "Pcs") content = totals.pcs;
                 else if (h.label === "Weight") content = totals.weight.toFixed(3);
                 else if (h.label === "Amount") content = totals.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
@@ -247,7 +231,7 @@ const LocationTransferSourceTable = ({ rows, onRemove, onStockClick, onSearchCli
                     width: h.width,
                     minWidth: h.width,
                     maxWidth: h.width,
-                    borderTop: isLoading ? "none" : footerCellStyle.borderTop,
+                    borderTop: isLoading ? "none" : "1px solid #C6C6C8",
                     borderBottom: isLoading ? "1px solid #EDEDED" : "none",
                   }}>
                     {isLoading ? (

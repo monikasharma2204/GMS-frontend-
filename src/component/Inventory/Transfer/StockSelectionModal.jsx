@@ -14,11 +14,73 @@ import {
   Checkbox,
   Button,
   Paper,
-  IconButton,
-  Skeleton
 } from "@mui/material";
 import apiRequest from "../../../helpers/apiHelper";
-import { API_URL } from "../../../config/config.js";
+
+const modalStyle = {
+  position: "absolute",
+  top: "50%",
+  left: "50%",
+  transform: "translate(-50%, -50%)",
+  width: 1360,
+  height: 842,
+  bgcolor: "background.paper",
+  borderRadius: "8px",
+};
+
+const headerText = {
+  color: "var(--Main-Text, #343434)",
+  fontFamily: "Calibri",
+  fontSize: "16px",
+  fontStyle: "normal",
+  fontWeight: 700,
+};
+
+const bodyText = {
+  color: "var(--Main-Text, #343434)",
+  fontFamily: "Calibri",
+  fontSize: "16px",
+  fontStyle: "normal",
+  fontWeight: 400,
+};
+
+const columns = [
+  { key: "stock_id", label: "Stock ID", width: 120 },
+  { key: "doc_date", label: "Doc Date", width: 120 },
+  { key: "lot_no", label: "Lot", width: 100 },
+  { key: "stone_code", label: "Stone Code", width: 160 },
+  { key: "stone", label: "Stone", width: 140 },
+  { key: "shape", label: "Shape", width: 120 },
+  { key: "size", label: "Size", width: 120 },
+  { key: "color", label: "Color", width: 120 },
+  { key: "cutting", label: "Cutting", width: 120 },
+  { key: "quality", label: "Quality", width: 120 },
+  { key: "clarity", label: "Clarity", width: 120 },
+  { key: "cer_type", label: "Cer Type", width: 140 },
+  { key: "cer_no", label: "CerNo.", width: 140 },
+  { key: "pcs", label: "Pcs", width: 80, align: "right" },
+  { key: "weight", label: "Weight", width: 120, align: "right" },
+  { key: "price", label: "Price", width: 120, align: "right" },
+  { key: "unit", label: "Unit", width: 80 },
+  { key: "amount", label: "Amount", width: 120, align: "right" },
+  { key: "remark", label: "Remark", width: 220 },
+];
+
+const formatCellValue = (stock, key) => {
+  if (key === "doc_date") {
+    return stock.doc_date ? new Date(stock.doc_date).toLocaleDateString() : "-";
+  }
+  if (key === "weight") {
+    return stock.weight?.toFixed(3) || "0.000";
+  }
+  if (key === "price" || key === "amount") {
+    return stock[key]?.toLocaleString(undefined, { minimumFractionDigits: 2 }) || "0.00";
+  }
+  if (key === "pcs") {
+    return stock.pcs || 0;
+  }
+  return stock[key] || "-";
+};
 
 const StockSelectionModal = ({ open, onClose, onSelect, mode = "merge" }) => {
   const [stocks, setStocks] = useState([]);
@@ -30,7 +92,6 @@ const StockSelectionModal = ({ open, onClose, onSelect, mode = "merge" }) => {
     if (open) {
       fetchStocks();
     } else {
-
       setSelectedIds([]);
     }
   }, [open]);
@@ -38,8 +99,7 @@ const StockSelectionModal = ({ open, onClose, onSelect, mode = "merge" }) => {
   const fetchStocks = async () => {
     try {
       setLoading(true);
-
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise((resolve) => setTimeout(resolve, 1000));
       const data = await apiRequest("GET", "/stocks");
       setStocks(Array.isArray(data) ? data : []);
     } catch (error) {
@@ -52,16 +112,23 @@ const StockSelectionModal = ({ open, onClose, onSelect, mode = "merge" }) => {
   const filteredStocks = useMemo(() => {
     if (!searchTerm) return stocks;
     const lowerSearch = searchTerm.toLowerCase();
-    return stocks.filter(stock =>
-      stock.stock_id?.toLowerCase().includes(lowerSearch) ||
-      stock.stone_code?.toLowerCase().includes(lowerSearch) ||
-      stock.stone?.toLowerCase().includes(lowerSearch)
+    return stocks.filter(
+      (stock) =>
+        stock.stock_id?.toLowerCase().includes(lowerSearch) ||
+        stock.stone_code?.toLowerCase().includes(lowerSearch) ||
+        stock.stone?.toLowerCase().includes(lowerSearch)
     );
   }, [stocks, searchTerm]);
 
+  const firstSelectedStone = useMemo(() => {
+    if (selectedIds.length === 0) return null;
+    const firstSelected = stocks.find((s) => s._id === selectedIds[0]);
+    return firstSelected ? firstSelected.stone : null;
+  }, [selectedIds, stocks]);
+
   const handleToggleSelect = (id) => {
-    setSelectedIds(prev =>
-      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
     );
   };
 
@@ -70,17 +137,16 @@ const StockSelectionModal = ({ open, onClose, onSelect, mode = "merge" }) => {
       if (filteredStocks.length === 0) return;
 
       let stoneToMatch = firstSelectedStone;
-
-
       if (!stoneToMatch && mode !== "transfer") {
         stoneToMatch = filteredStocks[0].stone;
       }
 
-      const validIds = mode === "transfer" 
-        ? filteredStocks.map(s => s._id)
-        : filteredStocks
-          .filter(s => s.stone === stoneToMatch)
-          .map(s => s._id);
+      const validIds =
+        mode === "transfer"
+          ? filteredStocks.map((s) => s._id)
+          : filteredStocks
+            .filter((s) => s.stone === stoneToMatch)
+            .map((s) => s._id);
 
       setSelectedIds(validIds);
     } else {
@@ -89,428 +155,333 @@ const StockSelectionModal = ({ open, onClose, onSelect, mode = "merge" }) => {
   };
 
   const handleConfirm = () => {
-    const selectedStocks = stocks.filter(s => selectedIds.includes(s._id));
+    const selectedStocks = stocks.filter((s) => selectedIds.includes(s._id));
     onSelect(selectedStocks);
     onClose();
   };
-  const firstSelectedStone = useMemo(() => {
-    if (selectedIds.length === 0) return null;
-    const firstSelected = stocks.find(s => s._id === selectedIds[0]);
-    return firstSelected ? firstSelected.stone : null;
-  }, [selectedIds, stocks]);
+
+  const selectableCount =
+    mode === "transfer"
+      ? filteredStocks.length
+      : filteredStocks.filter(
+        (s) => s.stone === (firstSelectedStone || filteredStocks[0]?.stone)
+      ).length;
 
   return (
     <Modal open={open} onClose={onClose}>
-      <Box sx={{
-        position: 'absolute',
-
-        top: '50%',
-        left: '50%',
-        transform: 'translate(-50%, -50%)',
-        maxWidth: "1360px",
-        width: "100%",
-        bgcolor: 'background.paper',
-        boxShadow: 24,
-        p: 0,
-        borderRadius: "8px",
-        overflow: "auto",
-
-      }}>
-        <Box sx={{ bgcolor: "#05595B", p: "0px 24px", display: "flex", justifyContent: "space-between", alignItems: "center", height: "56px" }}>
-          <Typography sx={{ color: "#FFF", fontSize: "18px", fontWeight: 700, fontFamily: "Calibri" }}>Merge/Split Stock</Typography>
-          <IconButton onClick={onClose} sx={{ color: "#FFF" }}>
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M18 6L6 18" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-              <path d="M6 6L18 18" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      <Box sx={modalStyle}>
+        <Box
+          sx={{
+            width: "100%",
+            height: "56px",
+            backgroundColor: "var(--HeadPage, #05595B)",
+            borderTopLeftRadius: "8px",
+            borderTopRightRadius: "8px",
+            justifyContent: "space-between",
+            display: "flex",
+          }}
+        >
+          <Typography
+            sx={{
+              color: "#FFF",
+              fontFamily: "Calibri",
+              fontSize: "24px",
+              fontStyle: "normal",
+              fontWeight: 700,
+              marginLeft: "32px",
+              marginTop: "10px",
+            }}
+          >
+            Merge/Split Stock
+          </Typography>
+          <Box
+            sx={{
+              marginTop: "16px",
+              marginRight: "16px",
+              cursor: "pointer",
+            }}
+            onClick={onClose}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+              <path
+                d="M14.1535 12.0008L19.5352 6.61748C19.6806 6.47704 19.7966 6.30905 19.8764 6.12331C19.9562 5.93757 19.9982 5.7378 19.9999 5.53565C20.0017 5.3335 19.9632 5.13303 19.8866 4.94593C19.8101 4.75883 19.697 4.58885 19.5541 4.44591C19.4111 4.30296 19.2412 4.18992 19.0541 4.11337C18.867 4.03682 18.6665 3.9983 18.4644 4.00006C18.2622 4.00181 18.0624 4.04381 17.8767 4.1236C17.691 4.20339 17.523 4.31937 17.3825 4.46478L11.9992 9.84654L6.61748 4.46478C6.47704 4.31937 6.30905 4.20339 6.12331 4.1236C5.93757 4.04381 5.7378 4.00181 5.53565 4.00006C5.3335 3.9983 5.13303 4.03682 4.94593 4.11337C4.75883 4.18992 4.58885 4.30296 4.44591 4.44591C4.30296 4.58885 4.18992 4.75883 4.11337 4.94593C4.03682 5.13303 3.9983 5.3335 4.00006 5.53565C4.00181 5.7378 4.04381 5.93757 4.1236 6.12331C4.20339 6.30905 4.31937 6.47704 4.46478 6.61748L9.84654 11.9992L4.46478 17.3825C4.31937 17.523 4.20339 17.691 4.1236 17.8767C4.04381 18.0624 4.00181 18.2622 4.00006 18.4644C3.9983 18.6665 4.03682 18.867 4.11337 19.0541C4.18992 19.2412 4.30296 19.4111 4.44591 19.5541C4.58885 19.697 4.75883 19.8101 4.94593 19.8866C5.13303 19.9632 5.3335 20.0017 5.53565 19.9999C5.7378 19.9982 5.93757 19.9562 6.12331 19.8764C6.30905 19.7966 6.47704 19.6806 6.61748 19.5352L11.9992 14.1535L17.3825 19.5352C17.523 19.6806 17.691 19.7966 17.8767 19.8764C18.0624 19.9562 18.2622 19.9982 18.4644 19.9999C18.6665 20.0017 18.867 19.9632 19.0541 19.8866C19.2412 19.8101 19.4111 19.697 19.5541 19.5541C19.697 19.4111 19.8101 19.2412 19.8866 19.0541C19.9632 18.867 20.0017 18.6665 19.9999 18.4644C19.9982 18.2622 19.9562 18.0624 19.8764 17.8767C19.7966 17.691 19.6806 17.523 19.5352 17.3825L14.1535 12.0008Z"
+                fill="white"
+              />
             </svg>
-          </IconButton>
-        </Box>
-
-
-        <Box sx={{ p: "0px 24px" }}>
-
-
-          <Box sx={{ p: "24px " }}>
-            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: "24px", paddingBottom: "24px" }}>
-              <Typography sx={{ fontSize: "16px", fontWeight: 600, fontFamily: "Calibri" }}>Merge/Split Stock List</Typography>
-              <Box
-                sx={{
-                  display: "flex",
-                  gap: "12px",
-                  flexDirection: { xs: "column", sm: "row" },
-                  justifyContent: "end",
-                  alignItems: "center ",
-                  textAlign: "center",
-                  width: { xs: "100%", sm: "auto" },
-                }}
-              >
-                <Box
-                  sx={{
-                    display: "flex",
-                    flexDirection: "row",
-                    alignItems: "center",
-                    gap: "12px",
-                    width: { xs: "100%", sm: "auto" },
-                  }}
-                >
-                  <Box>
-                    <svg
-                      width="24"
-                      height="24"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <path
-                        d="M6.75 3V5.25M17.25 3V5.25M3 18.75V7.5C3 6.90326 3.23705 6.33097 3.65901 5.90901C4.08097 5.48705 4.65326 5.25 5.25 5.25H18.75C19.3467 5.25 19.919 5.48705 20.341 5.90901C20.7629 6.33097 21 6.90326 21 7.5V18.75M3 18.75C3 19.3467 3.23705 19.919 3.65901 20.341C4.08097 20.7629 4.65326 21 5.25 21H18.75C19.3467 21 19.919 20.7629 20.341 20.341C20.7629 19.919 21 19.3467 21 18.75M3 18.75V11.25C3 10.6533 3.23705 10.081 3.65901 9.65901C4.08097 9.23705 4.65326 9 5.25 9H18.75C19.3467 9 19.919 9.23705 20.341 9.65901C20.7629 10.081 21 10.6533 21 11.25V18.75M12 12.75H12.008V12.758H12V12.75ZM12 15H12.008V15.008H12V15ZM12 17.25H12.008V17.258H12V17.25ZM9.75 15H9.758V15.008H9.75V15ZM9.75 17.25H9.758V17.258H9.75V17.25ZM7.5 15H7.508V15.008H7.5V15ZM7.5 17.25H7.508V17.258H7.5V17.25ZM14.25 12.75H14.258V12.758H14.25V12.75ZM14.25 15H14.258V15.008H14.25V15ZM14.25 17.25H14.258V17.258H14.25V17.25ZM16.5 12.75H16.508V12.758H16.5V12.75ZM16.5 15H16.508V15.008H16.5V15Z"
-                        stroke="#666666"
-                        strokeWidth="1.25"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                  </Box>
-
-                  <Box sx={{ flexGrow: 1 }}>
-                    <TextField
-                      placeholder="Search List..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      InputProps={{
-                        startAdornment: (
-                          <InputAdornment position="start">
-                            <svg
-                              width="20"
-                              height="20"
-                              viewBox="0 0 20 20"
-                              fill="none"
-                              xmlns="http://www.w3.org/2000/svg"
-                            >
-                              <path
-                                d="M17.5 17.5005L13.8833 13.8838"
-                                stroke="#666666"
-                                strokeWidth="1.25"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                              />
-                              <path
-                                d="M9.16667 15.8333C12.8486 15.8333 15.8333 12.8486 15.8333 9.16667C15.8333 5.48477 12.8486 2.5 9.16667 2.5C5.48477 2.5 2.5 5.48477 2.5 9.16667C2.5 12.8486 5.48477 15.8333 9.16667 15.8333Z"
-                                stroke="#666666"
-                                strokeWidth="1.25"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                              />
-                            </svg>
-                          </InputAdornment>
-                        ),
-                        sx: {
-                          color: "#9A9A9A",
-                          fontFamily: "Segoe UI",
-                          fontSize: "15px",
-                          fontStyle: "normal",
-                          fontWeight: 400,
-                        },
-                      }}
-                      sx={{
-                        "& .MuiInputLabel-asterisk": {
-                          color: "#B41E38",
-                        },
-                        "& .MuiOutlinedInput-root": {
-                          "& fieldset": { borderColor: "#EDEDED" },
-                          borderRadius: "8px",
-                          backgroundColor: "#FFF",
-                          width: { xs: "100%", sm: "354px" },
-                          height: "32px",
-                          "&:hover .MuiOutlinedInput-notchedOutline": {
-                            borderColor: "#EDEDED",
-                          },
-                          "&:hover": {
-                            backgroundColor: "#F5F8FF",
-                          },
-                          "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-                            borderColor: "#E0E2E4",
-                          },
-                        },
-                        paddingLeft: "8px",
-                        paddingRight: "8px",
-                        gap: "8px",
-                      }}
-                    />
-                  </Box>
-                </Box>
-
-                <Box
-                  sx={{
-                    display: "flex",
-                    flexDirection: "row",
-                    alignItems: "center",
-                    gap: "12px",
-                    justifyContent: "center",
-                  }}
-                >
-                  <Box
-                    sx={{
-                      height: "32px",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "8px",
-                      borderRadius: "8px",
-                      border: "1px solid #EDEDED",
-                      paddingLeft: "16px",
-                      paddingRight: "16px",
-                    }}
-                  >
-                    <svg
-                      width="20"
-                      height="20"
-                      viewBox="0 0 20 20"
-                      fill="none"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <path
-                        d="M3.75 5.83301H16.25M5.83333 9.99967H14.1667M8.33333 14.1663H11.6667"
-                        stroke="#343434"
-                        strokeWidth="1.25"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                    <Typography
-                      sx={{
-                        color: "#343434",
-                        fontFamily: "Calibri",
-                        fontSize: "16px",
-                        fontStyle: "normal",
-                        fontWeight: 400,
-                      }}
-                    >
-                      Filter
-                    </Typography>
-                  </Box>
-
-                  <Box sx={{ paddingLeft: "4px", paddingRight: "8px" }}>
-                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M16.4596 6.45833H12.7096C12.4886 6.45833 12.2767 6.37054 12.1204 6.21426C11.9641 6.05798 11.8763 5.84601 11.8763 5.625V1.875M16.4596 6.45833V17.2917C16.4596 17.5127 16.3718 17.7246 16.2156 17.8809C16.0593 18.0372 15.8473 18.125 15.6263 18.125H4.3763C4.15529 18.125 3.94333 18.0372 3.78705 17.8809C3.63077 17.7246 3.54297 17.5127 3.54297 17.2917V2.70833C3.54297 2.48732 3.63077 2.27536 3.78705 2.11908C3.94333 1.9628 4.15529 1.875 4.3763 1.875H11.8763M16.4596 6.45833L11.8763 1.875" stroke="#666666" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" />
-                      <path d="M14.3448 10.223H12.4732V13.9584M12.4732 12.0905H13.6944M5.65276 13.9513V10.2155H6.90984C7.24236 10.2153 7.5613 10.3473 7.7965 10.5824C8.0317 10.8174 8.1639 11.1363 8.16401 11.4688C8.16412 11.8013 8.03214 12.1202 7.79709 12.3554C7.56204 12.5906 7.24319 12.7228 6.91068 12.723H5.65234M9.06276 13.9584V10.2084H9.69859C10.1959 10.2084 10.6728 10.4059 11.0244 10.7575C11.376 11.1092 11.5736 11.5861 11.5736 12.0834C11.5736 12.5807 11.376 13.0576 11.0244 13.4092C10.6728 13.7608 10.1959 13.9584 9.69859 13.9584H9.06276Z" stroke="#666666" stroke-width="0.75" stroke-linecap="round" stroke-linejoin="round" />
-                    </svg>
-
-                  </Box>
-
-                  <Box sx={{ paddingLeft: "8px", paddingRight: "8px" }} >
-                    <svg
-                      width="20"
-                      height="20"
-                      viewBox="0 0 20 20"
-                      fill="none"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <path
-                        fillRule="evenodd"
-                        clipRule="evenodd"
-                        d="M17.9881 2.75359H11.6569V1.26172L1.25 2.86797V16.9473L11.6569 18.7398V16.5286H17.9881C18.1799 16.5383 18.3677 16.4717 18.5104 16.3433C18.6532 16.215 18.7393 16.0353 18.75 15.8436V3.43797C18.7392 3.24638 18.653 3.06686 18.5102 2.93863C18.3675 2.8104 18.1798 2.74388 17.9881 2.75359ZM18.0881 15.9573H11.6356L11.625 14.7767H13.1794V13.4017H11.6131L11.6056 12.5892H13.1794V11.2142H11.5937L11.5863 10.4017H13.1794V9.02672H11.5813V8.21422H13.1794V6.83922H11.5813V6.02672H13.1794V4.65172H11.5813V3.40172H18.0881V15.9573Z"
-                        fill="#666666"
-                      />
-                      <path
-                        d="M16.7561 4.64941H14.0542V6.02441H16.7561V4.64941Z"
-                        fill="#666666"
-                      />
-                      <path
-                        d="M16.7561 6.83789H14.0542V8.21289H16.7561V6.83789Z"
-                        fill="#666666"
-                      />
-                      <path
-                        d="M16.7561 9.02539H14.0542V10.4004H16.7561V9.02539Z"
-                        fill="#666666"
-                      />
-                      <path
-                        d="M16.7561 11.2139H14.0542V12.5889H16.7561V11.2139Z"
-                        fill="#666666"
-                      />
-                      <path
-                        d="M16.7561 13.4023H14.0542V14.7773H16.7561V13.4023Z"
-                        fill="#666666"
-                      />
-                      <path
-                        fillRule="evenodd"
-                        clipRule="evenodd"
-                        d="M3.96705 6.67027L5.3083 6.5934L6.15143 8.91152L7.14768 6.49777L8.48893 6.4209L6.86018 9.71215L8.48893 13.0115L7.0708 12.9159L6.1133 10.4009L5.15518 12.8203L3.85205 12.7053L5.3658 9.7909L3.96705 6.67027Z"
-                        fill="white"
-                      />
-                    </svg>
-                  </Box>
-
-                </Box>
-              </Box>
-
-            </Box>
-
-            <TableContainer component={Paper} sx={{
-              boxShadow: "none", maxHeight: "564px",
-              minHeight: "564px"
-            }}>
-              <Table stickyHeader size="small" sx={{
-                border: "1px solid #EDEDED",
-
-                "& th, & td": {
-                  border: "1px solid #EDEDED",
-                  whiteSpace: "nowrap",
-                },
-
-
-                "& th": {
-                  whiteSpace: "nowrap",
-                  padding: "7px 12px",
-                  lineHeight: "normal",
-                  color: "#343434"
-                },
-                "& td": {
-                  whiteSpace: "nowrap",
-                  padding: "12px",
-                  color: "#666666",
-                  // borderRight: "1px solid #EDEDED",
-
-                },
-
-
-              }}>
-                <TableHead>
-                  <TableRow>
-                    <TableCell padding="checkbox" sx={{ bgcolor: "#F5F5F5" }}>
-                      <Checkbox
-                        indeterminate={selectedIds.length > 0 && selectedIds.length < (
-                          (mode !== "transfer" && firstSelectedStone)
-                            ? filteredStocks.filter(s => s.stone === firstSelectedStone).length 
-                            : filteredStocks.length
-                        )}
-                        checked={
-                          filteredStocks.length > 0 && 
-                          selectedIds.length > 0 &&
-                          selectedIds.length === (mode === "transfer" ? filteredStocks.length : filteredStocks.filter(s => s.stone === (firstSelectedStone || filteredStocks[0].stone)).length)
-                        }
-                        onChange={handleSelectAll}
-                      />
-                    </TableCell>
-                    {["#", "Stock ID", "Doc Date", "Lot", "Stone Code", "Stone", "Shape", "Size", "Color", "Cutting", "Quality", "Clarity", "Cer Type", "Cer No.", "Pcs", "Weight", "Price", "Unit", "Amount"].map(h => (
-                      <TableCell key={h} sx={{ bgcolor: "#F5F5F5", fontWeight: 700, fontFamily: "Calibri", borderRight: (h === "Lot" || h === "Weight") ? "1px solid #C6C6C8" : "none" }}>{h}</TableCell>
-                    ))}
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {loading ? (
-                    Array.from(new Array(10)).map((_, index) => (
-                      <TableRow key={index}>
-                        <TableCell padding="checkbox">
-                          <Skeleton
-                            variant="rounded"
-                            width={16}
-                            height={24}
-                            sx={{
-                              borderRadius: "20px",
-                              background: "linear-gradient(90deg, #DBDBDB 0%, #F3F3F3 100%)",
-                              mx: "auto"
-                            }}
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Skeleton
-                            variant="rounded"
-                            width={16}
-                            height={24}
-                            sx={{
-                              borderRadius: "20px",
-                              background: "linear-gradient(90deg, #DBDBDB 0%, #F3F3F3 100%)",
-                              mx: "auto"
-                            }}
-                          />
-                        </TableCell>
-                        {[...Array(18)].map((_, i) => (
-                          <TableCell key={i}>
-                            <Skeleton
-                              variant="rounded"
-                              width={100}
-                              height={24}
-                              sx={{
-                                borderRadius: "20px",
-                                background: "linear-gradient(90deg, #DBDBDB 0%, #F3F3F3 100%)",
-                                animation: "pulse 1.5s ease-in-out infinite"
-                              }}
-                            />
-                          </TableCell>
-                        ))}
-                      </TableRow>
-                    ))
-                  ) : filteredStocks.length === 0 ? (
-                    <TableRow><TableCell colSpan={20} align="center">No stocks found</TableCell></TableRow>
-                  ) : filteredStocks.map((stock, idx) => {
-                    const isSelected = selectedIds.includes(stock._id);
-                    const isDisabled = mode !== "transfer" && firstSelectedStone && stock.stone !== firstSelectedStone;
-                    return (
-                      <TableRow
-                        key={stock._id}
-                        hover={!isDisabled}
-                        onClick={() => !isDisabled && handleToggleSelect(stock._id)}
-                        sx={{
-                          cursor: isDisabled ? "default" : "pointer",
-                          opacity: isDisabled ? 0.6 : 1
-                        }}
-                      >
-                        <TableCell padding="checkbox">
-                          <Checkbox checked={isSelected} disabled={isDisabled} />
-                        </TableCell>
-                        <TableCell sx={{ fontFamily: "Calibri", color: isDisabled ? "#AAA" : "inherit" }}>{idx + 1}</TableCell>
-
-                        <TableCell sx={{ fontFamily: "Calibri", color: isDisabled ? "#AAA" : "inherit" }}>{stock.stock_id}</TableCell>
-                        <TableCell sx={{ fontFamily: "Calibri", color: isDisabled ? "#AAA" : "inherit" }}>{stock.doc_date ? new Date(stock.doc_date).toLocaleDateString() : "-"}</TableCell>
-                        <TableCell sx={{ fontFamily: "Calibri", borderRight: "1px solid #C6C6C8", color: isDisabled ? "#AAA" : "inherit" }}>{stock.lot_no || "-"}</TableCell>
-                        <TableCell
-                          sx={{
-                            fontFamily: "Calibri", borderRight: "1px solid #C6C6C8",
-                            color: isDisabled ? "#AAA" : "inherit",
-                            fontWeight: 400
-                          }}
-                        >
-                          {stock.stone_code}
-                        </TableCell>
-                        <TableCell sx={{ fontFamily: "Calibri", color: isDisabled ? "#AAA" : "inherit" }}>{stock.stone}</TableCell>
-                        <TableCell sx={{ fontFamily: "Calibri", color: isDisabled ? "#AAA" : "inherit" }}>{stock.shape || "-"}</TableCell>
-                        <TableCell sx={{ fontFamily: "Calibri", color: isDisabled ? "#AAA" : "inherit" }}>{stock.size || "-"}</TableCell>
-                        <TableCell sx={{ fontFamily: "Calibri", color: isDisabled ? "#AAA" : "inherit" }}>{stock.color || "-"}</TableCell>
-                        <TableCell sx={{ fontFamily: "Calibri", color: isDisabled ? "#AAA" : "inherit" }}>{stock.cutting || "-"}</TableCell>
-                        <TableCell sx={{ fontFamily: "Calibri", color: isDisabled ? "#AAA" : "inherit" }}>{stock.quality || "-"}</TableCell>
-                        <TableCell sx={{ fontFamily: "Calibri", color: isDisabled ? "#AAA" : "inherit" }}>{stock.clarity || "-"}</TableCell>
-                        <TableCell sx={{ fontFamily: "Calibri", color: isDisabled ? "#AAA" : "inherit" }}>{stock.cer_type || "-"}</TableCell>
-                        <TableCell sx={{ fontFamily: "Calibri", color: isDisabled ? "#AAA" : "inherit" }}>{stock.cer_no || "-"}</TableCell>
-                        <TableCell sx={{ fontFamily: "Calibri", color: isDisabled ? "#AAA" : "inherit" }}>{stock.pcs || 0}</TableCell>
-                        <TableCell sx={{ fontFamily: "Calibri", borderRight: "1px solid #C6C6C8", color: isDisabled ? "#AAA" : "inherit" }}>{stock.weight?.toFixed(3) || "0.000"}</TableCell>
-                        <TableCell sx={{ fontFamily: "Calibri", color: isDisabled ? "#AAA" : "inherit" }}>{stock.price?.toLocaleString(undefined, { minimumFractionDigits: 2 }) || "0.00"}</TableCell>
-                        <TableCell sx={{ fontFamily: "Calibri", color: isDisabled ? "#AAA" : "inherit" }}>{stock.unit || "-"}</TableCell>
-                        <TableCell sx={{ fontFamily: "Calibri", color: isDisabled ? "#AAA" : "inherit" }}>{stock.amount?.toLocaleString(undefined, { minimumFractionDigits: 2 }) || "0.00"}</TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
-            </TableContainer>
-
           </Box>
         </Box>
 
+        <Box
+          sx={{
+            backgroundColor: "#F8F8F8",
+            width: "95.2%",
 
-        <Box sx={{ borderTop: "1px solid #C6C6C8  ", alignItems: "center", display: "flex", justifyContent: "flex-end", paddingleft: "32px", paddingRight: "32px", height: "56px" }}>
+            marginLeft: "33px",
+            marginTop: "33px",
+            paddingTop: "32px",
+          }}
+        >
+          <Box
+            sx={{
+              width: "1232px",
+              height: "40px",
+              marginLeft: "32px",
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
+            <Typography
+              sx={{
+                color: "#343434",
+                fontFamily: "Calibri",
+                fontSize: "20px",
+                fontStyle: "normal",
+                fontWeight: 700,
+                lineHeight: "normal",
+              }}
+            >
+              Merge/Split Stock List
+            </Typography>
+
+            <Box sx={{ display: "flex", gap: "12px", alignItems: "center" }}>
+              <TextField
+                placeholder="Search List..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M17.5 17.5005L13.8833 13.8838" stroke="#666666" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round" />
+                        <path d="M9.16667 15.8333C12.8486 15.8333 15.8333 12.8486 15.8333 9.16667C15.8333 5.48477 12.8486 2.5 9.16667 2.5C5.48477 2.5 2.5 5.48477 2.5 9.16667C2.5 12.8486 5.48477 15.8333 9.16667 15.8333Z" stroke="#666666" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    </InputAdornment>
+                  ),
+                  sx: {
+                    color: "#9A9A9A",
+                    fontFamily: "Segoe UI",
+                    fontSize: "15px",
+                    fontStyle: "normal",
+                    fontWeight: 400,
+                  },
+                }}
+                sx={{
+                  "& .MuiOutlinedInput-root": {
+                    "& fieldset": { borderColor: "#EDEDED" },
+                    borderRadius: "8px",
+                    backgroundColor: "#FFF",
+                    width: "354px",
+                    height: "32px",
+                    "&:hover .MuiOutlinedInput-notchedOutline": {
+                      borderColor: "#EDEDED",
+                    },
+                    "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                      borderColor: "#E0E2E4",
+                    },
+                  },
+                }}
+              />
+            </Box>
+          </Box>
+
+          <Box
+            sx={{
+              width: "1232px",
+              maxHeight: "578px",
+              marginTop: "24px",
+              marginLeft: "32px",
+              borderRadius: "5px",
+              border: "1px solid var(--Line-Table, #C6C6C8)",
+              overflowX: "auto",
+              "&::-webkit-scrollbar": {
+                height: "5px",
+              },
+              "&::-webkit-scrollbar-track": {
+                background: "#F8F8F8",
+                borderRadius: "5px",
+              },
+              "&::-webkit-scrollbar-thumb": {
+                background: "#919191",
+                borderRadius: "5px",
+              },
+            }}
+          >
+            <TableContainer component={Paper} sx={{ boxShadow: "none", borderRadius: 0, overflow: "visible" }}>
+              <Table
+                stickyHeader
+                size="small"
+                sx={{
+                  width: "fit-content",
+                  minWidth: "100%",
+                  "& th, & td": {
+                    whiteSpace: "nowrap",
+                    borderBottom: "1px solid #C6C6C8",
+                  },
+                  "& th": {
+                    backgroundColor: "#EDEDED",
+                    padding: "8px 8px",
+                  },
+                  "& td": {
+                    padding: "8px 8px",
+                    backgroundColor: "#FFF",
+                  },
+                }}
+              >
+                <TableHead>
+                  <TableRow>
+                    <TableCell sx={{ width: "60px", minWidth: "60px" }}>
+                      <Checkbox
+                        disabled={filteredStocks.length === 0}
+                        sx={{ p: 0 }}
+                        indeterminate={selectedIds.length > 0 && selectedIds.length < selectableCount}
+                        checked={filteredStocks.length > 0 && selectedIds.length === selectableCount}
+                        onChange={handleSelectAll}
+                      />
+                    </TableCell>
+                    {columns.map((column) => (
+                      <TableCell
+                        key={column.key}
+                        sx={{
+                          width: `${column.width}px`,
+                          minWidth: `${column.width}px`,
+                          textAlign: column.align || "left",
+                        }}
+                      >
+                        <Typography sx={headerText}>{column.label}</Typography>
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                </TableHead>
+
+                <TableBody>
+                  {loading ? (
+                    <TableRow>
+                      <TableCell colSpan={columns.length + 1} align="center" sx={{ height: "200px", backgroundColor: "#FFF" }}>
+                        <Typography sx={bodyText}>Loading...</Typography>
+                      </TableCell>
+                    </TableRow>
+                  ) : filteredStocks.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={columns.length + 1} align="center" sx={{ height: "200px", backgroundColor: "#FFF" }}>
+                        <Typography sx={bodyText}>No data available</Typography>
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    filteredStocks.map((stock, index) => {
+                      const isSelected = selectedIds.includes(stock._id);
+                      const isDisabled =
+                        mode !== "transfer" &&
+                        firstSelectedStone &&
+                        stock.stone !== firstSelectedStone;
+
+                      return (
+                        <TableRow
+                          key={stock._id}
+                          hover={!isDisabled}
+                          onClick={() => !isDisabled && handleToggleSelect(stock._id)}
+                          sx={{
+                            cursor: isDisabled ? "default" : "pointer",
+                            opacity: isDisabled ? 0.6 : 1,
+                          }}
+                        >
+                          <TableCell sx={{ width: "60px", minWidth: "60px" }}>
+                            <Box sx={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                              <Checkbox
+                                checked={isSelected}
+                                disabled={isDisabled}
+                                sx={{ p: 0 }}
+                              />
+                              <Typography sx={bodyText}>{index + 1}</Typography>
+                            </Box>
+                          </TableCell>
+                          {columns.map((column) => (
+                            <TableCell
+                              key={column.key}
+                              sx={{
+                                width: `${column.width}px`,
+                                minWidth: `${column.width}px`,
+                                textAlign: column.align || "left",
+                              }}
+                            >
+                              <Typography sx={bodyText}>{formatCellValue(stock, column.key)}</Typography>
+                            </TableCell>
+                          ))}
+                        </TableRow>
+                      );
+                    })
+                  )}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </Box>
+        </Box>
+
+        <Box
+          sx={{
+            display: "flex",
+            padding: "24px 32px",
+            justifyContent: "space-between",
+            alignItems: "center",
+            flexShrink: 0,
+          }}
+        >
           <Button
-            variant="contained"
+            onClick={onClose}
+            sx={{
+              width: "79px",
+              height: "35px",
+              padding: "12px 24px",
+              borderRadius: "4px",
+              border: "1px solid #BFBFBF",
+              bgcolor: "#FFF",
+              textTransform: "none",
+            }}
+          >
+            <Typography
+              sx={{
+                color: "#343434",
+                fontSize: "16px",
+                fontFamily: "Calibri",
+                fontStyle: "normal",
+                fontWeight: 700,
+              }}
+            >
+              Cancel
+            </Typography>
+          </Button>
+
+          <Button
             onClick={handleConfirm}
             disabled={selectedIds.length === 0}
             sx={{
-              bgcolor: "#05595B",
-              color: "#FFF",
+              width: "79px",
+              height: "35px",
+              padding: "12px 24px",
+              justifyContent: "center",
+              alignItems: "center",
+              gap: "10px",
+              flexShrink: 0,
+              borderRadius: "4px",
+              border: "1px solid #BFBFBF",
+              bgcolor: "#17C653",
               textTransform: "none",
-              height: "32px",
-              width: "100px",
-              "&:hover": { bgcolor: "#044a4c" }
+              "&:hover": {
+                backgroundColor: "#17C653",
+              },
             }}
           >
-            OK
+            <Typography
+              sx={{
+                color: "#FFF",
+                fontSize: "16px",
+                fontFamily: "Calibri",
+                fontStyle: "normal",
+                fontWeight: 700,
+              }}
+            >
+              Ok
+            </Typography>
           </Button>
         </Box>
       </Box>

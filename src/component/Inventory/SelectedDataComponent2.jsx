@@ -28,10 +28,10 @@ const SelectedDataComponent2 = React.forwardRef(({
   firstSectionRows = [],
   selectedRowIndex = null,
   operationType = "merge",
-  setSelectedRowIndex = () => {},
-  setOperationType = () => {},
+  setSelectedRowIndex = () => { },
+  setOperationType = () => { },
   isManualAdd = false,
-  setIsManualAdd = () => {},
+  setIsManualAdd = () => { },
   isFromDayBook = false,
   isApproved = false,
   isEditMode = false,
@@ -46,7 +46,7 @@ const SelectedDataComponent2 = React.forwardRef(({
   const [isManuallyEdited, setIsManuallyEdited] = React.useState(false);
   const [isDaybookInitialized, setIsDaybookInitialized] = React.useState(false);
   const prevSelectedRowIndexRef = React.useRef(selectedRowIndex);
-  
+
 
   const wrappedHandleDelete = React.useCallback((id) => {
     if (operationType === "normal" && selectedRowIndex !== null) {
@@ -78,7 +78,7 @@ const SelectedDataComponent2 = React.forwardRef(({
           updated[selectedRowIndex] = newDisplay;
           return updated;
         });
-        
+
         return newDisplay;
       });
     } else {
@@ -128,7 +128,7 @@ const SelectedDataComponent2 = React.forwardRef(({
         sale_amount: 0,
       };
 
-     
+
       setAllLoadItems(prev => {
         const updated = [...prev];
         const currentTabRows = Array.isArray(updated[selectedRowIndex]) ? updated[selectedRowIndex] : [];
@@ -141,24 +141,24 @@ const SelectedDataComponent2 = React.forwardRef(({
       handleAddRow();
     }
   }, [isFromDayBook, operationType, selectedRowIndex, firstSectionRows, handleAddRow]);
-  
- 
+
+
   React.useImperativeHandle(ref, () => ({
     getAllLoadItems: () => {
-  
+
       if (operationType === "merge") {
         return displayRows || [];
       }
-   
+
       if (!Array.isArray(allLoadItems)) return [];
       const flattened = [];
       for (const entry of allLoadItems) {
         if (!entry) continue;
-        
+
         if (Array.isArray(entry)) {
           flattened.push(...entry.filter(Boolean));
         } else if (entry && typeof entry === 'object') {
-          
+
           flattened.push(entry);
         }
       }
@@ -166,17 +166,17 @@ const SelectedDataComponent2 = React.forwardRef(({
     },
     setAllLoadItems: setAllLoadItems
   }));
-  
-  
+
+
   const handleLoadItemChange = (index, field, value) => {
     if (operationType === "normal" && selectedRowIndex !== null) {
-     
+
       setAllLoadItems(prev => {
         const updated = [...prev];
         const tabRows = updated[selectedRowIndex];
-        
+
         if (Array.isArray(tabRows)) {
-    
+
           const updatedTabRows = [...tabRows];
           if (updatedTabRows[index]) {
             updatedTabRows[index] = {
@@ -186,17 +186,17 @@ const SelectedDataComponent2 = React.forwardRef(({
           }
           updated[selectedRowIndex] = updatedTabRows;
         } else if (tabRows) {
-         
+
           updated[selectedRowIndex] = {
             ...tabRows,
             [field]: value
           };
         }
-       
+
         return updated;
       });
-      
-      
+
+
       setDisplayRows(prevRows => {
         const updatedRows = [...prevRows];
         if (updatedRows[index]) {
@@ -207,14 +207,14 @@ const SelectedDataComponent2 = React.forwardRef(({
         }
         return updatedRows;
       });
-    
+
       return;
     }
-    
-    
+
+
     if (operationType === "merge") {
       setIsManuallyEdited(true);
-     
+
       setRows(prevRows => {
         const updatedRows = [...prevRows];
         if (updatedRows[index]) {
@@ -235,10 +235,10 @@ const SelectedDataComponent2 = React.forwardRef(({
         }
         return updatedRows;
       });
-     
+
       return;
     }
-    
+
     // Call the original onChange for other cases
     onChange(index, field, value);
   };
@@ -256,24 +256,24 @@ const SelectedDataComponent2 = React.forwardRef(({
   }, [firstSectionRows, selectedRowIndex]);
 
 
-  
+
   useEffect(() => {
     if (operationType === "normal" && firstSectionRows.length > 0 && !isFromDayBook) {
       const isViewMode = fsmState === "saved";
-      
+
       if (isViewMode && rows && rows.length > 0) {
         console.log('[SelectedDataComponent2] View mode - Grouping load items');
         console.log('[SelectedDataComponent2] Total rows received:', rows.length);
         console.log('[SelectedDataComponent2] FirstSectionRows count:', firstSectionRows.length);
         console.log('[SelectedDataComponent2] Sample rows:', rows.slice(0, 2));
         console.log('[SelectedDataComponent2] All rows pu_item_ids:', rows.map(r => r.pu_item_id));
-        
+
         // CRITICAL: In view mode, rows should contain ALL load items, not just current tab
         // If we only have 1 row but firstSectionRows has 2, something is wrong
         if (rows.length < firstSectionRows.length) {
           console.warn(`[SelectedDataComponent2] WARNING: Only received ${rows.length} rows but have ${firstSectionRows.length} PU items. This indicates rows prop was overwritten.`);
         }
-        
+
         const groupedByPU = {};
         rows.forEach((loadItem) => {
           const key = loadItem.pu_item_id || loadItem.pu_id || loadItem.pu_item_ref || loadItem.pu_no;
@@ -293,14 +293,14 @@ const SelectedDataComponent2 = React.forwardRef(({
           const puItem = firstSectionRows[idx];
           let itemsForTab = [];
 
-          
+
           const puItemKey = puItem?.pu_item_id || puItem?.pu_id;
           if (puItemKey && groupedByPU[puItemKey] && !usedKeys.has(puItemKey)) {
             itemsForTab = groupedByPU[puItemKey];
             usedKeys.add(puItemKey);
             console.log(`[SelectedDataComponent2] Tab ${idx}: Matched ${itemsForTab.length} items for pu_item_id ${puItemKey}`);
           } else {
-        
+
             for (const key of allKeys) {
               if (!usedKeys.has(key)) {
                 itemsForTab = groupedByPU[key] || [];
@@ -328,21 +328,21 @@ const SelectedDataComponent2 = React.forwardRef(({
               // Convert single object to array format
               return [existingItem];
             } else {
-              
+
               return createMappedRowData(puItem);
             }
           });
           return newLoadItems;
         });
       }
-      
+
       if (selectedRowIndex === null) {
         setSelectedRowIndex(0);
       }
     }
   }, [firstSectionRows, operationType, isFromDayBook, rows, selectedRowIndex, setSelectedRowIndex, fsmState]);
 
- 
+
   useEffect(() => {
     if (
       operationType === "normal" &&
@@ -354,11 +354,11 @@ const SelectedDataComponent2 = React.forwardRef(({
     }
   }, [operationType, selectedRowIndex, firstSectionRows.length, isFromDayBook, setSelectedRowIndex]);
 
-  
+
   useEffect(() => {
     if (isFromDayBook && rows && rows.length > 0 && firstSectionRows.length > 0 && !isDaybookInitialized) {
       const groupedByPU = {};
-      
+
       rows.forEach(loadItem => {
         const key = loadItem.pu_item_id;
         if (!groupedByPU[key]) {
@@ -366,62 +366,62 @@ const SelectedDataComponent2 = React.forwardRef(({
         }
         groupedByPU[key].push(loadItem);
       });
-      
+
       const allGroupKeys = Object.keys(groupedByPU);
-      const usedGroupKeys = new Set(); 
+      const usedGroupKeys = new Set();
       const organizedLoadItems = [];
-      
+
       for (let idx = 0; idx < firstSectionRows.length; idx++) {
         const puItem = firstSectionRows[idx];
         let itemsForThisTab = [];
-        
+
         if (puItem.pu_item_id && groupedByPU[puItem.pu_item_id] && !usedGroupKeys.has(puItem.pu_item_id)) {
           itemsForThisTab = groupedByPU[puItem.pu_item_id];
           usedGroupKeys.add(puItem.pu_item_id);
         } else {
-      
+
           for (const key of allGroupKeys) {
             if (!usedGroupKeys.has(key)) {
               itemsForThisTab = groupedByPU[key] || [];
               usedGroupKeys.add(key);
-          break;
-      }
+              break;
+            }
           }
         }
-        
+
         organizedLoadItems.push(itemsForThisTab);
       }
-      
+
       setAllLoadItems(organizedLoadItems);
       if (selectedRowIndex === null) {
         setSelectedRowIndex(0);
       }
-      
+
       setIsDaybookInitialized(true);
     }
-  }, [isFromDayBook, rows.length, isDaybookInitialized, firstSectionRows.length]); 
+  }, [isFromDayBook, rows.length, isDaybookInitialized, firstSectionRows.length]);
 
   useEffect(() => {
     if (operationType !== "normal") return;
     if (!isManualAdd) return;
     if (selectedRowIndex === null) return;
     if (!rows || rows.length === 0) return;
-    if (isFromDayBook) return; 
-    
+    if (isFromDayBook) return;
+
     setAllLoadItems(prev => {
       const updated = [...prev];
       updated[selectedRowIndex] = [...rows];
       return updated;
     });
-    
+
     setDisplayRows([...rows]);
-    
+
     // Clear flag so subsequent effects work normally
     const timer = setTimeout(() => setIsManualAdd(false), 50);
     return () => clearTimeout(timer);
   }, [isManualAdd, rows, operationType, selectedRowIndex, isFromDayBook, setIsManualAdd]);
 
-  
+
   useEffect(() => {
     if (operationType !== "normal") return;
     if (selectedRowIndex === null) return;
@@ -432,7 +432,7 @@ const SelectedDataComponent2 = React.forwardRef(({
       console.log('[SelectedDataComponent2] Skipping setRows in view mode to preserve all load items');
       return;
     }
-    
+
     // CRITICAL SAFEGUARD: If parent's rows has more items than we're about to set,
     // it means we're in view mode and shouldn't overwrite
     if (rows && rows.length > 0 && firstSectionRows.length > 0) {
@@ -446,7 +446,7 @@ const SelectedDataComponent2 = React.forwardRef(({
         }
       }
     }
-    
+
     const currentTabData = allLoadItems[selectedRowIndex];
     if (currentTabData) {
       const dataArray = Array.isArray(currentTabData) ? currentTabData : [currentTabData];
@@ -458,11 +458,11 @@ const SelectedDataComponent2 = React.forwardRef(({
 
   useEffect(() => {
     const prevIndex = prevSelectedRowIndexRef.current;
-    if (operationType === "normal" && prevIndex !== null && 
-        prevIndex !== selectedRowIndex && 
-        displayRows && displayRows.length > 0 && 
-        !isManualAdd) {
-      
+    if (operationType === "normal" && prevIndex !== null &&
+      prevIndex !== selectedRowIndex &&
+      displayRows && displayRows.length > 0 &&
+      !isManualAdd) {
+
       setAllLoadItems(prev => {
         const updated = [...prev];
         // Create a copy that preserves File objects and image_preview
@@ -481,7 +481,7 @@ const SelectedDataComponent2 = React.forwardRef(({
 
   // Track previous firstSectionRows to detect actual changes in merge mode
   const prevFirstSectionRowsRef = React.useRef(firstSectionRows);
-  
+
   // Helper function to check if firstSectionRows actually changed (deep comparison)
   const hasFirstSectionRowsChanged = React.useCallback((prev, current) => {
     if (prev.length !== current.length) return true;
@@ -491,7 +491,7 @@ const SelectedDataComponent2 = React.forwardRef(({
       return !currentRow || prevRow._id !== currentRow._id || prevRow.amount !== currentRow.amount || prevRow.weight !== currentRow.weight || prevRow.pcs !== currentRow.pcs;
     });
   }, []);
-  
+
 
   useEffect(() => {
     // Only clear data if we're not in view mode (saved state)
@@ -506,16 +506,16 @@ const SelectedDataComponent2 = React.forwardRef(({
 
   useEffect(() => {
     if (operationType === "merge") {
-     
+
       if (isFromDayBook) {
         setDisplayRows(rows || []);
         return;
       }
-      
+
       const firstSectionRowsChanged = hasFirstSectionRowsChanged(prevFirstSectionRowsRef.current, firstSectionRows);
       if (firstSectionRowsChanged) {
         prevFirstSectionRowsRef.current = firstSectionRows;
-      
+
         if (firstSectionRows.length > 0) {
           const combinedRow = createCombinedRow(firstSectionRows);
           setDisplayRows(combinedRow ? [combinedRow] : []);
@@ -525,21 +525,21 @@ const SelectedDataComponent2 = React.forwardRef(({
           setRows([]);
         }
       }
-    
+
     } else {
-     
+
       if (isManualAdd) {
         setDisplayRows(rows || []);
         return;
       }
-      
-     
+
+
       if (selectedRowIndex !== null && allLoadItems[selectedRowIndex]) {
         const stored = allLoadItems[selectedRowIndex];
-       
+
         const displayData = Array.isArray(stored) ? stored : (stored ? [stored] : []);
         const displayDataWithImages = displayData.map((item) => {
-          
+
           if (item.imageFile instanceof File) {
             // Cleanup old blob URL if it exists
             if (item.image_preview && typeof item.image_preview === 'string' && item.image_preview.startsWith('blob:')) {
@@ -631,6 +631,7 @@ const SelectedDataComponent2 = React.forwardRef(({
           borderRadius: "5px",
           bgcolor: "#FFF",
           marginTop: "10px",
+          width: "100%"
         }}
       >
         <Box
@@ -663,47 +664,47 @@ const SelectedDataComponent2 = React.forwardRef(({
             >
               {displayRows.map((item, index) => {
                 return (
-                <TableRowComponent
+                  <TableRowComponent
                     key={item._id || `row-${selectedRowIndex}-${index}-${item.pu_item_id || item.pu_id || ''}`}
-                  item={item || {}}
-                  index={index}
-                  handleNumberChange={handleNumberChange}
-                  handleSelectChange={handleSelectChange}
-                  onChange={handleLoadItemChange}
-                  calculateAmount={calculateAmount}
-                  editMemoStatus={editMemoStatus}
-                  handleDelete={wrappedHandleDelete}
-                  dropdownOptions={dropdownOptions}
-                  selectedItems={state.selectedItems}
-                  rows={displayRows}
-                  setRows={wrappedSetDisplayRows}
+                    item={item || {}}
+                    index={index}
+                    handleNumberChange={handleNumberChange}
+                    handleSelectChange={handleSelectChange}
+                    onChange={handleLoadItemChange}
+                    calculateAmount={calculateAmount}
+                    editMemoStatus={editMemoStatus}
+                    handleDelete={wrappedHandleDelete}
+                    dropdownOptions={dropdownOptions}
+                    selectedItems={state.selectedItems}
+                    rows={displayRows}
+                    setRows={wrappedSetDisplayRows}
                     originalPUtotals={currentPURow}
                     operationType={operationType}
                     isFromDayBook={isFromDayBook}
                     isApproved={isApproved}
                     isEditMode={isEditMode}
-                      formatNumberWithCommas={formatNumberWithCommas}
-                />
+                    formatNumberWithCommas={formatNumberWithCommas}
+                  />
                 );
               })}
             </Box>
 
-            <TableForTotalComponent parentHeight={278} rows={displayRows}   formatNumberWithCommas={formatNumberWithCommas} />
+            <TableForTotalComponent parentHeight={278} rows={displayRows} formatNumberWithCommas={formatNumberWithCommas} />
           </Box>
         </Box>
       </Box>
 
       {/* Show Add Row button by default, hide only when explicitly in merge mode */}
       {operationType !== "merge" && (
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "flex-start",
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "flex-start",
             marginTop: "40px",
-        }}
-      >
-        <AddRowButtonComponent handleAddRow={wrappedHandleAddRow} disabled={disabled} />
-      </Box>
+          }}
+        >
+          <AddRowButtonComponent handleAddRow={wrappedHandleAddRow} disabled={disabled} />
+        </Box>
       )}
     </>
   );

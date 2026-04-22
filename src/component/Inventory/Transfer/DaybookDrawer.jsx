@@ -80,7 +80,7 @@ const DaybookDrawer = ({ open, onClose, onSelect }) => {
       onClose={onClose}
       hideBackdrop={true}
       PaperProps={{
-        sx: { width: "100%", maxWidth: "492px", padding: 0, top: "128px", bottom: "0px" }
+        sx: { borderLeft: " 1px solid #EDEDED", borderRight: "1px solid #EDEDED", width: "100%", maxWidth: "492px", padding: 0, top: "128px", bottom: "0px", boxShadow: "none" }
       }}
     >
       {/* Header */}
@@ -135,7 +135,7 @@ const DaybookDrawer = ({ open, onClose, onSelect }) => {
               onClick={() => setFilter("unapproved")}
               sx={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer" }}
             >
-              <StatusIcon type="unapproved" />
+              <StatusIcon type="unapproved" active={filter === "unapproved"} />
               <Typography sx={{ fontSize: "14px", fontFamily: "Calibri", color: "#343434", fontWeight: 400 }}>
                 Unapproved ({unapprovedCount})
               </Typography>
@@ -145,7 +145,7 @@ const DaybookDrawer = ({ open, onClose, onSelect }) => {
               onClick={() => setFilter("approved")}
               sx={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer" }}
             >
-              <StatusIcon type="approved" />
+              <StatusIcon type="approved" active={filter === "approved"} />
               <Typography sx={{ fontSize: "14px", fontFamily: "Calibri", color: "#343434", fontWeight: 400 }}>
                 Approved ({approvedCount})
               </Typography>
