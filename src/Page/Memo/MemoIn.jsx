@@ -245,6 +245,7 @@ const MemoInOrder = () => {
       certificateNumber: "",
       pcs: "",
       weight: "0.000",
+      sale_price: "0.00",
       price: "0.00",
       unit: "cts",
       amount: "0.00",
@@ -339,9 +340,9 @@ const MemoInOrder = () => {
 
   const isNumeric = (str) => {
     return (
-      !isNaN(str) && // use type coercion to parse the _entirety_ of the string (`parseFloat` alone does not do this)...
+      !isNaN(str) && 
       !isNaN(parseFloat(str))
-    ); // ...and ensure strings of whitespace fail
+    ); 
   };
   const formatNumberWithCommas = (number) => {
     const numberString = number.toString();
@@ -368,11 +369,6 @@ const MemoInOrder = () => {
     return totalAmount;
   };
 
-  // const calculateAmountAfterDiscount = (item) => {
-  //   const afterDiscount =
-  //     calculateAmount(item || {}) - item.discountAmount + (item.labour_price || 0);
-  //   return afterDiscount;
-  // };
 
   const calculateTotalAfterDiscount = () => {
     let total = rows.reduce((sum, item) => {
@@ -813,6 +809,7 @@ const MemoInOrder = () => {
           weight: Number(el.weight),
           unit_price: Number(el.price),
           total_amount: Number(calculateAmountAfterDiscount(el)),
+          sale_price : Number(el.sale_price),
           price: Number(el.price),
           discount_percent: Number(el.discount_percent),
           discount_amount: Number(el.discount_amount),
@@ -1088,6 +1085,7 @@ const MemoInOrder = () => {
         row.cer_no || "",
         Number(row.pcs || 0),
         Number(row.weight || 0),
+        Number(row.sale_price || 0),
         Number(row.price || 0),
         row.unit || "cts",
         Number(calculateAmountAfterDiscount(row) || 0),
@@ -1112,6 +1110,7 @@ const MemoInOrder = () => {
   const handleEdit = (item) => {
     setOpen(false);
     setEditMemoStatus(false);
+    dispatch({ type: "RESET_STATE" });
 
     setDocDate(parseBackendDate(item.doc_date));
     setDueDate(parseBackendDate(item.due_date));
@@ -1209,6 +1208,7 @@ const MemoInOrder = () => {
       total_amount: Number(el.total_amount).toFixed(2),
       weight_per_piece: Number(el.weight_per_piece).toFixed(2),
       weight: Number(el.weight).toFixed(3),
+      sale_price: Number(el.sale_price).toFixed(2),
       price: Number(el.price).toFixed(2),
       discount_percent: Number(el.discount_percent).toFixed(2),
       discount_amount: Number(el.discount_amount).toFixed(2),

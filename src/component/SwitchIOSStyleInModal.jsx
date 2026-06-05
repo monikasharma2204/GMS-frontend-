@@ -40,11 +40,11 @@ const IOSSwitch = styled((props) => (
   },
   "& .MuiSwitch-thumb": {
     boxSizing: "border-box",
-    width: 16, // Adjusted based on new height
-    height: 16, // Adjusted based on new height
+    width: 16,
+    height: 16,
   },
   "& .MuiSwitch-track": {
-    borderRadius: 20 / 2, // Adjusted based on new height
+    borderRadius: 20 / 2,
     backgroundColor: theme.palette.mode === "light" ? "#E9E9EA" : "#39393D",
     opacity: 1,
     transition: theme.transitions.create(["background-color"], {

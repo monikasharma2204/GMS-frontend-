@@ -124,34 +124,31 @@ const Other = ({ handleClick, showRedBox }) => {
           onClick={(e) => e.stopPropagation()}
         >
           <Box>
-            <Box sx={Dropdownmenu} className="hovered-box">
-              <Link to="/settings/main-location">
+            <Link to="/settings/main-location">
+              <Box sx={Dropdownmenu} className="hovered-box">
                 <Typography sx={TextMain} className={isMainLocationActive ? "active" : ""}>Main Location</Typography>
-              </Link>
-            </Box>
-            <Box sx={Dropdownmenu} className="hovered-box">
-
-              <Link to="/settings/sub-location">
+              </Box>
+            </Link>
+            <Link to="/settings/sub-location">
+              <Box sx={Dropdownmenu} className="hovered-box">
                 <Typography sx={TextMain} className={isSubLocationActive ? "active" : ""}>Sub Location</Typography>
-              </Link>
-            </Box>
-            <Box sx={Dropdownmenu} className="hovered-box">
-
-              <Link to="/settings/currency">
+              </Box>
+            </Link>
+            <Link to="/settings/currency">
+              <Box sx={Dropdownmenu} className="hovered-box">
                 <Typography sx={TextMain} className={isCurrencyActive ? "active" : ""}>Currency</Typography>
-              </Link>
-            </Box>
-
-             <Box sx={Dropdownmenu} className="hovered-box">
-                          <Link to="/stone-master/certificate-type/">
-                            <Typography sx={TextMain} className={isCertificateTypeActive ? "active" : ""}>Certificate Type</Typography>
-                          </Link>
-                        </Box>
-                        <Box sx={Dropdownmenu }  className="hovered-box">
-                          <Link to="/stone-master/labour-type/">
-                            <Typography sx={TextMain} className={isLabourTypeActive ? "active" : ""}>Labour Type</Typography>
-                          </Link>
-                        </Box>
+              </Box>
+            </Link>
+            <Link to="/stone-master/certificate-type/">
+              <Box sx={Dropdownmenu} className="hovered-box">
+                <Typography sx={TextMain} className={isCertificateTypeActive ? "active" : ""}>Certificate Type</Typography>
+              </Box>
+            </Link>
+            <Link to="/stone-master/labour-type/">
+              <Box sx={Dropdownmenu} className="hovered-box">
+                <Typography sx={TextMain} className={isLabourTypeActive ? "active" : ""}>Labour Type</Typography>
+              </Box>
+            </Link>
 
 
           </Box>

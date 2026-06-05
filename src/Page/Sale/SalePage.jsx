@@ -21,6 +21,7 @@ import {
 } from "../../recoil/state/SaleFSMState";
 import { getCustomerInfo } from "recoil/selector/CustomerSelector";
 import ConfirmCancelDialog from "../../component/Commons/ConfirmCancelDialog";
+import ValidationWarningBanner from "../../component/Commons/ValidationWarningBanner";
 import { currencyState } from "recoil/state/CommonState";
 import {
   initialData,
@@ -237,6 +238,36 @@ const SalePage = () => {
   const [isOpenModalWarning, setIsOpenModalWarning] = useState(false);
   const [isOpenModalConfirm, setIsOpenModalConfrim] = useState(false);
   const [isOpenModalSuccess, setIsOpenModalSuccess] = useState(false);
+  const [showWarningBanner, setShowWarningBanner] = useState(false);
+  const [warningMessage, setWarningMessage] = useState("Please complete all required fields.");
+  const showWarning = useCallback((message) => {
+    setWarningMessage(message || "Please complete all required fields.");
+    setShowWarningBanner(true);
+    setTimeout(() => {
+      setShowWarningBanner(false);
+    }, 1800);
+  }, []);
+
+  const getStockAvailabilityMap = useCallback(async () => {
+    try {
+      const response = await apiRequest("GET", "/stocksandconsignments");
+      const stockRows = [
+        ...(response?.stocks || []),
+        ...(response?.consignments || []),
+      ];
+      return stockRows.reduce((map, stockRow) => {
+        [stockRow._id, stockRow.id, stockRow.stock_id].forEach((key) => {
+          if (key) {
+            map[String(key)] = stockRow;
+          }
+        });
+        return map;
+      }, {});
+    } catch (error) {
+      console.error("Error fetching stock availability:", error);
+      return {};
+    }
+  }, []);
 
 
 
@@ -731,9 +762,9 @@ const SalePage = () => {
         rowErrors.push("Pcs");
       }
 
-      if (!isNumeric(el.weight) || parseFloat(el.weight) <= 0) {
-        rowErrors.push("Weight");
-      }
+      // if (!isNumeric(el.weight) || parseFloat(el.weight) <= 0) {
+      //   rowErrors.push("Weight");
+      // }
 
       if (!isNumeric(el.price) || parseFloat(el.price) <= 0) {
         rowErrors.push("Price");
@@ -875,6 +906,9 @@ const SalePage = () => {
           remark: el.remark,
           unit: el.unit || "cts",
           status: "active",
+          isFromStock: el.isFromStock,
+          availablePcs: el.availablePcs,
+          availableWeight: el.availableWeight,
           // Add from_reserve flag and reserve_id only to items that actually came from reserve
           ...(memoInfo?.from_reserve && el?.isFromStock === true && {
             from_reserve: true,
@@ -1279,8 +1313,9 @@ const SalePage = () => {
     }
   };
 
-  const handleEdit = (item) => {
+  const handleEdit = async (item) => {
     setOpen(false);
+    dispatch({ type: "RESET_STATE" });
 
     const accountName = typeof item.account === 'object' ? (item.account.vendor_code_name || item.account.label || "") : item.account;
     const accountCode = typeof item.account === 'object' ? (item.account.code || item.vendor_code_id || "") : item.vendor_code_id;
@@ -1360,7 +1395,13 @@ const SalePage = () => {
     setRemark(item.remark);
     setNote(item.note);
 
+    const stockAvailabilityMap = await getStockAvailabilityMap();
     const formattedItems = item.items.map((el) => {
+      const stockRow =
+        stockAvailabilityMap[String(el.stock?._id || "")] ||
+        stockAvailabilityMap[String(el._id || "")] ||
+        stockAvailabilityMap[String(el.id || "")] ||
+        stockAvailabilityMap[String(el.stock_id || "")];
 
       let imageUrl = null;
       let imagePath = null;
@@ -1379,9 +1420,12 @@ const SalePage = () => {
 
       return {
         ...el,
+        isFromStock: el.isFromStock || !!el.stock_id || !!el.stone_code,
         total_amount: Number(el.total_amount).toFixed(2),
         weight_per_piece: Number(el.weight_per_piece).toFixed(2),
         weight: Number(el.weight).toFixed(3),
+        availablePcs: stockRow?.pcs ?? el.availablePcs,
+        availableWeight: stockRow?.weight ?? el.availableWeight,
         price: Number(el.price).toFixed(2),
         discount_percent: Number(el.discount_percent).toFixed(2),
         discount_amount: Number(el.discount_amount).toFixed(2),
@@ -1686,8 +1730,10 @@ const SalePage = () => {
         lot_no: item.lot_no || "",
         type: item.type || "",
         pcs: Number(item.pcs || 0),
+        availablePcs: item.availablePcs !== undefined ? item.availablePcs : (item.original_pcs ?? item.pcs),
         weight_per_piece: Number(item.weight_per_piece || 0).toFixed(2),
         weight: Number(item.weight || 0).toFixed(3),
+        availableWeight: item.availableWeight !== undefined ? item.availableWeight : item.weight,
         price: Number(item.price || 0).toFixed(2),
         unit: item.unit || "cts",
         amount: Number(item.amount || 0).toFixed(2),
@@ -2169,6 +2215,7 @@ const SalePage = () => {
               handleReturnReserveEdit={handleReturnReserveEdit}
               handleReserveSubmit={handleReserveSubmit}
               triggerFSMDirty={triggerFSMDirty}
+              showWarning={showWarning}
             />
           </Box>
         </Box>
@@ -2285,6 +2332,11 @@ const SalePage = () => {
       {renderDialogConfirm()}
       {renderDialogError()}
       {renderDialogWarning()}
+      <ValidationWarningBanner
+        show={showWarningBanner}
+        message={warningMessage}
+        sx={{ position: "fixed", top: "100px", right: "25px", zIndex: 99999 }}
+      />
     </Box>
   );
 }

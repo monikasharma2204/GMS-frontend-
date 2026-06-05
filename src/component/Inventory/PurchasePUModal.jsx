@@ -9,6 +9,10 @@ import apiRequest from "helpers/apiHelper.js";
 import { memoInfoState } from "recoil/Load/MemoState";
 import dayjs from "dayjs";
 import { QuotationtableRowsState } from "recoil/Purchase/PurchaseState";
+import useTableSort from "../../hooks/useTableSort";
+import ColumnFilterPopover from "../Commons/ColumnFilterPopover/ColumnFilterPopover";
+import { useColumnFilters } from "../Commons/ColumnFilterPopover/useColumnFilters";
+import SortIcon from "../Commons/SortIcon/SortIcon";
 
 
 const style = {
@@ -29,6 +33,22 @@ const textStyle = {
   fontStyle: "normal",
   fontWeight: 400,
 };
+
+
+const formatWeight = (weight) => {
+  const value = Number(weight);
+  return Number.isFinite(value) ? value.toFixed(3) : "0.000";
+};
+
+const formatCurrency = (amount) => {
+  const num = parseFloat(amount);
+  return isNaN(num) ? "0.00" : num.toLocaleString("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+};
+
+
 const PurchasePUModal = ({ handleSubmit = () => { }, disabledItems = [], isApproved = false, disabled = false }) => {
   const [open, setOpen] = useState(false);
   const [checked, setChecked] = useState(false);
@@ -42,6 +62,38 @@ const PurchasePUModal = ({ handleSubmit = () => { }, disabledItems = [], isAppro
   const [openSelectAccountModal, setOpenSelectAccountModal] = useState(false);
   const [openOperationModal, setOpenOperationModal] = useState(false);
   const [operationType, setOperationType] = useState("merge");
+
+  const { filteredData, handleFilterClick, popoverProps, isFilterActive } = useColumnFilters(rowData, open);
+  const { sortedData, requestSort, sortConfig, setSortConfig } = useTableSort(filteredData, { key: 'doc_date', direction: 'desc' });
+
+  const renderFilterIcon = (columnKey) => {
+    const active = isFilterActive(columnKey) || (popoverProps.open && popoverProps.activeColumnKey === columnKey);
+    return (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="12"
+        height="12"
+        viewBox="0 0 12 12"
+        fill="none"
+        style={{ marginLeft: "4px", flexShrink: 0 }}
+      >
+        <g clipPath={`url(#clip0_purchase_pu_filter_${columnKey})`}>
+          <path
+            d="M2 1.5H10C10.1326 1.5 10.2598 1.55268 10.3536 1.64645C10.4473 1.74021 10.5 1.86739 10.5 2V2.793C10.5 2.9256 10.4473 3.05275 10.3535 3.1465L7.1465 6.3535C7.05273 6.44725 7.00003 6.5744 7 6.707V9.8595C7 9.9355 6.98267 10.0105 6.94933 10.0788C6.91599 10.1471 6.86752 10.2069 6.80761 10.2537C6.74769 10.3004 6.6779 10.3329 6.60355 10.3486C6.52919 10.3644 6.45222 10.363 6.3785 10.3445L5.3785 10.0945C5.27038 10.0674 5.1744 10.005 5.10583 9.9171C5.03725 9.82923 5 9.72096 5 9.6095V6.707C4.99997 6.5744 4.94727 6.44725 4.8535 6.3535L1.6465 3.1465C1.55273 3.05275 1.50003 2.9256 1.5 2.793V2C1.5 1.86739 1.55268 1.74021 1.64645 1.64645C1.74021 1.55268 1.86739 1.5 2 1.5Z"
+            stroke={active ? "#17C653" : "#666666"}
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </g>
+        <defs>
+          <clipPath id={`clip0_purchase_pu_filter_${columnKey}`}>
+            <rect width="12" height="12" fill="white" />
+          </clipPath>
+        </defs>
+      </svg>
+    );
+  };
 
   useEffect(() => {
     const fetchApprovedItems = async () => {
@@ -61,7 +113,10 @@ const PurchasePUModal = ({ handleSubmit = () => { }, disabledItems = [], isAppro
           "GET",
           `/pu/approved-items/by-account?account=${accountValue}`
         );
-        setRowData(response);
+        const approvedRows = Array.isArray(response)
+          ? response.map((row, index) => ({ ...row, __rowIndex: index }))
+          : [];
+        setRowData(approvedRows);
       } catch (error) {
         console.error("Error fetching approved items:", error);
         setRowData([]);
@@ -181,12 +236,17 @@ const PurchasePUModal = ({ handleSubmit = () => { }, disabledItems = [], isAppro
   };
 
   const handleCheckboxSelectAllChange = () => {
-    if (selectedRows.length === rowData.length) {
+    if (selectedRows.length === sortedData.length && sortedData.length > 0) {
 
       setSelectedRows([]);
     } else {
 
-      setSelectedRows(rowData);
+      setSelectedRows(
+        sortedData.map((row, index) => ({
+          ...row,
+          __uniqueId: row._id || `${row.pu_item_id || 'unknown'}-${row.__rowIndex ?? index}`,
+        }))
+      );
     }
   };
 
@@ -494,11 +554,11 @@ const PurchasePUModal = ({ handleSubmit = () => { }, disabledItems = [], isAppro
                   >
                     <Checkbox
                       checked={
-                        selectedRows.length === rowData.length &&
-                        rowData.length > 0
+                        selectedRows.length === sortedData.length &&
+                        sortedData.length > 0
                       }
                       onChange={() => handleCheckboxSelectAllChange()}
-                      disabled={rowData.every(row =>
+                      disabled={sortedData.every(row =>
                         disabledItems.some(
                           (disabledItem) => {
                             const disabledId = disabledItem.pu_item_id || disabledItem._id || disabledItem.stock_id;
@@ -527,11 +587,13 @@ const PurchasePUModal = ({ handleSubmit = () => { }, disabledItems = [], isAppro
 
                   {/* Doc Date */}
                   <Box
+                    onClick={() => requestSort('doc_date')}
                     sx={{
                       width: "140px",
                       display: "flex",
                       alignItems: "center",
                       padding: "0 8px",
+                      cursor: "pointer",
                     }}
                   >
                     <Typography
@@ -544,15 +606,18 @@ const PurchasePUModal = ({ handleSubmit = () => { }, disabledItems = [], isAppro
                     >
                       Doc Date
                     </Typography>
+                    <SortIcon sortConfig={sortConfig} columnKey="doc_date" />
                   </Box>
 
                   {/* PU No. */}
                   <Box
+                    onClick={(e) => handleFilterClick(e, 'invoice_no')}
                     sx={{
                       width: "140px",
                       display: "flex",
                       alignItems: "center",
                       padding: "0 8px",
+                      cursor: "pointer",
                     }}
                   >
                     <Typography
@@ -565,15 +630,18 @@ const PurchasePUModal = ({ handleSubmit = () => { }, disabledItems = [], isAppro
                     >
                       PU No.
                     </Typography>
+                    {renderFilterIcon('invoice_no')}
                   </Box>
 
                   {/* Stone */}
                   <Box
+                    onClick={(e) => handleFilterClick(e, 'stone')}
                     sx={{
                       width: "140px",
                       display: "flex",
                       alignItems: "center",
                       padding: "0 8px",
+                      cursor: "pointer",
                     }}
                   >
                     <Typography
@@ -586,15 +654,18 @@ const PurchasePUModal = ({ handleSubmit = () => { }, disabledItems = [], isAppro
                     >
                       Stone
                     </Typography>
+                    {renderFilterIcon('stone')}
                   </Box>
 
                   {/* Shape */}
                   <Box
+                    onClick={(e) => handleFilterClick(e, 'shape')}
                     sx={{
                       width: "140px",
                       display: "flex",
                       alignItems: "center",
                       padding: "0 8px",
+                      cursor: "pointer",
                     }}
                   >
                     <Typography
@@ -607,15 +678,18 @@ const PurchasePUModal = ({ handleSubmit = () => { }, disabledItems = [], isAppro
                     >
                       Shape
                     </Typography>
+                    {renderFilterIcon('shape')}
                   </Box>
 
                   {/* Size */}
                   <Box
+                    onClick={(e) => handleFilterClick(e, 'size')}
                     sx={{
                       width: "140px",
                       display: "flex",
                       alignItems: "center",
                       padding: "0 8px",
+                      cursor: "pointer",
                     }}
                   >
                     <Typography
@@ -628,15 +702,18 @@ const PurchasePUModal = ({ handleSubmit = () => { }, disabledItems = [], isAppro
                     >
                       Size
                     </Typography>
+                    {renderFilterIcon('size')}
                   </Box>
 
                   {/* Color */}
                   <Box
+                    onClick={(e) => handleFilterClick(e, 'color')}
                     sx={{
                       width: "140px",
                       display: "flex",
                       alignItems: "center",
                       padding: "0 8px",
+                      cursor: "pointer",
                     }}
                   >
                     <Typography
@@ -649,15 +726,18 @@ const PurchasePUModal = ({ handleSubmit = () => { }, disabledItems = [], isAppro
                     >
                       Color
                     </Typography>
+                    {renderFilterIcon('color')}
                   </Box>
 
                   {/* Cutting */}
                   <Box
+                    onClick={(e) => handleFilterClick(e, 'cutting')}
                     sx={{
                       width: "140px",
                       display: "flex",
                       alignItems: "center",
                       padding: "0 8px",
+                      cursor: "pointer",
                     }}
                   >
                     <Typography
@@ -670,15 +750,18 @@ const PurchasePUModal = ({ handleSubmit = () => { }, disabledItems = [], isAppro
                     >
                       Cutting
                     </Typography>
+                    {renderFilterIcon('cutting')}
                   </Box>
 
                   {/* Quality */}
                   <Box
+                    onClick={(e) => handleFilterClick(e, 'quality')}
                     sx={{
                       width: "140px",
                       display: "flex",
                       alignItems: "center",
                       padding: "0 8px",
+                      cursor: "pointer",
                     }}
                   >
                     <Typography
@@ -691,15 +774,18 @@ const PurchasePUModal = ({ handleSubmit = () => { }, disabledItems = [], isAppro
                     >
                       Quality
                     </Typography>
+                    {renderFilterIcon('quality')}
                   </Box>
 
                   {/* Clarity */}
                   <Box
+                    onClick={(e) => handleFilterClick(e, 'clarity')}
                     sx={{
                       width: "140px",
                       display: "flex",
                       alignItems: "center",
                       padding: "0 8px",
+                      cursor: "pointer",
                     }}
                   >
                     <Typography
@@ -712,6 +798,7 @@ const PurchasePUModal = ({ handleSubmit = () => { }, disabledItems = [], isAppro
                     >
                       Clarity
                     </Typography>
+                    {renderFilterIcon('clarity')}
                   </Box>
 
                   {/* Pcs */}
@@ -840,7 +927,7 @@ const PurchasePUModal = ({ handleSubmit = () => { }, disabledItems = [], isAppro
                     >
                       <Typography sx={textStyle}>Loading...</Typography>
                     </Box>
-                  ) : rowData.length === 0 ? (
+                  ) : sortedData.length === 0 ? (
                     <Box
                       sx={{
                         display: "flex",
@@ -852,7 +939,8 @@ const PurchasePUModal = ({ handleSubmit = () => { }, disabledItems = [], isAppro
                       <Typography sx={textStyle}>No data available</Typography>
                     </Box>
                   ) : (
-                    rowData.map((row, rowIndex) => {
+                    sortedData.map((row, rowIndex) => {
+                      const rowSelectionIndex = row.__rowIndex ?? rowIndex;
                       const isDisabled = disabledItems.some(
                         (disabledItem) => {
                           const disabledId = disabledItem.pu_item_id || disabledItem._id || disabledItem.stock_id;
@@ -892,13 +980,13 @@ const PurchasePUModal = ({ handleSubmit = () => { }, disabledItems = [], isAppro
                                     return row._id === selectedRow._id;
                                   }
                                   // Otherwise, use the uniqueId we stored
-                                  const rowUniqueId = row._id || `${row.pu_item_id || 'unknown'}-${rowIndex}`;
+                                  const rowUniqueId = row._id || `${row.pu_item_id || 'unknown'}-${rowSelectionIndex}`;
                                   const selectedUniqueId = selectedRow.__uniqueId ||
                                     (selectedRow._id || `${selectedRow.pu_item_id || 'unknown'}-${selectedRows.indexOf(selectedRow)}`);
                                   return selectedUniqueId === rowUniqueId;
                                 }
                               )}
-                              onChange={() => handleCheckboxChange(row, rowIndex)}
+                              onChange={() => handleCheckboxChange(row, rowSelectionIndex)}
                               disabled={isDisabled}
                               sx={{
                                 '&.Mui-disabled': {
@@ -1040,7 +1128,7 @@ const PurchasePUModal = ({ handleSubmit = () => { }, disabledItems = [], isAppro
                               padding: "0 8px",
                             }}
                           >
-                            <Typography sx={textStyle}>{row.weight || ""}</Typography>
+                              <Typography sx={textStyle}>{formatWeight(row.weight)}</Typography>
                           </Box>
 
                           {/* Price */}
@@ -1052,7 +1140,7 @@ const PurchasePUModal = ({ handleSubmit = () => { }, disabledItems = [], isAppro
                               padding: "0 8px",
                             }}
                           >
-                            <Typography sx={textStyle}>{row.price || ""}</Typography>
+                            <Typography sx={textStyle}>{formatCurrency(row.price)}</Typography>
                           </Box>
 
                           {/* Unit */}
@@ -1076,7 +1164,9 @@ const PurchasePUModal = ({ handleSubmit = () => { }, disabledItems = [], isAppro
                               padding: "0 8px",
                             }}
                           >
-                            <Typography sx={textStyle}>{row.total_amount || ""}</Typography>
+                        
+
+                                                  <Typography sx={textStyle}>{formatCurrency(row.total_amount)}</Typography>
                           </Box>
                         </Box>
                       );
@@ -1138,6 +1228,12 @@ const PurchasePUModal = ({ handleSubmit = () => { }, disabledItems = [], isAppro
           </Box>
         </Box>
       </Modal>
+
+      <ColumnFilterPopover
+        {...popoverProps}
+        sortConfig={sortConfig}
+        setSortConfig={setSortConfig}
+      />
 
       {/* Select Account Modal */}
       <Dialog

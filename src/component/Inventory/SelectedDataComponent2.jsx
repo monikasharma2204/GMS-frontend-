@@ -659,6 +659,15 @@ const SelectedDataComponent2 = React.forwardRef(({
           >
             <TableHeaderComponent headers={headers} />
             <Box
+              onScroll={() => {
+                if (
+                  document.activeElement &&
+                  (document.activeElement.getAttribute("aria-autocomplete") ||
+                    document.activeElement.getAttribute("role") === "combobox")
+                ) {
+                  document.activeElement.blur();
+                }
+              }}
               sx={{ height: "155px", overflowX: "hidden", overflowY: "scroll" }}
               className="pikachuuuu"
             >

@@ -478,16 +478,22 @@ const Footer = (props) => {
       }
       const invoiceNo = formData.invoice_no || selectedData.invoice_no || originalData.invoice_no || "sale";
       await downloadSalePdf(id, invoiceNo);
+      return;
     }
+
+
+    window.print();
   };
+
 
 
   return (
     <>
       <Box
         sx={{
-          width: "1697px",
-marginLeft : "222px",
+          width: "calc(100% - 222px)",
+          left: "222px",
+          right: 0,
           height: "65px",
           display: "flex",
           justifyContent: "center",
@@ -541,6 +547,7 @@ marginLeft : "222px",
             </Button>
           ) : null}
 
+        {props.type !== "sale" && (
           <Box sx={{
             paddingRight: "20px",
 
@@ -609,6 +616,7 @@ marginLeft : "222px",
             </Button>
 
           </Box>
+        )}
 
 
         </Box>
@@ -693,6 +701,7 @@ marginLeft : "222px",
 
 
           <Box
+            onClick={handlePrint}
             sx={{
               "&:hover svg path": {
                 fill: "#E9B238",
@@ -701,6 +710,7 @@ marginLeft : "222px",
               marginLeft: "8px",
             }}
           >
+
             <svg
               xmlns="http://www.w3.org/2000/svg"
               width="28"

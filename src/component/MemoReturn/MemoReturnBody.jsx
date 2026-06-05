@@ -89,6 +89,7 @@ const MemoReturnBody = ({
   triggerFSMDirty,
   fsmState,
   editMemoStatus,
+  hasUnsavedData,
 }) => {
   const [memoInfo, setMemoInfo] = useRecoilState(memoInfoState);
   const editMemoStatusValue = useRecoilValue(editMemoState);
@@ -440,6 +441,8 @@ const MemoReturnBody = ({
                 setRows={setRows}
                 triggerFSMDirty={triggerFSMDirty}
                 disabled={shouldDisableFields}
+                fsmState={fsmState}
+                hasUnsavedData={hasUnsavedData}
               />
             </Box>
             <Box

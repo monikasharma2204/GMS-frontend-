@@ -313,6 +313,15 @@ const SelectedDataComponent = ({
       </Box>
 
       <Box
+        onScroll={() => {
+          if (
+            document.activeElement &&
+            (document.activeElement.getAttribute("aria-autocomplete") ||
+              document.activeElement.getAttribute("role") === "combobox")
+          ) {
+            document.activeElement.blur();
+          }
+        }}
         sx={{
           height: "294px",
           overflowX: "scroll",

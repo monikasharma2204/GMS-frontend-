@@ -15,7 +15,12 @@ import {
   Button,
   Paper,
 } from "@mui/material";
+
 import apiRequest from "../../../helpers/apiHelper";
+import useTableSort from "../../../hooks/useTableSort";
+import ColumnFilterPopover from "../../Commons/ColumnFilterPopover/ColumnFilterPopover";
+import { useColumnFilters } from "../../Commons/ColumnFilterPopover/useColumnFilters";
+import SortIcon from "../../Commons/SortIcon/SortIcon";
 
 const modalStyle = {
   position: "absolute",
@@ -65,6 +70,20 @@ const columns = [
   { key: "amount", label: "Amount", width: 120, align: "right" },
   { key: "remark", label: "Remark", width: 220 },
 ];
+
+const filterableColumnKeys = new Set([
+  "stock_id",
+ 
+  "stone_code",
+  "stone",
+  "shape",
+  "size",
+  "color",
+  "cutting",
+  "quality",
+  "clarity",
+  "cer_type",
+]);
 
 const formatCellValue = (stock, key) => {
   if (key === "doc_date") {
@@ -120,6 +139,42 @@ const StockSelectionModal = ({ open, onClose, onSelect, mode = "merge" }) => {
     );
   }, [stocks, searchTerm]);
 
+  const {
+    filteredData: columnFilteredStocks,
+    handleFilterClick,
+    popoverProps,
+    isFilterActive,
+  } = useColumnFilters(filteredStocks, open);
+
+  const { sortedData: sortedStocks, requestSort, sortConfig } = useTableSort(
+    columnFilteredStocks,
+    { key: "doc_date", direction: "desc" }
+  );
+
+  const renderFilterIcon = (columnKey) => {
+    const active = isFilterActive(columnKey) || (popoverProps.open && popoverProps.activeColumnKey === columnKey);
+
+    return (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="12"
+        height="12"
+        viewBox="0 0 12 12"
+        fill="none"
+        style={{ marginLeft: "4px", flexShrink: 0 }}
+      >
+        <path
+          d="M2 1.5H10C10.1326 1.5 10.2598 1.55268 10.3536 1.64645C10.4473 1.74021 10.5 1.86739 10.5 2V2.793C10.5 2.9256 10.4473 3.05275 10.3535 3.1465L7.1465 6.3535C7.05273 6.44725 7.00003 6.5744 7 6.707V9.8595C7 9.9355 6.98267 10.0105 6.94933 10.0788C6.91599 10.1471 6.86752 10.2069 6.80761 10.2537C6.74769 10.3004 6.6779 10.3329 6.60355 10.3486C6.52919 10.3644 6.45222 10.363 6.3785 10.3445L5.3785 10.0945C5.27038 10.0674 5.1744 10.005 5.10583 9.9171C5.03725 9.82923 5 9.72096 5 9.6095V6.707C4.99997 6.5744 4.94727 6.44725 4.8535 6.3535L1.6465 3.1465C1.55273 3.05275 1.50003 2.9256 1.5 2.793V2C1.5 1.86739 1.55268 1.74021 1.64645 1.64645C1.74021 1.55268 1.86739 1.5 2 1.5Z"
+          stroke={active ? "#17C653" : "#343434"}
+          fill="none"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+    );
+  };
+
   const firstSelectedStone = useMemo(() => {
     if (selectedIds.length === 0) return null;
     const firstSelected = stocks.find((s) => s._id === selectedIds[0]);
@@ -134,17 +189,17 @@ const StockSelectionModal = ({ open, onClose, onSelect, mode = "merge" }) => {
 
   const handleSelectAll = (event) => {
     if (event.target.checked) {
-      if (filteredStocks.length === 0) return;
+      if (sortedStocks.length === 0) return;
 
       let stoneToMatch = firstSelectedStone;
       if (!stoneToMatch && mode !== "transfer") {
-        stoneToMatch = filteredStocks[0].stone;
+        stoneToMatch = sortedStocks[0].stone;
       }
 
       const validIds =
         mode === "transfer"
-          ? filteredStocks.map((s) => s._id)
-          : filteredStocks
+          ? sortedStocks.map((s) => s._id)
+          : sortedStocks
             .filter((s) => s.stone === stoneToMatch)
             .map((s) => s._id);
 
@@ -162,10 +217,32 @@ const StockSelectionModal = ({ open, onClose, onSelect, mode = "merge" }) => {
 
   const selectableCount =
     mode === "transfer"
-      ? filteredStocks.length
-      : filteredStocks.filter(
-        (s) => s.stone === (firstSelectedStone || filteredStocks[0]?.stone)
+      ? sortedStocks.length
+      : sortedStocks.filter(
+        (s) => s.stone === (firstSelectedStone || sortedStocks[0]?.stone)
       ).length;
+
+  const visibleSelectedCount =
+    mode === "transfer"
+      ? sortedStocks.filter((s) => selectedIds.includes(s._id)).length
+      : sortedStocks.filter(
+        (s) =>
+          selectedIds.includes(s._id) &&
+          s.stone === (firstSelectedStone || sortedStocks[0]?.stone)
+      ).length;
+
+  const handleHeaderClick = (event, columnKey) => {
+    if (columnKey === "doc_date") {
+      requestSort(columnKey);
+      return;
+    }
+
+    if (!filterableColumnKeys.has(columnKey)) {
+      return;
+    }
+
+    handleFilterClick(event, columnKey);
+  };
 
   return (
     <Modal open={open} onClose={onClose}>
@@ -214,18 +291,18 @@ const StockSelectionModal = ({ open, onClose, onSelect, mode = "merge" }) => {
         <Box
           sx={{
             backgroundColor: "#F8F8F8",
-            width: "95.2%",
+       
 
-            marginLeft: "33px",
-            marginTop: "33px",
-            paddingTop: "32px",
+           
+    
+            padding: "64px 64px 0px  64px",
           }}
         >
           <Box
             sx={{
-              width: "1232px",
+            
               height: "40px",
-              marginLeft: "32px",
+            
               display: "flex",
               justifyContent: "space-between",
               alignItems: "center",
@@ -287,10 +364,10 @@ const StockSelectionModal = ({ open, onClose, onSelect, mode = "merge" }) => {
 
           <Box
             sx={{
-              width: "1232px",
+             
               maxHeight: "578px",
               marginTop: "24px",
-              marginLeft: "32px",
+           
               borderRadius: "5px",
               border: "1px solid var(--Line-Table, #C6C6C8)",
               overflowX: "auto",
@@ -307,7 +384,7 @@ const StockSelectionModal = ({ open, onClose, onSelect, mode = "merge" }) => {
               },
             }}
           >
-            <TableContainer component={Paper} sx={{ boxShadow: "none", borderRadius: 0, overflow: "visible" }}>
+            <TableContainer component={Paper} sx={{       overflowX: "visible",  boxShadow: "none", borderRadius: 0, overflow: "visible" , minHeight : "557px"}}>
               <Table
                 stickyHeader
                 size="small"
@@ -332,25 +409,42 @@ const StockSelectionModal = ({ open, onClose, onSelect, mode = "merge" }) => {
                   <TableRow>
                     <TableCell sx={{ width: "60px", minWidth: "60px" }}>
                       <Checkbox
-                        disabled={filteredStocks.length === 0}
+                        disabled={sortedStocks.length === 0}
                         sx={{ p: 0 }}
-                        indeterminate={selectedIds.length > 0 && selectedIds.length < selectableCount}
-                        checked={filteredStocks.length > 0 && selectedIds.length === selectableCount}
+                        indeterminate={visibleSelectedCount > 0 && visibleSelectedCount < selectableCount}
+                        checked={sortedStocks.length > 0 && selectableCount > 0 && visibleSelectedCount === selectableCount}
                         onChange={handleSelectAll}
                       />
                     </TableCell>
-                    {columns.map((column) => (
-                      <TableCell
-                        key={column.key}
-                        sx={{
-                          width: `${column.width}px`,
-                          minWidth: `${column.width}px`,
-                          textAlign: column.align || "left",
-                        }}
-                      >
-                        <Typography sx={headerText}>{column.label}</Typography>
-                      </TableCell>
-                    ))}
+                    {columns.map((column) => {
+                      const isSortable = column.key === "doc_date";
+                      const isFilterable = filterableColumnKeys.has(column.key);
+
+                      return (
+                        <TableCell
+                          key={column.key}
+                          onClick={(event) => handleHeaderClick(event, column.key)}
+                          sx={{
+                            width: `${column.width}px`,
+                            minWidth: `${column.width}px`,
+                            textAlign: column.align || "left",
+                            cursor: isSortable || isFilterable ? "pointer" : "default",
+                          }}
+                        >
+                          <Box
+                            sx={{
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: column.align === "right" ? "flex-end" : "flex-start",
+                            }}
+                          >
+                            <Typography sx={headerText}>{column.label}</Typography>
+                            {isSortable && <SortIcon sortConfig={sortConfig} columnKey="doc_date" />}
+                            {isFilterable && renderFilterIcon(column.key)}
+                          </Box>
+                        </TableCell>
+                      );
+                    })}
                   </TableRow>
                 </TableHead>
 
@@ -361,14 +455,14 @@ const StockSelectionModal = ({ open, onClose, onSelect, mode = "merge" }) => {
                         <Typography sx={bodyText}>Loading...</Typography>
                       </TableCell>
                     </TableRow>
-                  ) : filteredStocks.length === 0 ? (
+                  ) : sortedStocks.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={columns.length + 1} align="center" sx={{ height: "200px", backgroundColor: "#FFF" }}>
                         <Typography sx={bodyText}>No data available</Typography>
                       </TableCell>
                     </TableRow>
                   ) : (
-                    filteredStocks.map((stock, index) => {
+                    sortedStocks.map((stock, index) => {
                       const isSelected = selectedIds.includes(stock._id);
                       const isDisabled =
                         mode !== "transfer" &&
@@ -416,11 +510,12 @@ const StockSelectionModal = ({ open, onClose, onSelect, mode = "merge" }) => {
             </TableContainer>
           </Box>
         </Box>
+        <ColumnFilterPopover {...popoverProps} hideSort />
 
         <Box
           sx={{
             display: "flex",
-            padding: "24px 32px",
+            padding: "24px 24px",
             justifyContent: "space-between",
             alignItems: "center",
             flexShrink: 0,

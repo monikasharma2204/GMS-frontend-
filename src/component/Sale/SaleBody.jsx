@@ -88,6 +88,7 @@ const SaleBody = ({
   handleReturnReserveEdit,
   handleReserveSubmit,
   triggerFSMDirty,
+  showWarning,
 }) => {
   const [memoInfo, setMemoInfo] = useRecoilState(memoInfoState);
   const editMemoStatus = useRecoilValue(editMemoState);
@@ -462,6 +463,7 @@ const SaleBody = ({
                 disabled={isDisabled}
                 isCancelled={isCancelledDoc}
                 triggerFSMDirty={triggerFSMDirty}
+                showWarning={showWarning}
               />
             </Box>
             <Box

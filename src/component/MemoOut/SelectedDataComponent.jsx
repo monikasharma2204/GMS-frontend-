@@ -38,6 +38,7 @@ const SelectedDataComponent = ({
   remark,
   triggerFSMDirty,
   disabled = false,
+  showWarning,
 }) => {
   const [dropdownOptions, setDropdownOptions] = useState({});
   const editMemoStatus = useRecoilValue(editMemoState);
@@ -101,7 +102,9 @@ const SelectedDataComponent = ({
         location: stockRow.location_name || stockRow.location, // Use location_name if available, fallback to location ID
         lot_no: stockRow.lot_no,
         pcs: stockRow.pcs,
+        availablePcs: stockRow.availablePcs !== undefined ? stockRow.availablePcs : stockRow.pcs,
         weight: stockRow.weight,
+        availableWeight: stockRow.availableWeight !== undefined ? stockRow.availableWeight : stockRow.weight,
         
         price: stockRow.price,
         unit: stockRow.unit,
@@ -269,6 +272,15 @@ const SelectedDataComponent = ({
       </Box>
 
       <Box
+        onScroll={() => {
+          if (
+            document.activeElement &&
+            (document.activeElement.getAttribute("aria-autocomplete") ||
+              document.activeElement.getAttribute("role") === "combobox")
+          ) {
+            document.activeElement.blur();
+          }
+        }}
         sx={{
           height: "294px",
           overflowX: "scroll",
@@ -277,10 +289,9 @@ const SelectedDataComponent = ({
           alignItems: "flex-start",
           border: "1px solid var(--Line-Table, #C6C6C8)",
           borderRadius: "5px",
-      
+
           bgcolor: "#FFF",
           marginTop: "10px",
-          
         }}
       >
         <Box
@@ -336,6 +347,7 @@ const SelectedDataComponent = ({
                   setRows={setRows}
                   rowData={rowData}
                     formatNumberWithCommas={formatNumberWithCommas}
+                  showWarning={showWarning}
                 />
               ))}
             </Box>

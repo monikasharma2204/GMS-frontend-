@@ -24,6 +24,7 @@ import apiRequest from "../../helpers/apiHelper.js";
 import { QuotationtableRowsState } from "recoil/state/MemoOutState";
 import { useRecoilState, useRecoilValueLoadable, useResetRecoilState } from "recoil";
 import ConfirmCancelDialog from "../../component/Commons/ConfirmCancelDialog";
+import ValidationWarningBanner from "../../component/Commons/ValidationWarningBanner";
 import useTransactionNavigationGuard from "../../hooks/useTransactionNavigationGuard";
 import { getCompanyCurrencyId } from "../../helpers/currencyCache.js";
 import { API_URL } from "config/config.js";
@@ -892,6 +893,8 @@ const MemoOut = () => {
         total_amount: Number(el.total_amount).toFixed(2),
         weight_per_piece: Number(el.weight_per_piece).toFixed(2),
         weight: Number(el.weight).toFixed(3),
+        availablePcs: el.availablePcs,
+        availableWeight: el.availableWeight,
         price: Number(el.price).toFixed(2),
         discount_percent: Number(el.discount_percent).toFixed(2),
         discount_amount: Number(el.discount_amount).toFixed(2),
@@ -1007,9 +1010,9 @@ const MemoOut = () => {
         rowErrors.push("Pcs");
       }
 
-      if (!isNumeric(el.weight) || parseFloat(el.weight) <= 0) {
-        rowErrors.push("Weight");
-      }
+      // if (!isNumeric(el.weight) || parseFloat(el.weight) <= 0) {
+      //   rowErrors.push("Weight");
+      // }
 
       if (!isNumeric(el.price) || parseFloat(el.price) <= 0) {
         rowErrors.push("Price");
@@ -1141,6 +1144,9 @@ const MemoOut = () => {
           remark: el.remark,
           unit: el.unit || "cts",
           status: "active",
+          isFromStock: el.isFromStock,
+          availablePcs: el.availablePcs,
+          availableWeight: el.availableWeight,
           // Preserve image but strip full URL back to relative '/uploads/...' before saving
           image: el.imageFile ? undefined : (el.image ? (() => {
             const img = el.image;
@@ -1239,8 +1245,38 @@ const MemoOut = () => {
   const [isOpenModalWarning, setIsOpenModalWarning] = useState(false);
   const [isOpenModalConfirm, setIsOpenModalConfrim] = useState(false);
   const [isOpenModalSuccess, setIsOpenModalSuccess] = useState(false);
+  const [showWarningBanner, setShowWarningBanner] = useState(false);
+  const [warningMessage, setWarningMessage] = useState("Please complete all required fields.");
+  const showWarning = useCallback((message) => {
+    setWarningMessage(message || "Please complete all required fields.");
+    setShowWarningBanner(true);
+    setTimeout(() => {
+      setShowWarningBanner(false);
+    }, 1800);
+  }, []);
 
-  const handleEdit = (item) => {
+  const getStockAvailabilityMap = useCallback(async () => {
+    try {
+      const response = await apiRequest("GET", "/stocksandconsignments");
+      const stockRows = [
+        ...(response?.stocks || []),
+        ...(response?.consignments || []),
+      ];
+      return stockRows.reduce((map, stockRow) => {
+        [stockRow._id, stockRow.id, stockRow.stock_id].forEach((key) => {
+          if (key) {
+            map[String(key)] = stockRow;
+          }
+        });
+        return map;
+      }, {});
+    } catch (error) {
+      console.error("Error fetching stock availability:", error);
+      return {};
+    }
+  }, []);
+
+  const handleEdit = async (item) => {
     setOpen(false);
     // Reset summary state when loading daybook data
     dispatch({ type: "RESET_STATE" });
@@ -1361,7 +1397,13 @@ const MemoOut = () => {
       isDayBookEdit: true,
     });
 
+    const stockAvailabilityMap = await getStockAvailabilityMap();
     const updatedItems = item.items.map((obj) => {
+      const stockRow =
+        stockAvailabilityMap[String(obj.stock?._id || "")] ||
+        stockAvailabilityMap[String(obj._id || "")] ||
+        stockAvailabilityMap[String(obj.id || "")] ||
+        stockAvailabilityMap[String(obj.stock_id || "")];
       // Ensure image path is absolute so <img> can load it in daybook
       const imageUrl = obj.image
         ? (/^https?:\/\//.test(obj.image) ? obj.image : `${API_URL}${obj.image}`)
@@ -1369,9 +1411,12 @@ const MemoOut = () => {
       return {
         ...obj,
         uniqueId: obj._id,
+        isFromStock: obj.isFromStock || !!obj.stock_id || !!obj.stone_code,
         total_amount: Number(obj.total_amount).toFixed(2),
         weight_per_piece: obj.weight_per_piece && !isNaN(Number(obj.weight_per_piece)) ? Number(obj.weight_per_piece).toFixed(2) : "",
         weight: Number(obj.weight).toFixed(3),
+        availablePcs: stockRow?.pcs ?? obj.availablePcs,
+        availableWeight: stockRow?.weight ?? obj.availableWeight,
         price: Number(obj.price).toFixed(2),
         discount_percent: Number(obj.discount_percent).toFixed(2),
         discount_amount: Number(obj.discount_amount).toFixed(2),
@@ -1876,6 +1921,7 @@ const MemoOut = () => {
               triggerFSMDirty={triggerFSMDirty}
               fsmState={fsmState}
               editMemoStatus={editMemoStatus}
+              showWarning={showWarning}
 
             />
           </Box>
@@ -1904,6 +1950,11 @@ const MemoOut = () => {
       {renderDialogConfirm()}
       {renderDialogError()}
       {renderDialogWarning()}
+      <ValidationWarningBanner
+        show={showWarningBanner}
+        message={warningMessage}
+        sx={{ position: "fixed", top: "100px", right: "25px", zIndex: 99999 }}
+      />
 
       <ConfirmCancelDialog
         open={showCancelConfirmDialog}

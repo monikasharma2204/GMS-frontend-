@@ -34,16 +34,16 @@ const CustomSelectInput = ({
   };
   const selectedOption =
     options.find((option) => option["label"] === value) || defaultOption;
-  //  const selectedOption = value;
+
 
   return (
     <Autocomplete
-      value={selectedOption} // Controlled value
+      value={selectedOption}
       onChange={(_, newValue) => {
-        onChange(newValue ? newValue.label : ""); // Update the parent state with label (name) instead of value (code)
+        onChange(newValue ? newValue.label : "");
       }}
       onBlur={(event) => {
-        // Ensure the value is retained on blur
+
         if (!event.target.value && selectedOption) {
           onChange(selectedOption.label);
         }
@@ -52,7 +52,7 @@ const CustomSelectInput = ({
       disableClearable
       options={options}
       getOptionLabel={(option) => option?.label || ""}
-      isOptionEqualToValue={(option, value) => option.label === value?.label} // Compare options by label
+      isOptionEqualToValue={(option, value) => option.label === value?.label}
       renderInput={(params) => (
         <TextField
           {...params}
@@ -91,9 +91,9 @@ const TableRowComponent = (
     handleDelete,
     handleAddRow = () => { },
     selectedItems = [],
-    handleShapeChange, // Add this prop
-    disabled = false, // Add disabled prop
-    formatNumberWithCommas, // Add formatNumberWithCommas prop
+    handleShapeChange,
+    disabled = false,
+    formatNumberWithCommas,
     // rows,
     // setRows,
   }) => {
@@ -122,17 +122,16 @@ const TableRowComponent = (
           ? (currItem.pcs || 0) * (currItem.price || 0)
           : (currItem.weight || 0) * (currItem.price || 0);
 
-      // Format to 2 decimals per schema
+
       return parseFloat(totalAmount).toFixed(2);
     };
-    //   this is subtotal
+
     const calculateAmountAfterDiscount = (currItem) => {
       const afterDiscount = parseFloat(
         calculateAmount(currItem || {}) -
         parseFloat(currItem?.discount_amount || 0)
       );
 
-      // Format to 2 decimals per schema
       return afterDiscount.toFixed(2);
     };
 
@@ -140,7 +139,7 @@ const TableRowComponent = (
       const amount = Number(calculateAmount(item || {}));
       const discountPercent = Number(item?.discount_percent || 0);
       const discount = (discountPercent / 100) * amount;
-      // Format to 2 decimals per schema
+
       return discount.toFixed(2);
     };
 
@@ -148,7 +147,7 @@ const TableRowComponent = (
       const amount = calculateAmount(item || {});
       if (!amount) return 0;
       const discount = ((item.discount_amount || 0) / amount) * 100;
-      // Format to 2 decimals per schema
+
       return parseFloat(Number(discount || 0).toFixed(2));
     };
 
@@ -169,11 +168,11 @@ const TableRowComponent = (
       (index, field, val, item = {}) => {
 
 
-        // Special handling for shape changes
+
         if (field === "shape" && handleShapeChange) {
 
           handleShapeChange(index, val);
-          return; // Don't proceed with normal change handling
+          return;
         }
 
         setRows((prevRows) => {
@@ -181,11 +180,11 @@ const TableRowComponent = (
           let itm = { ...item };
 
           let value = val;
-          // Convert unit to lowercase to match schema enum values
+
           if (field === "unit" && typeof value === "string") {
             value = value.toLowerCase();
           }
-          //(parseFloat(rows?.[index]?.[key]) || 0).toFixed(2)
+
           if (field === "discount_percent") {
             itm = { ...item, discount_percent: value };
             const val = calculateDiscount(itm || {});

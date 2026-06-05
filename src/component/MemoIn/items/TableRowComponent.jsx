@@ -410,6 +410,7 @@ const TableRowComponent = (
     
       { key: "pcs", component: CustomTextField ,type:"number", noDecimal:true ,  formatWithCommas: true},
       { key: "weight", component: CustomTextField,type:"number"  , decimal: 3 ,  formatWithCommas: true},
+     
       { key: "price", component: CustomTextField ,type:"number" ,decimal: 2 ,  formatWithCommas: true},
       {
         key: "unit",
@@ -417,9 +418,11 @@ const TableRowComponent = (
         options: dropdownOptions?.unit || [],
       },
       { key: "amount", component: CustomTextField,type:"number" , bgHighlight: true   , disabled : true , decimal: 2 ,  formatWithCommas: true},
+     
       { key: "discount_percent", component: CustomTextField ,type:"number" , decimal: 2 ,  formatWithCommas: true},
       { key: "discount_amount", component: CustomTextField,type:"number" , decimal: 2 ,  formatWithCommas: true},
       { key: "totalAmount", component: CustomTextField ,type:"number" , bgHighlight: true ,disabled : true , decimal: 2 ,  formatWithCommas: true},
+        {key : "sale_price" ,  component: CustomTextField ,type:"number" ,decimal: 2 ,  formatWithCommas: true},
       { key: "ref_no", component: CustomTextField },
       // {
       //   key: "labour",
@@ -676,6 +679,7 @@ const TableRowComponent = (
                     "weight_per_piece",
                     "weight",
                     "price",
+                    "sale_price",
                     "unit",
                     "discount_amount",
                     "discount_percent",

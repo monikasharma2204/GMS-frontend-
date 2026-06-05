@@ -101,7 +101,8 @@ const TableRowComponent = React.memo(
     // rows,
     // setRows,
      formatNumberWithCommas, // Add formatNumberWithCommas prop
-    rowData
+    rowData,
+    showWarning,
   }) => {
     const [warningPopup, setWarningPopup] = useState(false);
     const [rows, setRows] = useRecoilState(QuotationtableRowsState);
@@ -174,15 +175,47 @@ const TableRowComponent = React.memo(
 
     const selIndex = index;
     const selectedData = rowData?.find((row) => row._id === rows[index]?._id)
+    const validateStockLimit = useCallback((field, value, row = {}) => {
+      if (!(row.isFromStock || !!row.stock_id || !!row.stone_code)) {
+        return true;
+      }
+
+      if (field === "pcs") {
+        const numVal = Number(value) || 0;
+        const hasStockPcs = row.availablePcs !== undefined && row.availablePcs !== null && row.availablePcs !== "";
+        const maxPcs = Number(row.availablePcs);
+        if (!hasStockPcs || Number.isNaN(maxPcs) || numVal > maxPcs) {
+          if (showWarning) {
+            showWarning(hasStockPcs ? `PCS cannot exceed available stock (Max: ${maxPcs})` : "Stock PCS not found for this item");
+          } else {
+            setWarningPopup(true);
+          }
+          return false;
+        }
+      }
+
+      if (field === "weight") {
+        const numVal = Number(value) || 0;
+        const hasStockWeight = row.availableWeight !== undefined && row.availableWeight !== null && row.availableWeight !== "";
+        const maxWeight = Number(row.availableWeight);
+        if (!hasStockWeight || Number.isNaN(maxWeight) || numVal > maxWeight) {
+          if (showWarning) {
+            showWarning(hasStockWeight ? `Weight cannot exceed available stock (Max: ${maxWeight})` : "Stock weight not found for this item");
+          } else {
+            setWarningPopup(true);
+          }
+          return false;
+        }
+      }
+
+      return true;
+    }, [showWarning]);
 
     const handleChange = useCallback(
       (index, field, val, item = {}) => {
 
-        if (field === 'pcs') {
-          if (val > selectedData?.pcs) {
-            setWarningPopup(true);
-
-          }
+        if (!validateStockLimit(field, val, item)) {
+          return;
         }
 
 
@@ -223,7 +256,7 @@ const TableRowComponent = React.memo(
           return newRows;
         });
       },
-      [setRows]
+      [setRows, validateStockLimit]
     );
 
 
@@ -570,12 +603,13 @@ const TableRowComponent = React.memo(
               )}
               onChange={(value) =>
                 handleChange(index, key, value, rows?.[index])}
+              beforeChange={(value) => validateStockLimit(key, value, rows?.[index])}
               onDropdownClick={() => {
                 
               }}
                formatNumberWithCommas={formatNumberWithCommas}
               {...rest}
-              error={key === 'pcs' && rows?.[index]?.pcs > selectedData?.pcs}
+              error={key === 'pcs' && rows?.[index]?.availablePcs !== undefined && Number(rows?.[index]?.pcs || 0) > Number(rows?.[index]?.availablePcs || 0)}
               disabled={
                 disabled || rest?.disabled ||
                 ["stone_code", "location", "type", "lot_no"].includes(key) ||

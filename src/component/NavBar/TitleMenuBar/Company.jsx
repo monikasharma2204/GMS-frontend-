@@ -73,8 +73,8 @@ const Company = ({ handleClick, showRedBox }) => {
                 strokeLinejoin="round"
               />
             </svg> */}
-                <svg className="hovered-svg hovered-svg-arrow" width="4" height="8" viewBox="0 0 4 8" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M4 4L0 8V0L4 4Z" fill="currentColor" stroke="none" strokeWidth= "0"  />
+            <svg className="hovered-svg hovered-svg-arrow" width="4" height="8" viewBox="0 0 4 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M4 4L0 8V0L4 4Z" fill="currentColor" stroke="none" strokeWidth="0" />
             </svg>
           </Box>
 
@@ -133,23 +133,23 @@ const Company = ({ handleClick, showRedBox }) => {
 
       {/* Dropdown */}
       {showRedBox === "Company" && (
-        <Box 
-          sx={NewTab} 
+        <Box
+          sx={NewTab}
           data-dropdown-menu
           onClick={(e) => e.stopPropagation()}
         >
           <Box>
-            <Box sx={Dropdownmenu} className="hovered-box">
-              <Link to="/company/company-profile">
+            <Link to="/company/company-profile">
+              <Box sx={Dropdownmenu} className="hovered-box">
                 <Typography sx={TextMain} className={isCompanyProfileActive ? "active" : ""}>Company Profile</Typography>
-              </Link>
-            </Box>
+              </Box>
+            </Link>
 
-            <Box sx={Dropdownmenu} className="hovered-box">
-              <Link to="/company/bank">
+            <Link to="/company/bank">
+              <Box sx={Dropdownmenu} className="hovered-box">
                 <Typography sx={TextMain} className={isBankActive ? "active" : ""}>Bank</Typography>
-              </Link>
-            </Box>
+              </Box>
+            </Link>
           </Box>
         </Box>
       )}

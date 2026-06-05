@@ -1,33 +1,14 @@
-import React, { useState } from "react";
+import React from "react";
 import { Box, Typography } from "@mui/material";
 import { Link } from "react-router-dom";
 import { useLocation } from "react-router-dom";
 import {
   SidebarMenuBox,
-  ButtonOnNavBarWithRightArrow,
   DropdownMenuBox,
   TextButton,
   TextMain,
   Dropdownmenu,
 } from "../../../Assets/styles/NavbarStyles.jsx";
-
-// const ButtonOnNavBarWithRightArrow = {
-//   display: "flex",
-//   width: "222px",
-//   height: "51px",
-//   alignItems: "center",
-//   flexShrink: 0,
-//   "&:hover svg path": {
-//     stroke: "#FFF",
-//   },
-//   "&:hover .hovered-text": {
-//     color: "#FFF",
-//   },
-//   "&:hover .hovered-box": {
-//     backgroundColor: "#FFF",
-//   },
-//   cursor: "pointer",
-// };
 
 const NewTab = {
   // position: "absolute",
@@ -47,13 +28,16 @@ const NewTab = {
 const Finance = ({ handleClick, showRedBox }) => {
   const location = useLocation();
 
-  const isActive = location.pathname.startsWith("/finance/outstandingreceivble");
+  const isActive =
+    location.pathname.startsWith("/finance/outstandingreceivble") ||
+    location.pathname.startsWith("/finance/outstandingpayable");
+
   return (
     <>
       <Box
         onClick={handleClick}
         className="sidebar-menu-box"
-        sx={[SidebarMenuBox, DropdownMenuBox]}
+        sx={[SidebarMenuBox, DropdownMenuBox(showRedBox, "Finance")]}
       >
         <Box sx={{ display: "flex", alignItems: "center", marginLeft: "12px" }}>
           <Box
@@ -61,7 +45,7 @@ const Finance = ({ handleClick, showRedBox }) => {
               marginRight: "6px",
             }}
           >
-            
+
 
             <svg className="hovered-svg hovered-svg-arrow" width="4" height="8" viewBox="0 0 4 8" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M4 4L0 8V0L4 4Z" fill={isActive ? "#fff" : "rgba(255,255,255,0.48)"} strokeWidth="0" />
@@ -126,14 +110,16 @@ const Finance = ({ handleClick, showRedBox }) => {
           onClick={(e) => e.stopPropagation()}
         >
           <Box>
-            <Box sx={Dropdownmenu} className="hovered-box">
-              <Link to="/finance/outstandingreceivble">
-                <Typography sx={TextMain}>Receivable</Typography>
-              </Link>
-            </Box>
-            <Box sx={Dropdownmenu} className="hovered-box">
-              <Typography sx={TextMain}>Payable</Typography>
-            </Box>
+            <Link to="/finance/outstandingreceivble">
+              <Box sx={Dropdownmenu} className="hovered-box">
+                <Typography sx={TextMain} className={location.pathname === "/finance/outstandingreceivble" ? "active" : ""}>Receivable</Typography>
+              </Box>
+            </Link>
+            <Link to="/finance/outstandingpayable">
+              <Box sx={Dropdownmenu} className="hovered-box">
+                <Typography sx={TextMain} className={location.pathname === "/finance/outstandingpayable" ? "active" : ""}>Payable</Typography>
+              </Box>
+            </Link>
             <Box sx={Dropdownmenu} className="hovered-box">
               <Typography sx={TextMain}>Transaction</Typography>
             </Box>

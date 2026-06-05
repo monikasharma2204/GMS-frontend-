@@ -95,7 +95,8 @@ const TableRowComponent = React.memo(
     rows,
     setRows,
     disabled = false,
-    formatNumberWithCommas
+    formatNumberWithCommas,
+    showWarning,
   }) => {
     // const [rows, setRows] = useRecoilState(QuotationtableRowsState);
     const [allDropdrownOptions, setAllDropdownOptions] = useRecoilState(
@@ -170,8 +171,44 @@ const TableRowComponent = React.memo(
     };
 
     const selIndex = index;
+    const validateStockLimit = useCallback((field, value, row = {}) => {
+      if (!(row.isFromStock || !!row.stock_id || !!row.stone_code)) {
+        return true;
+      }
+
+      if (field === "pcs") {
+        const numVal = Number(value) || 0;
+        const hasStockPcs = row.availablePcs !== undefined && row.availablePcs !== null && row.availablePcs !== "";
+        const maxPcs = Number(row.availablePcs);
+        if (!hasStockPcs || Number.isNaN(maxPcs) || numVal > maxPcs) {
+          if (showWarning) {
+            showWarning(hasStockPcs ? `PCS cannot exceed available stock (Max: ${maxPcs})` : "Stock PCS not found for this item");
+          }
+          return false;
+        }
+      }
+
+      if (field === "weight") {
+        const numVal = Number(value) || 0;
+        const hasStockWeight = row.availableWeight !== undefined && row.availableWeight !== null && row.availableWeight !== "";
+        const maxWeight = Number(row.availableWeight);
+        if (!hasStockWeight || Number.isNaN(maxWeight) || numVal > maxWeight) {
+          if (showWarning) {
+            showWarning(hasStockWeight ? `Weight cannot exceed available stock (Max: ${maxWeight})` : "Stock weight not found for this item");
+          }
+          return false;
+        }
+      }
+
+      return true;
+    }, [showWarning]);
+
     const handleChange = useCallback(
       (index, field, val, item = {}) => {
+        if (!validateStockLimit(field, val, item)) {
+          return;
+        }
+
         setRows((prevRows) => {
           const obj = {};
           let itm = { ...item };
@@ -209,7 +246,7 @@ const TableRowComponent = React.memo(
           return newRows;
         });
       },
-      [setRows]
+      [setRows, validateStockLimit]
     );
 
     const handleAddRowOnClick = (key, index) => {
@@ -603,6 +640,7 @@ const TableRowComponent = React.memo(
               onChange={(value) =>
                 handleChange(index, key, value, rows?.[index])
               }
+              beforeChange={(value) => validateStockLimit(key, value, rows?.[index])}
               onDropdownClick={() => handleAddRowOnClick(key, index)}
     formatNumberWithCommas={formatNumberWithCommas}
               {...rest}

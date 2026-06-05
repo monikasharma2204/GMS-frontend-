@@ -16,6 +16,10 @@ import {
 } from "recoil/MemoOutReturn/MemoState.js";
 import dayjs from "dayjs";
 import ConfirmCancelDialog from "../Commons/ConfirmCancelDialog";
+import useTableSort from "../../hooks/useTableSort";
+import ColumnFilterPopover from "../Commons/ColumnFilterPopover/ColumnFilterPopover";
+import { useColumnFilters } from "../Commons/ColumnFilterPopover/useColumnFilters";
+import SortIcon from "../Commons/SortIcon/SortIcon";
 
 export const selectedRowsState = atom({
   key: "quotationSelectedRowsState_MemoOutReturn",
@@ -39,6 +43,20 @@ const textStyle = {
   fontStyle: "normal",
   fontWeight: 400,
 };
+
+const formatWeight = (weight) => {
+  const value = Number(weight);
+  return Number.isFinite(value) ? value.toFixed(3) : "0.000";
+};
+
+const formatCurrency = (amount) => {
+  const num = parseFloat(amount);
+  return isNaN(num) ? "0.00" : num.toLocaleString("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+};
+
 const ReturnMemoPending = ({ data, state, handleSubmit, fsmState, hasUnsavedData }) => {
   const [open, setOpen] = useState(false);
   const [checked, setChecked] = useState(false);
@@ -54,6 +72,38 @@ const ReturnMemoPending = ({ data, state, handleSubmit, fsmState, hasUnsavedData
   const [pendingSubmit, setPendingSubmit] = useState(false);
 
   const [rows, setRows] = useRecoilState(QuotationtableRowsState);
+
+  const { filteredData, handleFilterClick, popoverProps, isFilterActive } = useColumnFilters(rowData, open);
+  const { sortedData, requestSort, sortConfig, setSortConfig } = useTableSort(filteredData, { key: 'doc_date', direction: 'desc' });
+
+  const renderFilterIcon = (columnKey) => {
+    const active = isFilterActive(columnKey) || (popoverProps.open && popoverProps.activeColumnKey === columnKey);
+    return (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="12"
+        height="12"
+        viewBox="0 0 12 12"
+        fill="none"
+        style={{ marginLeft: "4px", flexShrink: 0 }}
+      >
+        <g clipPath={`url(#clip0_memo_out_pending_filter_${columnKey})`}>
+          <path
+            d="M2 1.5H10C10.1326 1.5 10.2598 1.55268 10.3536 1.64645C10.4473 1.74021 10.5 1.86739 10.5 2V2.793C10.5 2.9256 10.4473 3.05275 10.3535 3.1465L7.1465 6.3535C7.05273 6.44725 7.00003 6.5744 7 6.707V9.8595C7 9.9355 6.98267 10.0105 6.94933 10.0788C6.91599 10.1471 6.86752 10.2069 6.80761 10.2537C6.74769 10.3004 6.6779 10.3329 6.60355 10.3486C6.52919 10.3644 6.45222 10.363 6.3785 10.3445L5.3785 10.0945C5.27038 10.0674 5.1744 10.005 5.10583 9.9171C5.03725 9.82923 5 9.72096 5 9.6095V6.707C4.99997 6.5744 4.94727 6.44725 4.8535 6.3535L1.6465 3.1465C1.55273 3.05275 1.50003 2.9256 1.5 2.793V2C1.5 1.86739 1.55268 1.74021 1.64645 1.64645C1.74021 1.55268 1.86739 1.5 2 1.5Z"
+            stroke={active ? "#17C653" : "#666666"}
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </g>
+        <defs>
+          <clipPath id={`clip0_memo_out_pending_filter_${columnKey}`}>
+            <rect width="12" height="12" fill="white" />
+          </clipPath>
+        </defs>
+      </svg>
+    );
+  };
   
           const disabled = () => {
         return rows.some(r => r.isFromMemoPending);
@@ -68,8 +118,11 @@ const ReturnMemoPending = ({ data, state, handleSubmit, fsmState, hasUnsavedData
           "GET",
           `/memo-outs/items?account=${memoInfo?.account?.label || ""}`
         );
-        setRowData(response);        
-        setMemoInfo({...memoInfo,memoPendingData:response});
+        const memoRows = Array.isArray(response)
+          ? response.map((row, index) => ({ ...row, __rowIndex: index }))
+          : [];
+        setRowData(memoRows);
+        setMemoInfo({...memoInfo,memoPendingData:memoRows});
        
       } catch (error) {
         console.error("Error fetching stock:", error);
@@ -158,12 +211,12 @@ const ReturnMemoPending = ({ data, state, handleSubmit, fsmState, hasUnsavedData
   };
 
   const handleCheckboxSelectAllChange = () => {
-    if (selectedRows.length === rowData.length) {
+    if (selectedRows.length === sortedData.length && sortedData.length > 0) {
       // Uncheck all if everything is already selected
       setSelectedRows([]);
     } else {
       // Select all
-      setSelectedRows(rowData);
+      setSelectedRows(sortedData);
     }
   };
 
@@ -200,32 +253,30 @@ const ReturnMemoPending = ({ data, state, handleSubmit, fsmState, hasUnsavedData
            <Button
                   disabled={memoInfo?.isDayBookEdit}
                   onClick={handleOpen}
-                  sx={{
-                    textTransform: "none",
-                    height: "35px",
-                    width: "200px",
-                    padding: "12px",
-                    borderRadius: "4px",
-                    // border: "1px solid #BFBFBF",
-                    gap: "8px",
-                    marginRight: "24px",
-                    backgroundColor: "#C6A969",
-                    "&:hover": {
-                      backgroundColor: "#C6A969",
-                    },
-                  }}
+                    sx={{
+                              textTransform: "none",
+                              height: "26px",
+                              width: "153px",
+                              padding: "12px",
+                              borderRadius: "4px",
+                              border: "1px solid #57646E",
+                              backgroundColor: "#000",
+                              "&:hover": {
+                                backgroundColor: "#000",
+                              },
+                            }}
                  
                 >
                   <Typography
-                    sx={{
-                      color: "var(--jw-background-white-textwhite, #FFF)",
-                      fontFamily: "Calibri",
-                      fontSize: "16px",
-                      fontStyle: "normal",
-                      fontWeight: 700,
-                      lineHeight: "normal",
-                      letterSpacing: "1px",
-                    }}
+                       sx={{
+                                 color: "#FFF",
+                                 textAlign: "center",
+                                 fontFamily: "Calibri",
+                                 fontSize: "14px",
+                                 fontStyle: "normal",
+                                 fontWeight: 700,
+                                 lineHeight: "normal",
+                               }}
                   >
                      Memo Out Pending
                   </Typography>
@@ -623,8 +674,8 @@ const ReturnMemoPending = ({ data, state, handleSubmit, fsmState, hasUnsavedData
                   >
                     <Checkbox
                       checked={
-                        selectedRows.length === rowData.length &&
-                        rowData.length > 0
+                        selectedRows.length === sortedData.length &&
+                        sortedData.length > 0
                       }
                       onChange={() => handleCheckboxSelectAllChange()}
                     />
@@ -642,11 +693,13 @@ const ReturnMemoPending = ({ data, state, handleSubmit, fsmState, hasUnsavedData
                   </Box>
 
                   <Box
+                    onClick={() => requestSort('doc_date')}
                     sx={{
                       width: "140px",
                       display: "flex",
                       alignItems: "center",
                       padding: "12px 8px",
+                      cursor: "pointer",
                     }}
                   >
                     <Typography
@@ -660,28 +713,7 @@ const ReturnMemoPending = ({ data, state, handleSubmit, fsmState, hasUnsavedData
                     >
                       Doc Date
                     </Typography>
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="12"
-                      height="12"
-                      viewBox="0 0 12 12"
-                      fill="none"
-                    >
-                      <g clipPath="url(#clip0_2622_213943)">
-                        <path
-                          d="M2 1.5H10C10.1326 1.5 10.2598 1.55268 10.3536 1.64645C10.4473 1.74021 10.5 1.86739 10.5 2V2.793C10.5 2.9256 10.4473 3.05275 10.3535 3.1465L7.1465 6.3535C7.05273 6.44725 7.00003 6.5744 7 6.707V9.8595C7 9.9355 6.98267 10.0105 6.94933 10.0788C6.91599 10.1471 6.86752 10.2069 6.80761 10.2537C6.74769 10.3004 6.6779 10.3329 6.60355 10.3486C6.52919 10.3644 6.45222 10.363 6.3785 10.3445L5.3785 10.0945C5.27038 10.0674 5.1744 10.005 5.10583 9.9171C5.03725 9.82923 5 9.72096 5 9.6095V6.707C4.99997 6.5744 4.94727 6.44725 4.8535 6.3535L1.6465 3.1465C1.55273 3.05275 1.50003 2.9256 1.5 2.793V2C1.5 1.86739 1.55268 1.74021 1.64645 1.64645C1.74021 1.55268 1.86739 1.5 2 1.5Z"
-                          stroke="#666666"
-                          strokeWidth="1.5"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </g>
-                      <defs>
-                        <clipPath id="clip0_2622_213943">
-                          <rect width="12" height="12" fill="white" />
-                        </clipPath>
-                      </defs>
-                    </svg>
+                    <SortIcon sortConfig={sortConfig} columnKey="doc_date" />
                   </Box>
 
               
@@ -690,11 +722,13 @@ const ReturnMemoPending = ({ data, state, handleSubmit, fsmState, hasUnsavedData
 
              
                   <Box
+                    onClick={(e) => handleFilterClick(e, 'stone')}
                     sx={{
                       width: "120px",
                       display: "flex",
                       alignItems: "center",
                       padding: "12px 8px",
+                      cursor: "pointer",
                     }}
                   >
                     <Typography
@@ -708,37 +742,18 @@ const ReturnMemoPending = ({ data, state, handleSubmit, fsmState, hasUnsavedData
                     >
                       Stone
                     </Typography>
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="12"
-                      height="12"
-                      viewBox="0 0 12 12"
-                      fill="none"
-                    >
-                      <g clipPath="url(#clip0_2622_213958)">
-                        <path
-                          d="M2 1.5H10C10.1326 1.5 10.2598 1.55268 10.3536 1.64645C10.4473 1.74021 10.5 1.86739 10.5 2V2.793C10.5 2.9256 10.4473 3.05275 10.3535 3.1465L7.1465 6.3535C7.05273 6.44725 7.00003 6.5744 7 6.707V9.8595C7 9.9355 6.98267 10.0105 6.94933 10.0788C6.91599 10.1471 6.86752 10.2069 6.80761 10.2537C6.74769 10.3004 6.6779 10.3329 6.60355 10.3486C6.52919 10.3644 6.45222 10.363 6.3785 10.3445L5.3785 10.0945C5.27038 10.0674 5.1744 10.005 5.10583 9.9171C5.03725 9.82923 5 9.72096 5 9.6095V6.707C4.99997 6.5744 4.94727 6.44725 4.8535 6.3535L1.6465 3.1465C1.55273 3.05275 1.50003 2.9256 1.5 2.793V2C1.5 1.86739 1.55268 1.74021 1.64645 1.64645C1.74021 1.55268 1.86739 1.5 2 1.5Z"
-                          stroke="#666666"
-                          strokeWidth="1.5"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </g>
-                      <defs>
-                        <clipPath id="clip0_2622_213958">
-                          <rect width="12" height="12" fill="white" />
-                        </clipPath>
-                      </defs>
-                    </svg>
+                    {renderFilterIcon('stone')}
                   </Box>
 
                   <Box
+                    onClick={(e) => handleFilterClick(e, 'shape')}
                     sx={{
                       width: "120px",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "start",
                       padding: "12px 8px",
+                      cursor: "pointer",
                     }}
                   >
                     <Typography
@@ -752,37 +767,18 @@ const ReturnMemoPending = ({ data, state, handleSubmit, fsmState, hasUnsavedData
                     >
                       Shape
                     </Typography>
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="12"
-                      height="12"
-                      viewBox="0 0 12 12"
-                      fill="none"
-                    >
-                      <g clipPath="url(#clip0_2622_213958)">
-                        <path
-                          d="M2 1.5H10C10.1326 1.5 10.2598 1.55268 10.3536 1.64645C10.4473 1.74021 10.5 1.86739 10.5 2V2.793C10.5 2.9256 10.4473 3.05275 10.3535 3.1465L7.1465 6.3535C7.05273 6.44725 7.00003 6.5744 7 6.707V9.8595C7 9.9355 6.98267 10.0105 6.94933 10.0788C6.91599 10.1471 6.86752 10.2069 6.80761 10.2537C6.74769 10.3004 6.6779 10.3329 6.60355 10.3486C6.52919 10.3644 6.45222 10.363 6.3785 10.3445L5.3785 10.0945C5.27038 10.0674 5.1744 10.005 5.10583 9.9171C5.03725 9.82923 5 9.72096 5 9.6095V6.707C4.99997 6.5744 4.94727 6.44725 4.8535 6.3535L1.6465 3.1465C1.55273 3.05275 1.50003 2.9256 1.5 2.793V2C1.5 1.86739 1.55268 1.74021 1.64645 1.64645C1.74021 1.55268 1.86739 1.5 2 1.5Z"
-                          stroke="#666666"
-                          strokeWidth="1.5"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </g>
-                      <defs>
-                        <clipPath id="clip0_2622_213958">
-                          <rect width="12" height="12" fill="white" />
-                        </clipPath>
-                      </defs>
-                    </svg>
+                    {renderFilterIcon('shape')}
                   </Box>
 
                       <Box
+                    onClick={(e) => handleFilterClick(e, 'type')}
                     sx={{
                       width: "120px",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "start",
                       padding: "12px 8px",
+                      cursor: "pointer",
                     }}
                   >
                     <Typography
@@ -796,37 +792,18 @@ const ReturnMemoPending = ({ data, state, handleSubmit, fsmState, hasUnsavedData
                     >
                       Type
                     </Typography>
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="12"
-                      height="12"
-                      viewBox="0 0 12 12"
-                      fill="none"
-                    >
-                      <g clipPath="url(#clip0_2622_213958)">
-                        <path
-                          d="M2 1.5H10C10.1326 1.5 10.2598 1.55268 10.3536 1.64645C10.4473 1.74021 10.5 1.86739 10.5 2V2.793C10.5 2.9256 10.4473 3.05275 10.3535 3.1465L7.1465 6.3535C7.05273 6.44725 7.00003 6.5744 7 6.707V9.8595C7 9.9355 6.98267 10.0105 6.94933 10.0788C6.91599 10.1471 6.86752 10.2069 6.80761 10.2537C6.74769 10.3004 6.6779 10.3329 6.60355 10.3486C6.52919 10.3644 6.45222 10.363 6.3785 10.3445L5.3785 10.0945C5.27038 10.0674 5.1744 10.005 5.10583 9.9171C5.03725 9.82923 5 9.72096 5 9.6095V6.707C4.99997 6.5744 4.94727 6.44725 4.8535 6.3535L1.6465 3.1465C1.55273 3.05275 1.50003 2.9256 1.5 2.793V2C1.5 1.86739 1.55268 1.74021 1.64645 1.64645C1.74021 1.55268 1.86739 1.5 2 1.5Z"
-                          stroke="#666666"
-                          strokeWidth="1.5"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </g>
-                      <defs>
-                        <clipPath id="clip0_2622_213958">
-                          <rect width="12" height="12" fill="white" />
-                        </clipPath>
-                      </defs>
-                    </svg>
+                    {renderFilterIcon('type')}
                   </Box>
 
                   <Box
+                    onClick={(e) => handleFilterClick(e, 'size')}
                     sx={{
                       width: "120px",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "start",
                       padding: "12px 8px",
+                      cursor: "pointer",
                     }}
                   >
                     <Typography
@@ -840,37 +817,18 @@ const ReturnMemoPending = ({ data, state, handleSubmit, fsmState, hasUnsavedData
                     >
                       Size
                     </Typography>
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="12"
-                      height="12"
-                      viewBox="0 0 12 12"
-                      fill="none"
-                    >
-                      <g clipPath="url(#clip0_2622_213958)">
-                        <path
-                          d="M2 1.5H10C10.1326 1.5 10.2598 1.55268 10.3536 1.64645C10.4473 1.74021 10.5 1.86739 10.5 2V2.793C10.5 2.9256 10.4473 3.05275 10.3535 3.1465L7.1465 6.3535C7.05273 6.44725 7.00003 6.5744 7 6.707V9.8595C7 9.9355 6.98267 10.0105 6.94933 10.0788C6.91599 10.1471 6.86752 10.2069 6.80761 10.2537C6.74769 10.3004 6.6779 10.3329 6.60355 10.3486C6.52919 10.3644 6.45222 10.363 6.3785 10.3445L5.3785 10.0945C5.27038 10.0674 5.1744 10.005 5.10583 9.9171C5.03725 9.82923 5 9.72096 5 9.6095V6.707C4.99997 6.5744 4.94727 6.44725 4.8535 6.3535L1.6465 3.1465C1.55273 3.05275 1.50003 2.9256 1.5 2.793V2C1.5 1.86739 1.55268 1.74021 1.64645 1.64645C1.74021 1.55268 1.86739 1.5 2 1.5Z"
-                          stroke="#666666"
-                          strokeWidth="1.5"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </g>
-                      <defs>
-                        <clipPath id="clip0_2622_213958">
-                          <rect width="12" height="12" fill="white" />
-                        </clipPath>
-                      </defs>
-                    </svg>
+                    {renderFilterIcon('size')}
                   </Box>
 
                   <Box
+                    onClick={(e) => handleFilterClick(e, 'color')}
                     sx={{
                       width: "120px",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "start",
                       padding: "12px 8px",
+                      cursor: "pointer",
                     }}
                   >
                     <Typography
@@ -884,37 +842,18 @@ const ReturnMemoPending = ({ data, state, handleSubmit, fsmState, hasUnsavedData
                     >
                       Color
                     </Typography>
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="12"
-                      height="12"
-                      viewBox="0 0 12 12"
-                      fill="none"
-                    >
-                      <g clipPath="url(#clip0_2622_213958)">
-                        <path
-                          d="M2 1.5H10C10.1326 1.5 10.2598 1.55268 10.3536 1.64645C10.4473 1.74021 10.5 1.86739 10.5 2V2.793C10.5 2.9256 10.4473 3.05275 10.3535 3.1465L7.1465 6.3535C7.05273 6.44725 7.00003 6.5744 7 6.707V9.8595C7 9.9355 6.98267 10.0105 6.94933 10.0788C6.91599 10.1471 6.86752 10.2069 6.80761 10.2537C6.74769 10.3004 6.6779 10.3329 6.60355 10.3486C6.52919 10.3644 6.45222 10.363 6.3785 10.3445L5.3785 10.0945C5.27038 10.0674 5.1744 10.005 5.10583 9.9171C5.03725 9.82923 5 9.72096 5 9.6095V6.707C4.99997 6.5744 4.94727 6.44725 4.8535 6.3535L1.6465 3.1465C1.55273 3.05275 1.50003 2.9256 1.5 2.793V2C1.5 1.86739 1.55268 1.74021 1.64645 1.64645C1.74021 1.55268 1.86739 1.5 2 1.5Z"
-                          stroke="#666666"
-                          strokeWidth="1.5"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </g>
-                      <defs>
-                        <clipPath id="clip0_2622_213958">
-                          <rect width="12" height="12" fill="white" />
-                        </clipPath>
-                      </defs>
-                    </svg>
+                    {renderFilterIcon('color')}
                   </Box>
 
                   <Box
+                    onClick={(e) => handleFilterClick(e, 'cutting')}
                     sx={{
                       width: "120px",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "start",
                       padding: "12px 8px",
+                      cursor: "pointer",
                     }}
                   >
                     <Typography
@@ -928,37 +867,18 @@ const ReturnMemoPending = ({ data, state, handleSubmit, fsmState, hasUnsavedData
                     >
                       Cutting
                     </Typography>
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="12"
-                      height="12"
-                      viewBox="0 0 12 12"
-                      fill="none"
-                    >
-                      <g clipPath="url(#clip0_2622_213958)">
-                        <path
-                          d="M2 1.5H10C10.1326 1.5 10.2598 1.55268 10.3536 1.64645C10.4473 1.74021 10.5 1.86739 10.5 2V2.793C10.5 2.9256 10.4473 3.05275 10.3535 3.1465L7.1465 6.3535C7.05273 6.44725 7.00003 6.5744 7 6.707V9.8595C7 9.9355 6.98267 10.0105 6.94933 10.0788C6.91599 10.1471 6.86752 10.2069 6.80761 10.2537C6.74769 10.3004 6.6779 10.3329 6.60355 10.3486C6.52919 10.3644 6.45222 10.363 6.3785 10.3445L5.3785 10.0945C5.27038 10.0674 5.1744 10.005 5.10583 9.9171C5.03725 9.82923 5 9.72096 5 9.6095V6.707C4.99997 6.5744 4.94727 6.44725 4.8535 6.3535L1.6465 3.1465C1.55273 3.05275 1.50003 2.9256 1.5 2.793V2C1.5 1.86739 1.55268 1.74021 1.64645 1.64645C1.74021 1.55268 1.86739 1.5 2 1.5Z"
-                          stroke="#666666"
-                          strokeWidth="1.5"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </g>
-                      <defs>
-                        <clipPath id="clip0_2622_213958">
-                          <rect width="12" height="12" fill="white" />
-                        </clipPath>
-                      </defs>
-                    </svg>
+                    {renderFilterIcon('cutting')}
                   </Box>
 
                   <Box
+                    onClick={(e) => handleFilterClick(e, 'quality')}
                     sx={{
                       width: "120px",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "start",
                       padding: "12px 8px",
+                      cursor: "pointer",
                     }}
                   >
                     <Typography
@@ -972,37 +892,18 @@ const ReturnMemoPending = ({ data, state, handleSubmit, fsmState, hasUnsavedData
                     >
                       Quality
                     </Typography>
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="12"
-                      height="12"
-                      viewBox="0 0 12 12"
-                      fill="none"
-                    >
-                      <g clipPath="url(#clip0_2622_213958)">
-                        <path
-                          d="M2 1.5H10C10.1326 1.5 10.2598 1.55268 10.3536 1.64645C10.4473 1.74021 10.5 1.86739 10.5 2V2.793C10.5 2.9256 10.4473 3.05275 10.3535 3.1465L7.1465 6.3535C7.05273 6.44725 7.00003 6.5744 7 6.707V9.8595C7 9.9355 6.98267 10.0105 6.94933 10.0788C6.91599 10.1471 6.86752 10.2069 6.80761 10.2537C6.74769 10.3004 6.6779 10.3329 6.60355 10.3486C6.52919 10.3644 6.45222 10.363 6.3785 10.3445L5.3785 10.0945C5.27038 10.0674 5.1744 10.005 5.10583 9.9171C5.03725 9.82923 5 9.72096 5 9.6095V6.707C4.99997 6.5744 4.94727 6.44725 4.8535 6.3535L1.6465 3.1465C1.55273 3.05275 1.50003 2.9256 1.5 2.793V2C1.5 1.86739 1.55268 1.74021 1.64645 1.64645C1.74021 1.55268 1.86739 1.5 2 1.5Z"
-                          stroke="#666666"
-                          strokeWidth="1.5"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </g>
-                      <defs>
-                        <clipPath id="clip0_2622_213958">
-                          <rect width="12" height="12" fill="white" />
-                        </clipPath>
-                      </defs>
-                    </svg>
+                    {renderFilterIcon('quality')}
                   </Box>
 
                   <Box
+                    onClick={(e) => handleFilterClick(e, 'clarity')}
                     sx={{
                       width: "120px",
                       display: "flex",
                       alignItems: "center",
                       padding: "12px 8px",
                       justifyContent: "start",
+                      cursor: "pointer",
                     }}
                   >
                     <Typography
@@ -1016,36 +917,17 @@ const ReturnMemoPending = ({ data, state, handleSubmit, fsmState, hasUnsavedData
                     >
                       Clarity
                     </Typography>
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="12"
-                      height="12"
-                      viewBox="0 0 12 12"
-                      fill="none"
-                    >
-                      <g clipPath="url(#clip0_2622_213958)">
-                        <path
-                          d="M2 1.5H10C10.1326 1.5 10.2598 1.55268 10.3536 1.64645C10.4473 1.74021 10.5 1.86739 10.5 2V2.793C10.5 2.9256 10.4473 3.05275 10.3535 3.1465L7.1465 6.3535C7.05273 6.44725 7.00003 6.5744 7 6.707V9.8595C7 9.9355 6.98267 10.0105 6.94933 10.0788C6.91599 10.1471 6.86752 10.2069 6.80761 10.2537C6.74769 10.3004 6.6779 10.3329 6.60355 10.3486C6.52919 10.3644 6.45222 10.363 6.3785 10.3445L5.3785 10.0945C5.27038 10.0674 5.1744 10.005 5.10583 9.9171C5.03725 9.82923 5 9.72096 5 9.6095V6.707C4.99997 6.5744 4.94727 6.44725 4.8535 6.3535L1.6465 3.1465C1.55273 3.05275 1.50003 2.9256 1.5 2.793V2C1.5 1.86739 1.55268 1.74021 1.64645 1.64645C1.74021 1.55268 1.86739 1.5 2 1.5Z"
-                          stroke="#666666"
-                          strokeWidth="1.5"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </g>
-                      <defs>
-                        <clipPath id="clip0_2622_213958">
-                          <rect width="12" height="12" fill="white" />
-                        </clipPath>
-                      </defs>
-                    </svg>
+                    {renderFilterIcon('clarity')}
                   </Box>
 
                   <Box
+                    onClick={(e) => handleFilterClick(e, 'cer_type')}
                     sx={{
                       width: "120px",
                       display: "flex",
                       alignItems: "center",
                       padding: "12px 8px",
+                      cursor: "pointer",
                     }}
                   >
                     <Typography
@@ -1059,28 +941,7 @@ const ReturnMemoPending = ({ data, state, handleSubmit, fsmState, hasUnsavedData
                     >
                       Cer Type
                     </Typography>
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="12"
-                      height="12"
-                      viewBox="0 0 12 12"
-                      fill="none"
-                    >
-                      <g clipPath="url(#clip0_2622_213958)">
-                        <path
-                          d="M2 1.5H10C10.1326 1.5 10.2598 1.55268 10.3536 1.64645C10.4473 1.74021 10.5 1.86739 10.5 2V2.793C10.5 2.9256 10.4473 3.05275 10.3535 3.1465L7.1465 6.3535C7.05273 6.44725 7.00003 6.5744 7 6.707V9.8595C7 9.9355 6.98267 10.0105 6.94933 10.0788C6.91599 10.1471 6.86752 10.2069 6.80761 10.2537C6.74769 10.3004 6.6779 10.3329 6.60355 10.3486C6.52919 10.3644 6.45222 10.363 6.3785 10.3445L5.3785 10.0945C5.27038 10.0674 5.1744 10.005 5.10583 9.9171C5.03725 9.82923 5 9.72096 5 9.6095V6.707C4.99997 6.5744 4.94727 6.44725 4.8535 6.3535L1.6465 3.1465C1.55273 3.05275 1.50003 2.9256 1.5 2.793V2C1.5 1.86739 1.55268 1.74021 1.64645 1.64645C1.74021 1.55268 1.86739 1.5 2 1.5Z"
-                          stroke="#666666"
-                          strokeWidth="1.5"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </g>
-                      <defs>
-                        <clipPath id="clip0_2622_213958">
-                          <rect width="12" height="12" fill="white" />
-                        </clipPath>
-                      </defs>
-                    </svg>
+                    {renderFilterIcon('cer_type')}
                   </Box>
 
                   <Box
@@ -1106,7 +967,7 @@ const ReturnMemoPending = ({ data, state, handleSubmit, fsmState, hasUnsavedData
 
                   <Box
                     sx={{
-                      width: "60px",
+                      width: "120px",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "start",
@@ -1259,7 +1120,7 @@ const ReturnMemoPending = ({ data, state, handleSubmit, fsmState, hasUnsavedData
                       Loading...
                     </Typography>
                   </Box>
-                ) : rowData.length === 0 ? (
+                ) : sortedData.length === 0 ? (
                   <Box
                     sx={{
                       display: "flex",
@@ -1280,12 +1141,12 @@ const ReturnMemoPending = ({ data, state, handleSubmit, fsmState, hasUnsavedData
                     </Typography>
                   </Box>
                 ) : (
-                  rowData.map((row, rowIndex) => {
+                  sortedData.map((row, rowIndex) => {
                     // Use rowIndex as the primary unique identifier - it's always unique in the array
                     // This ensures each row has a unique ID even if properties are the same
-                    const uniqueKey = `row_${rowIndex}_${row._id || 'no_id'}`;
+                    const uniqueKey = `row_${row.__rowIndex ?? rowIndex}_${row._id || 'no_id'}`;
                     // Use rowIndex as the selection identifier to ensure uniqueness
-                    const rowSelectionId = rowIndex; // rowIndex is always unique
+                    const rowSelectionId = row.__rowIndex ?? rowIndex;
                     
                     return (
                     <Box
@@ -1312,13 +1173,13 @@ const ReturnMemoPending = ({ data, state, handleSubmit, fsmState, hasUnsavedData
                             (selectedRow) => {
                               // Compare using rowIndex stored in the selected row
                               const selectedIndex = selectedRow.__rowIndex;
-                              return selectedIndex === rowIndex;
+                              return selectedIndex === rowSelectionId;
                             }
                           )}
                           onChange={(e) => {
                             e.stopPropagation(); // Prevent event bubbling
                             // Add rowIndex to the row object for unique identification
-                            const rowToSelect = { ...row, __rowIndex: rowIndex };
+                            const rowToSelect = { ...row, __rowIndex: rowSelectionId };
                             handleCheckboxChange(rowToSelect);
                           }}
                         />
@@ -1378,6 +1239,7 @@ const ReturnMemoPending = ({ data, state, handleSubmit, fsmState, hasUnsavedData
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "start",
+                            padding: "12px 8px",
                         }}
                       >
                         <Typography sx={textStyle}>{row.size}</Typography>
@@ -1465,7 +1327,7 @@ const ReturnMemoPending = ({ data, state, handleSubmit, fsmState, hasUnsavedData
                           padding: "12px 8px",
                         }}
                       >
-                        <Typography sx={textStyle}>{row.weight}</Typography>
+                        <Typography sx={textStyle}>{formatWeight(row.weight)}</Typography>
                       </Box>
                       <Box
                         sx={{
@@ -1476,7 +1338,7 @@ const ReturnMemoPending = ({ data, state, handleSubmit, fsmState, hasUnsavedData
                           padding: "12px 8px",
                         }}
                       >
-                        <Typography sx={textStyle}>{row.price}</Typography>
+                         <Typography sx={textStyle}>{formatCurrency(row.price)}</Typography>
                       </Box>
                       <Box
                         sx={{
@@ -1498,7 +1360,7 @@ const ReturnMemoPending = ({ data, state, handleSubmit, fsmState, hasUnsavedData
                           padding: "12px 8px",
                         }}
                       >
-                        <Typography sx={textStyle}>{row.amount}</Typography>
+                       <Typography sx={textStyle}>{formatCurrency(row.amount)}</Typography>
                       </Box>
                       <Box
                         sx={{
@@ -1595,6 +1457,12 @@ const ReturnMemoPending = ({ data, state, handleSubmit, fsmState, hasUnsavedData
           </Box>
         </Modal>
       </Box>
+
+      <ColumnFilterPopover
+        {...popoverProps}
+        sortConfig={sortConfig}
+        setSortConfig={setSortConfig}
+      />
 
         <ConfirmCancelDialog
         open={showConfirmDialog}

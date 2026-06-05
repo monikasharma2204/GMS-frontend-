@@ -46,7 +46,7 @@ const Inventory = ({ handleClick, showRedBox, openInventory,
     const currentFromParam = urlParams.get('from');
     const navState = location.state;
 
-    const pathMatches = location.pathname.includes(path);
+    const pathMatches = location.pathname === path;
     if (!pathMatches) return false;
 
     if (fromParamValue) {
@@ -105,7 +105,8 @@ const Inventory = ({ handleClick, showRedBox, openInventory,
         if (prevOpenReport && (
           location.pathname.includes("/primary") ||
           location.pathname.includes("/consignment") ||
-          location.pathname.includes("/stockmovement")
+          location.pathname.includes("/stockmovement") ||
+          location.pathname.includes("/consignment-movement")
         )) {
           return true;
         }
@@ -294,67 +295,48 @@ const Inventory = ({ handleClick, showRedBox, openInventory,
               <Box>
 
 
-                <Box sx={DropdownMenuReport} className="hovered-box">
-                  <Box
-                    onClick={(e) => e.stopPropagation()}
-                    sx={DropdownMenuReport}
-                  >
-                    <ProtectedLink
-                      to="/inventory/report/primary"
-                    >
-                      <Typography
-                        className={isPathActive("/inventory/report/primary") ? "active" : ""}
-                        sx={TextMainReport}
-                      >Primary</Typography>
-                    </ProtectedLink>
+                <ProtectedLink to="/inventory/report/primary">
+                  <Box sx={DropdownMenuReport} className="hovered-box">
+                    <Typography
+                      className={isPathActive("/inventory/report/primary") ? "active" : ""}
+                      sx={TextMainReport}
+                    >Primary</Typography>
                   </Box>
-                </Box>
-                <Box sx={DropdownMenuReport} className="hovered-box">
-                  <Box
-                    onClick={(e) => e.stopPropagation()}
-                    sx={DropdownMenuReport}
-                  >
-                    <ProtectedLink
-                      to="/inventory/report/consignment"
-                    >
-                      <Typography
-                        className={isPathActive("/inventory/report/consignment") ? "active" : ""}
-                        sx={TextMainReport}
-                      >Consignment</Typography>
-                    </ProtectedLink>
+                </ProtectedLink>
+                <ProtectedLink to="/inventory/report/consignment">
+                  <Box sx={DropdownMenuReport} className="hovered-box">
+                    <Typography
+                      className={isPathActive("/inventory/report/consignment") ? "active" : ""}
+                      sx={TextMainReport}
+                    >Consignment</Typography>
                   </Box>
-                </Box>
-                <Box sx={DropdownMenuReport} className="hovered-box">
-                  <Box
-                    onClick={(e) => e.stopPropagation()}
-                    sx={DropdownMenuReport}
-                  >
-                    <ProtectedLink
-                      to="/inventory/report/stock-check"
-                    >
-                      <Typography
-                        className={isPathActive("/inventory/report/stock-check") ? "active" : ""}
-                        sx={TextMainReport}
-                      >Movement</Typography>
-                    </ProtectedLink>
+                </ProtectedLink>
+                <ProtectedLink to="/inventory/report/stock-check">
+                  <Box sx={DropdownMenuReport} className="hovered-box">
+                    <Typography
+                      className={isPathActive("/inventory/report/stock-check") ? "active" : ""}
+                      sx={TextMainReport}
+                    >Movement</Typography>
                   </Box>
-                </Box>
+                </ProtectedLink>
 
-                <Box sx={DropdownMenuReport} className="hovered-box">
-                  <Box
-                    onClick={(e) => e.stopPropagation()}
-                    sx={DropdownMenuReport}
-                  >
-                    <ProtectedLink
-                      to="/inventory/report/stock-adj"
-                    >
-                      <Typography
-                        className={isPathActive("/inventory/report/stock-adj") ? "active" : ""}
-                        sx={TextMainReport}
-                      >Stock ADJ</Typography>
-                    </ProtectedLink>
+                <ProtectedLink to="/inventory/report/consignment-movement">
+                  <Box sx={DropdownMenuReport} className="hovered-box">
+                    <Typography
+                      className={isPathActive("/inventory/report/consignment-movement") ? "active" : ""}
+                      sx={TextMainReport}
+                    >Cons Mov</Typography>
                   </Box>
-                </Box>
+                </ProtectedLink>
+
+                <ProtectedLink to="/inventory/report/stock-adj">
+                  <Box sx={DropdownMenuReport} className="hovered-box">
+                    <Typography
+                      className={isPathActive("/inventory/report/stock-adj") ? "active" : ""}
+                      sx={TextMainReport}
+                    >Stock ADJ</Typography>
+                  </Box>
+                </ProtectedLink>
 
 
               </Box>
@@ -413,36 +395,22 @@ const Inventory = ({ handleClick, showRedBox, openInventory,
               onClick={(e) => e.stopPropagation()}
             >
               <Box>
-                <Box sx={DropdownMenuTransfer} className="hovered-box">
-                  <Box
-                    onClick={(e) => e.stopPropagation()}
-                    sx={DropdownMenuTransfer}
-                  >
-                    <ProtectedLink
-                      to="/inventory/transfer/merge-split"
-                    >
-                      <Typography
-                        className={isPathActive("/inventory/transfer/merge-split") ? "active" : ""}
-                        sx={TextMainTransfer}
-                      >Merge & Split</Typography>
-                    </ProtectedLink>
+                <ProtectedLink to="/inventory/transfer/merge-split">
+                  <Box sx={DropdownMenuTransfer} className="hovered-box">
+                    <Typography
+                      className={isPathActive("/inventory/transfer/merge-split") ? "active" : ""}
+                      sx={TextMainTransfer}
+                    >Merge & Split</Typography>
                   </Box>
-                </Box>
-                <Box sx={DropdownMenuTransfer} className="hovered-box">
-                  <Box
-                    onClick={(e) => e.stopPropagation()}
-                    sx={DropdownMenuTransfer}
-                  >
-                    <ProtectedLink
-                      to="/inventory/transfer/location-transfer"
-                    >
-                      <Typography
-                        className={isPathActive("/inventory/transfer/location-transfer") ? "active" : ""}
-                        sx={TextMainTransfer}
-                      >Transfer</Typography>
-                    </ProtectedLink>
+                </ProtectedLink>
+                <ProtectedLink to="/inventory/transfer/location-transfer">
+                  <Box sx={DropdownMenuTransfer} className="hovered-box">
+                    <Typography
+                      className={isPathActive("/inventory/transfer/location-transfer") ? "active" : ""}
+                      sx={TextMainTransfer}
+                    >Transfer</Typography>
                   </Box>
-                </Box>
+                </ProtectedLink>
               </Box>
             </Box>
           )}

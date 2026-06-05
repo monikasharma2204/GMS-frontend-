@@ -46,11 +46,10 @@ const InventoryStockMovementBody = ({ }) => {
     fetchStockMovements();
   }, []);
 
-  // Filter stock movements based on search term and dates
+
   useEffect(() => {
     let filtered = stockMovements;
 
-    // Filter by search term
     if (searchTerm) {
       filtered = filtered.filter(item =>
         item.stone_code?.toLowerCase().includes(searchTerm.toLowerCase()) ||

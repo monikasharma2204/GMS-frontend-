@@ -61,8 +61,8 @@ const Account = ({ handleClick, showRedBox }) => {
               />
             </svg> */}
 
-            <svg className="hovered-svg hovered-svg-arrow"  width="4" height="8" viewBox="0 0 4 8" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M4 4L0 8V0L4 4Z" fill="currentColor" stroke="none" strokeWidth= "0"  />
+            <svg className="hovered-svg hovered-svg-arrow" width="4" height="8" viewBox="0 0 4 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M4 4L0 8V0L4 4Z" fill="currentColor" stroke="none" strokeWidth="0" />
             </svg>
 
             <Box className="hovered-box" />
@@ -114,16 +114,16 @@ const Account = ({ handleClick, showRedBox }) => {
           onClick={(e) => e.stopPropagation()}
         >
           <Box>
-            <Box sx={Dropdownmenu} className="hovered-box">
-              <Link to="/account/vendor">
+            <Link to="/account/vendor">
+              <Box sx={Dropdownmenu} className="hovered-box">
                 <Typography sx={TextMain} className={isVendorActive ? "active" : ""}>Vendor</Typography>
-              </Link>
-            </Box>
-            <Box sx={Dropdownmenu} className="hovered-box">
-              <Link to="/account/customer">
+              </Box>
+            </Link>
+            <Link to="/account/customer">
+              <Box sx={Dropdownmenu} className="hovered-box">
                 <Typography sx={TextMain} className={isCustomerActive ? "active" : ""}>Customer</Typography>
-              </Link>
-            </Box>
+              </Box>
+            </Link>
           </Box>
         </Box>
       )}

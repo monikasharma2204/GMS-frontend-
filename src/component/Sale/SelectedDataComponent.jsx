@@ -40,6 +40,7 @@ const SelectedDataComponent = ({
   disabled = false,
   isCancelled = false,
   triggerFSMDirty,
+  showWarning,
 }) => {
   const [dropdownOptions, setDropdownOptions] = useState({});
   const editMemoStatus = useRecoilValue(editMemoState);
@@ -66,13 +67,13 @@ const SelectedDataComponent = ({
 
 
   const handleStockSubmit = (selectedStockRows) => {
-  
+
     const newRows = selectedStockRows.map((stockRow, index) => {
       const imageUrl = stockRow.image
         ? (/^https?:\/\//.test(stockRow.image) ? stockRow.image : `${API_URL}${stockRow.image}`)
         : null;
       return {
-        _id: `stock_${stockRow._id}_${Date.now()}_${index}`, 
+        _id: `stock_${stockRow._id}_${Date.now()}_${index}`,
         stock_id: stockRow.stock_id,
         stone_code: stockRow.stone_code,
         account: stockRow.account,
@@ -86,11 +87,13 @@ const SelectedDataComponent = ({
         clarity: stockRow.clarity,
         cer_type: stockRow.cer_type,
         cer_no: stockRow.cer_no,
-        location: stockRow.location_name || stockRow.location, 
+        location: stockRow.location_name || stockRow.location,
         type: stockRow.type,
         lot_no: stockRow.lot_no,
         pcs: stockRow.pcs,
+        availablePcs: stockRow.availablePcs !== undefined ? stockRow.availablePcs : stockRow.pcs,
         weight: stockRow.weight,
+        availableWeight: stockRow.availableWeight !== undefined ? stockRow.availableWeight : stockRow.weight,
         price: stockRow.type === "Cons." ? stockRow.price : stockRow.sale_price,
         unit: stockRow.unit,
         amount: stockRow.amount,
@@ -100,9 +103,9 @@ const SelectedDataComponent = ({
         totalAmount: stockRow.amount,
         labour: "",
         labour_price: 0,
-        isFromStock: false, 
-        image: stockRow.image || null, 
-        image_preview: imageUrl, 
+        isFromStock: true,
+        image: stockRow.image || null,
+        image_preview: imageUrl,
       };
     });
 
@@ -110,8 +113,8 @@ const SelectedDataComponent = ({
 
       const existingStockIds = new Set(
         prevRows
-          .filter(row => (row.id || row.stock_id)) 
-          .map(row => row.id || row.stock_id) 
+          .filter(row => (row.id || row.stock_id))
+          .map(row => row.id || row.stock_id)
       );
 
 
@@ -249,17 +252,26 @@ const SelectedDataComponent = ({
         <QuotationModalFromStock handleSubmit={handleStockSubmit} disabled={disabled || isCancelled} />
 
 
-          <ReturnReserve
+        <ReturnReserve
           handleSubmit={handleReserveSubmit}
           handleEdit={handleReturnReserveEdit}
           disabled={disabled || isCancelled}
         />
-      
+
       </Box>
 
 
 
       <Box
+        onScroll={() => {
+          if (
+            document.activeElement &&
+            (document.activeElement.getAttribute("aria-autocomplete") ||
+              document.activeElement.getAttribute("role") === "combobox")
+          ) {
+            document.activeElement.blur();
+          }
+        }}
         sx={{
           height: "294px",
           overflowX: "scroll",
@@ -325,12 +337,13 @@ const SelectedDataComponent = ({
                   disabled={disabled}
                   isCancelled={isCancelled}
                   triggerFSMDirty={triggerFSMDirty}
-                    formatNumberWithCommas={formatNumberWithCommas}
+                  formatNumberWithCommas={formatNumberWithCommas}
+                  showWarning={showWarning}
                 />
               ))}
             </Box>
 
-            <TableForTotalComponent parentHeight={278}   formatNumberWithCommas={formatNumberWithCommas}/>
+            <TableForTotalComponent parentHeight={278} formatNumberWithCommas={formatNumberWithCommas} />
           </Box>
         </Box>
       </Box>

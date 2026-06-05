@@ -85,6 +85,7 @@ const ReserveBody = ({
   note,
   remark,
   triggerFSMDirty,
+  showWarning,
 }) => {
 
   const [memoInfo, setMemoInfo] = useRecoilState(memoInfoState);
@@ -453,6 +454,7 @@ const ReserveBody = ({
                 rows={rows}
                 setRows={setRows}
                 disabled={isApprovedDoc || shouldDisableFields}
+                showWarning={showWarning}
               />
             </Box>
             <Box

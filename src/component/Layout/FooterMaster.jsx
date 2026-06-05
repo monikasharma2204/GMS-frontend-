@@ -254,8 +254,9 @@ const Footer = (props) => {
     <>
       <Box
         sx={{
-          width: "1697px",
-          marginLeft: "222px",
+          width: "calc(100% - 222px)",
+          left: "222px",
+          right: 0,
           height: "65px",
           display: "flex",
           justifyContent: "center",

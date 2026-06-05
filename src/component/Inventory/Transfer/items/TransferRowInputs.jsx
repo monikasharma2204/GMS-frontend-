@@ -46,7 +46,7 @@ export const TransferSelectInput = React.memo(
               },
               "& .MuiOutlinedInput-root.Mui-error > fieldset": {
                 borderColor: "#E00410 !important",
-                borderWidth: "2px",
+                borderWidth: "1px",
               },
               "& .MuiOutlinedInput-root.Mui-error.Mui-focused > fieldset": {
                 borderColor: "#E00410 !important",
@@ -108,7 +108,7 @@ export const TransferReadonlyField = ({
       },
       "& .MuiOutlinedInput-root.Mui-error > fieldset": {
         borderColor: "#E00410 !important",
-        borderWidth: "2px",
+        borderWidth: "1px",
       },
       "& .MuiInputBase-root.Mui-disabled": {
         "& > fieldset": {

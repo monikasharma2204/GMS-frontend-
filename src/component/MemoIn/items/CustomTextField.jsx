@@ -18,6 +18,7 @@ const CustomTextField = ({
   InputProps = {},
   inputProps = {},
   onBlur,
+  beforeChange,
 }) => {
   const [internalValue, setInternalValue] = useState(() => {
     if (type === "number" && value !== "" && value !== null && value !== undefined) {
@@ -91,6 +92,10 @@ const CustomTextField = ({
 
     if (cursorPosInUnformatted > newValue.length) {
       cursorPosInUnformatted = newValue.length;
+    }
+
+    if (beforeChange && beforeChange(newValue) === false) {
+      return;
     }
 
     onChange(newValue);

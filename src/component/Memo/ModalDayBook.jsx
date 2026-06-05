@@ -11,7 +11,11 @@ import {formatNumberWithCommas,formatNumberStringWithCommas} from '../../helpers
 import { useRecoilState } from "recoil";
 import { omitFields } from "helpers/objHelper.js";
 import { editMemoState,checkViewEditDayBookInvoiceState,keyEditState,memoInfoState ,memoItemState,useVATState,useDiscountPercentState,discountPercentState,discountAmountState,vatAmountState,grandTotalState, useDiscountAmountState,discountPercentAmountState,choosenMemoInfoState,choosenMemoItemState ,currentAccountSelectionState,subTotalState,vatPercentState,otherChargeState,discountAmountTotalState,currentDiscountValueState,totalAfterDiscountState} from "recoil/MemoState.js";
-import { Label } from "@mui/icons-material";
+import useTableSort from "../../hooks/useTableSort";
+import { API_URL } from "../../config/config";
+import SortIcon from "../Commons/SortIcon/SortIcon";
+import AccountFilterPopover from "../Commons/AccountFilterPopover/AccountFilterPopover";
+import { useAccountFilter } from "../Commons/AccountFilterPopover/useAccountFilter";
 
 const style = {
   position: "absolute",
@@ -42,8 +46,16 @@ const ModalDayBook = ({ data, handleCheckboxChange, handleSubmit,inventory_label
   const [discountAmount,setDiscountAmount]  = useRecoilState(discountAmountState)
   const [viewEditId,setViewEditId] = useRecoilState(checkViewEditDayBookInvoiceState)
   const [currentAccountSelection,setCurrentAccountSelection] = useRecoilState(currentAccountSelectionState)
-  const [choosenMemoInfo,setChoosenMemoInfo] = useRecoilState(choosenMemoInfoState)
-  const [choosenMemoItem,setChoosenMemoItem] = useRecoilState(choosenMemoItemState)
+  const [choosenMemoInfo, setChoosenMemoInfo] = useState({});
+  const [choosenMemoItem, setChoosenMemoItem] = useState([]);
+
+  const { filteredData, handleAccountClick, popoverProps, isFilterActive } = useAccountFilter(
+    data,
+    checkViewEditDayBookInvoice ? [checkViewEditDayBookInvoice] : [],
+    open
+  );
+
+  const { sortedData, requestSort, sortConfig, setSortConfig } = useTableSort(filteredData, { key: 'updatedAt', direction: 'desc' });
   const [subTotal,setSubTotal] = useRecoilState(subTotalState)
 
   const [vatAmount,setVatAmount]  = useRecoilState(vatAmountState)
@@ -381,11 +393,13 @@ const ModalDayBook = ({ data, handleCheckboxChange, handleSubmit,inventory_label
                   </Box>
 
                   <Box
+                    onClick={() => requestSort('updatedAt')}
                     sx={{
                       width: "140px",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
+                      cursor: "pointer",
                     }}
                   >
                     <Typography
@@ -399,26 +413,17 @@ const ModalDayBook = ({ data, handleCheckboxChange, handleSubmit,inventory_label
                     >
                       TranDate
                     </Typography>
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="19"
-                      height="18"
-                      viewBox="0 0 19 18"
-                      fill="none"
-                    >
-                      <path
-                        d="M6.5 12H3.5L8 16.5V1.5H6.5V12ZM11 3.75V16.5H12.5V6H15.5L11 1.5V3.75Z"
-                        fill="#343434"
-                      />
-                    </svg>
+                    <SortIcon sortConfig={sortConfig} columnKey="updatedAt" />
                   </Box>
 
                   <Box
+                    onClick={() => requestSort('doc_date')}
                     sx={{
                       width: "140px",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
+                      cursor: "pointer",
                     }}
                   >
                     <Typography
@@ -432,26 +437,17 @@ const ModalDayBook = ({ data, handleCheckboxChange, handleSubmit,inventory_label
                     >
                       Doc Date
                     </Typography>
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="19"
-                      height="18"
-                      viewBox="0 0 19 18"
-                      fill="none"
-                    >
-                      <path
-                        d="M6.5 12H3.5L8 16.5V1.5H6.5V12ZM11 3.75V16.5H12.5V6H15.5L11 1.5V3.75Z"
-                        fill="#343434"
-                      />
-                    </svg>
+                    <SortIcon sortConfig={sortConfig} columnKey="doc_date" />
                   </Box>
 
                   <Box
+                    onClick={() => requestSort('due_date')}
                     sx={{
                       width: "140px",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
+                      cursor: "pointer",
                     }}
                   >
                     <Typography
@@ -465,18 +461,7 @@ const ModalDayBook = ({ data, handleCheckboxChange, handleSubmit,inventory_label
                     >
                       Due Date
                     </Typography>
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="19"
-                      height="18"
-                      viewBox="0 0 19 18"
-                      fill="none"
-                    >
-                      <path
-                        d="M6.5 12H3.5L8 16.5V1.5H6.5V12ZM11 3.75V16.5H12.5V6H15.5L11 1.5V3.75Z"
-                        fill="#343434"
-                      />
-                    </svg>
+                    <SortIcon sortConfig={sortConfig} columnKey="due_date" />
                   </Box>
 
                   <Box
@@ -501,11 +486,13 @@ const ModalDayBook = ({ data, handleCheckboxChange, handleSubmit,inventory_label
                   </Box>
 
                   <Box
+                    onClick={handleAccountClick}
                     sx={{
                       width: "140px",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
+                      cursor: "pointer",
                     }}
                   >
                     <Typography
@@ -528,7 +515,7 @@ const ModalDayBook = ({ data, handleCheckboxChange, handleSubmit,inventory_label
                     >
                       <path
                         d="M2.83333 1.75H12.1667C12.3214 1.75 12.4697 1.81146 12.5791 1.92085C12.6885 2.03025 12.75 2.17862 12.75 2.33333V3.2585C12.75 3.4132 12.6885 3.56155 12.5791 3.67092L8.83758 7.41242C8.72818 7.52179 8.6667 7.67014 8.66667 7.82483V11.5028C8.66666 11.5914 8.64645 11.6789 8.60755 11.7586C8.56866 11.8383 8.51211 11.9081 8.44221 11.9626C8.3723 12.0172 8.29088 12.0551 8.20414 12.0734C8.11739 12.0918 8.0276 12.0901 7.94158 12.0686L6.77492 11.7769C6.64877 11.7453 6.53681 11.6725 6.4568 11.57C6.37679 11.4674 6.33334 11.3411 6.33333 11.2111V7.82483C6.3333 7.67014 6.27182 7.52179 6.16242 7.41242L2.42092 3.67092C2.31151 3.56155 2.25003 3.4132 2.25 3.2585V2.33333C2.25 2.17862 2.31146 2.03025 2.42085 1.92085C2.53025 1.81146 2.67862 1.75 2.83333 1.75Z"
-                        stroke="#666666"
+                        stroke={(popoverProps.open || isFilterActive) ? "#17C653" : "#343434"}
                         strokeWidth="1.5"
                         strokeLinecap="round"
                         strokeLinejoin="round"
@@ -622,8 +609,8 @@ const ModalDayBook = ({ data, handleCheckboxChange, handleSubmit,inventory_label
                     </Typography>
                   </Box>
                 </Box>
-                {data && data.length > 0 ? (
-                  data.map((item, index) => (
+                {sortedData && sortedData.length > 0 ? (
+                  sortedData.map((item, index) => (
                     
                       <Box
                         key={index }
@@ -1004,6 +991,7 @@ const ModalDayBook = ({ data, handleCheckboxChange, handleSubmit,inventory_label
           </Box>
         </Modal>
       </Box>
+      <AccountFilterPopover {...popoverProps} sortConfig={sortConfig} setSortConfig={setSortConfig} />
     </>
   );
 };

@@ -12,7 +12,7 @@ const TaxID = ({ value, onChange, error, helperText }) => {
     
     disabled={editStatus?false:true}
     classes={editStatus?"taxid" : "taxid disabled_input"}
-      required
+      // required
       value={value}
       onChange={onChange}
       error={error}

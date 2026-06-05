@@ -18,6 +18,7 @@ import {
   QuotationtableRowsState,
   QuotationtableRowsDropdownData,
 } from "recoil/MemoOutReturn/MemoReturn";
+import ReturnMemoPending from "./ReturnMemoPending";
 
 
 
@@ -43,7 +44,58 @@ const SelectedDataComponent = ({
   remark,
   triggerFSMDirty,
   disabled = false,
+  fsmState,
+  hasUnsavedData,
 }) => {
+
+  const handleStockSubmit = (selectedStockRows = []) => {
+    // Map the stock data to match your table structure
+    const newRows = selectedStockRows?.map((stockRow) => ({
+      memo_out_id: stockRow.memo_out_id,
+      memo_out_item_id: stockRow._id,
+      _id: stockRow._id,
+      stone_code: stockRow.stone_code,
+      stock_id: stockRow.stock_id,
+      account: stockRow.account,
+      stone: stockRow.stone,
+      shape: stockRow.shape,
+      size: stockRow.size,
+      color: stockRow.color,
+      cutting: stockRow.cutting,
+      quality: stockRow.quality,
+      clarity: stockRow.clarity,
+      cer_type: stockRow.cer_type,
+      cer_no: stockRow.cer_no,
+      location: stockRow.location,
+      type: stockRow.type,
+      lot_no: stockRow.lot_no,
+      pcs: stockRow.pcs,
+      weight: stockRow.weight,
+      price: stockRow.price,
+      unit: stockRow.unit,
+      amount: stockRow.amount,
+      remark: stockRow.remark,
+      ref_no: stockRow.ref_no,
+      // Add any other fields needed with default values
+      discount_percent: stockRow.discount_percent,
+      discount_amount: stockRow.discount_amount,
+      totalAmount: stockRow.amount,
+      labour: "",
+      labour_price: 0,
+      isFromMemoPending: true,
+    }));
+
+    console.log(newRows, "newwwww")
+
+    // Add the new rows to existing rows
+    setRows((prevRows) => [...prevRows, ...newRows]);
+
+    // Capture the single memo_out_id from the selected rows for POST save
+    const uniqueMemoOutIds = Array.from(new Set((selectedStockRows || []).map(r => r.memo_out_id).filter(Boolean)));
+    if (uniqueMemoOutIds.length === 1) {
+      setMemoInfo(prev => ({ ...prev, memo_out_id: uniqueMemoOutIds[0] }));
+    }
+  };
 
   const [dropdownOptions, setDropdownOptions] = useState({});
   const editMemoStatus = useRecoilValue(editMemoState);
@@ -189,10 +241,23 @@ const SelectedDataComponent = ({
         >
           Item
         </Typography>
-       
+        <ReturnMemoPending
+          handleSubmit={handleStockSubmit}
+          fsmState={fsmState}
+          hasUnsavedData={hasUnsavedData}
+        />
       </Box>
 
       <Box
+        onScroll={() => {
+          if (
+            document.activeElement &&
+            (document.activeElement.getAttribute("aria-autocomplete") ||
+              document.activeElement.getAttribute("role") === "combobox")
+          ) {
+            document.activeElement.blur();
+          }
+        }}
         sx={{
           height: "294px",
           overflowX: "scroll",

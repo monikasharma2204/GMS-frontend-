@@ -166,6 +166,7 @@ const SelectedDataComponent = ({
       weight: stockRow.weight,
       weight_per_piece: stockRow.weight_per_piece,
       price: stockRow.price,
+      sale_price: stockRow.sale_price,
       unit: stockRow.unit_price,
       amount: stockRow.amount,
       remark: stockRow.remark,
@@ -291,12 +292,16 @@ const SelectedDataComponent = ({
     { label: "Pcs", width: "142px" },
     // { label: "Wt/Pc", width: "142px" },
     { label: "Weight", width: "142px" },
+     
     { label: "Price", width: "142px" },
+   
     { label: "Unit", width: "142px" },
     { label: "Amount", width: "142px" },
+  
     { label: "Discount(%)", width: "142px" },
     { label: "Discount Amt", width: "142px" },
     { label: "Total Amount", width: "142px" },
+      { label : "Sale Price" , width : "142px"},
     { label: "Ref No", width: "142px" },
     // { label: "Labour", width: "150px" },
     // { label: "Labour Price", width: "130px" },
@@ -322,6 +327,15 @@ const SelectedDataComponent = ({
       </Box>
 
       <Box
+        onScroll={() => {
+          if (
+            document.activeElement &&
+            (document.activeElement.getAttribute("aria-autocomplete") ||
+              document.activeElement.getAttribute("role") === "combobox")
+          ) {
+            document.activeElement.blur();
+          }
+        }}
         sx={{
           height: "294px",
           overflowX: "scroll",

@@ -117,26 +117,35 @@ const SelectedDataComponent1 = ({
       {/* Table Container */}
       <Box sx={{ display: "flex" }}>
         <TableContainer
+          onScroll={() => {
+            if (
+              document.activeElement &&
+              (document.activeElement.getAttribute("aria-autocomplete") ||
+                document.activeElement.getAttribute("role") === "combobox")
+            ) {
+              document.activeElement.blur();
+            }
+          }}
           sx={{
             height: "200px",
             borderRight: "1px solid var(--Line-Table, #C6C6C8)",
             width: "1583px",
             bgcolor: "#FFF",
             marginTop: "10px",
-              "&::-webkit-scrollbar": {
-                height: "5px",
-                width: "5px",
-              },
-              "&::-webkit-scrollbar-track": {
-                background: "#FFF",
-                borderRadius: "5px",
-              },
-              "&::-webkit-scrollbar-thumb": {
-                background: "#919191",
-                borderRadius: "5px",
-              },
-            }}
-          >
+            "&::-webkit-scrollbar": {
+              height: "5px",
+              width: "5px",
+            },
+            "&::-webkit-scrollbar-track": {
+              background: "#FFF",
+              borderRadius: "5px",
+            },
+            "&::-webkit-scrollbar-thumb": {
+              background: "#919191",
+              borderRadius: "5px",
+            },
+          }}
+        >
           <Table stickyHeader>
               <TableHeaderComponent headers={headers} />
             <TableBody>

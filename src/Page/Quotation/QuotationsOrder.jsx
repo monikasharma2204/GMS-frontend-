@@ -1313,6 +1313,7 @@ const QuotationsOrder = () => {
   const handleEditQuotation = (item) => {
     setOpen(false);
     setEditMemoStatus(false);
+    dispatch({ type: "RESET_STATE" });
 
 
 

@@ -94,6 +94,8 @@ const MergeSplitBody = ({
                 </Box>
 
                 <Box sx={{ display: "flex", alignItems: "center", gap: "15px", flexWrap: "wrap" }}>
+
+
                   <LocalizationProvider dateAdapter={AdapterDayjs}>
                     <DatePicker
                       label="Doc Date :"
@@ -102,24 +104,40 @@ const MergeSplitBody = ({
                       disabled={disabled}
                       format="DD/MM/YYYY"
                       slots={{ openPickerIcon: CalendarIcon }}
+
                       slotProps={{
                         textField: {
                           required: true,
-                          InputLabelProps: { shrink: true }
-                        }
+                        },
                       }}
                       sx={{
+                        "& .MuiInputLabel-asterisk": {
+                          color: "red",
+                        },
                         "& .MuiOutlinedInput-root": {
                           borderRadius: "8px",
                           backgroundColor: "#FFF",
                           width: "220px",
                           height: "42px",
-                          "& fieldset": { borderColor: "#E0E2E4" },
+                          "&:hover .MuiOutlinedInput-notchedOutline": {
+                            borderColor: "#8BB4FF",
+                          },
+                          "&:hover": {
+                            backgroundColor: "#F5F8FF",
+                          },
+                          "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                            borderColor: "#8BB4FF",
+                          },
                         },
-
+                        marginRight: "24px",
+                        marginLeft: "24px",
                       }}
                     />
                   </LocalizationProvider>
+
+
+
+
 
                   <TextField
                     label="Ref. 1"

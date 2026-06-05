@@ -69,7 +69,7 @@ const NavBar = ({ handleClick, showRedBox }) => {
             </svg> */}
 
             <svg className="hovered-svg hovered-svg-arrow" width="4" height="8" viewBox="0 0 4 8" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M4 4L0 8V0L4 4Z"  fill={isActive ? "#fff" : "rgba(255,255,255,0.48)"}  strokeWidth="0" />
+              <path d="M4 4L0 8V0L4 4Z" fill={isActive ? "#fff" : "rgba(255,255,255,0.48)"} strokeWidth="0" />
             </svg>
           </Box>
 
@@ -115,29 +115,29 @@ const NavBar = ({ handleClick, showRedBox }) => {
           onClick={(e) => e.stopPropagation()}
         >
           <Box>
-            <Box sx={Dropdownmenu} className="hovered-box">
-              <ProtectedLink to="/memo/memo-in">
+            <ProtectedLink to="/memo/memo-in">
+              <Box sx={Dropdownmenu} className="hovered-box">
                 <Typography sx={TextMain} className={isMemoInActive ? "active" : ""}>Memo In</Typography>
-              </ProtectedLink>
-            </Box>
+              </Box>
+            </ProtectedLink>
 
-            <Box sx={Dropdownmenu} className="hovered-box">
-              <ProtectedLink to="/memo/memo-return">
+            <ProtectedLink to="/memo/memo-return">
+              <Box sx={Dropdownmenu} className="hovered-box">
                 <Typography sx={TextMain} className={isMemoReturnActive ? "active" : ""}>Memo Return</Typography>
-              </ProtectedLink>
-            </Box>
+              </Box>
+            </ProtectedLink>
 
-            <Box sx={Dropdownmenu} className="hovered-box">
-              <ProtectedLink to="/memo/memo-out">
+            <ProtectedLink to="/memo/memo-out">
+              <Box sx={Dropdownmenu} className="hovered-box">
                 <Typography sx={TextMain} className={isMemoOutActive ? "active" : ""}>Memo Out</Typography>
-              </ProtectedLink>
-            </Box>
+              </Box>
+            </ProtectedLink>
 
-            <Box sx={Dropdownmenu} className="hovered-box">
-              <ProtectedLink to="/memo/memo-out-return">
+            <ProtectedLink to="/memo/memo-out-return">
+              <Box sx={Dropdownmenu} className="hovered-box">
                 <Typography sx={TextMain} className={isMemoOutReturnActive ? "active" : ""}>Memo Out Return</Typography>
-              </ProtectedLink>
-            </Box>
+              </Box>
+            </ProtectedLink>
           </Box>
         </Box>
       )}

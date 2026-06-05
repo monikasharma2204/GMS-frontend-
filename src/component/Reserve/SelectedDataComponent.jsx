@@ -37,6 +37,7 @@ const SelectedDataComponent = ({
   remark,
   disabled = false,
   triggerFSMDirty,
+  showWarning,
 }) => {
   const [dropdownOptions, setDropdownOptions] = useState({});
   const editMemoStatus = useRecoilValue(editMemoState);
@@ -90,7 +91,9 @@ const SelectedDataComponent = ({
       type: stockRow.type,
       lot_no: stockRow.lot_no,
       pcs: stockRow.pcs,
+      availablePcs: stockRow.availablePcs !== undefined ? stockRow.availablePcs : stockRow.pcs,
       weight: stockRow.weight,
+      availableWeight: stockRow.availableWeight !== undefined ? stockRow.availableWeight : stockRow.weight,
       // Conditional pricing: Use price for Cons. type, sale_price for Pmr. type
       price: stockRow.type === "Cons." ? stockRow.price : stockRow.sale_price,
       unit: stockRow.unit,
@@ -254,6 +257,15 @@ const SelectedDataComponent = ({
       </Box>
 
       <Box
+        onScroll={() => {
+          if (
+            document.activeElement &&
+            (document.activeElement.getAttribute("aria-autocomplete") ||
+              document.activeElement.getAttribute("role") === "combobox")
+          ) {
+            document.activeElement.blur();
+          }
+        }}
         sx={{
           height: "294px",
           overflowX: "scroll",
@@ -323,6 +335,7 @@ const SelectedDataComponent = ({
                   disabled={disabled}
                   triggerFSMDirty={triggerFSMDirty}
                   formatNumberWithCommas={formatNumberWithCommas}
+                  showWarning={showWarning}
                 />
               ))}
             </Box>

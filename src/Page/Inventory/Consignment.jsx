@@ -9,12 +9,12 @@ const Consignment = () => {
   return (
     <Box sx={{ display: "flex" }}>
       <NavBar />
-      <Box  sx={{marginLeft: "222px" , Height : "100vh " , paddingBottom : "130px", width: "100%"}}>
+      <Box sx={{ marginLeft: "222px", Height: "100vh ", width: "100%" }}>
         <Header />
         <Box sx={{ display: "flex" }}>
-          <Box sx={{ width: "100%" }}> 
-            <InventoryConsignmentHeader/>
-            <InventoryConsignmentBody/>
+          <Box sx={{ width: "100%" }}>
+            <InventoryConsignmentHeader />
+            <InventoryConsignmentBody />
           </Box>
         </Box>
       </Box>

@@ -121,16 +121,16 @@ const PurchaseOrder = ({ handleClick, showRedBox }) => {
           onClick={(e) => e.stopPropagation()}
         >
           <Box>
-            <Box sx={Dropdownmenu} className="hovered-box">
-              <ProtectedLink to="/purchase-order/purchase-order">
+            <ProtectedLink to="/purchase-order/purchase-order">
+              <Box sx={Dropdownmenu} className="hovered-box">
                 <Typography sx={TextMain} className={isPurchaseOrderActive ? "active" : ""}>Purchase Order</Typography>
-              </ProtectedLink>
-            </Box>
-            <Box sx={Dropdownmenu} className="hovered-box">
-              <ProtectedLink to="/purchase-order/purchase">
+              </Box>
+            </ProtectedLink>
+            <ProtectedLink to="/purchase-order/purchase">
+              <Box sx={Dropdownmenu} className="hovered-box">
                 <Typography sx={TextMain} className={isPurchaseActive ? "active" : ""}>Purchase(PU)</Typography>
-              </ProtectedLink>
-            </Box>
+              </Box>
+            </ProtectedLink>
           </Box>
         </Box>
       )}

@@ -16,7 +16,7 @@ import {
   shapeFormDataState,
 } from "../../recoil/state/stone/ShapeState";
 import axios from "axios";
-import {API_URL} from "config/config.js";
+import { API_URL } from "config/config.js";
 
 const Shape = () => {
   const [selectedData, setSelectedData] = useState(null);
@@ -36,7 +36,7 @@ const Shape = () => {
     } else if (!selectedData && formData && formData._id) {
       setFormData(null);
     }
-   
+
   }, [selectedData?._id]);
 
 
@@ -75,37 +75,39 @@ const Shape = () => {
   const proceedWithSelection = async (data) => {
     if (data) {
       let finalData = { ...data };
-      
-      if ((!finalData._id || finalData._id === undefined) && finalData.code) {
+      const recordId = data._id || data.id;
+
+
+      if (recordId || data.code) {
         try {
-          const response = await axios.get(
-            `${API_URL}/master?master_type=master_stone_shape&code=${encodeURIComponent(finalData.code)}`
-          );
-          
+          const url = recordId
+            ? `${API_URL}/master?master_type=master_stone_shape&_id=${recordId}`
+            : `${API_URL}/master?master_type=master_stone_shape&code=${encodeURIComponent(data.code)}`;
+
+          const response = await axios.get(url);
           let records = [];
           if (Array.isArray(response.data)) {
             records = response.data;
           } else if (response.data && typeof response.data === 'object') {
             records = [response.data];
           }
-          
+
           if (records && records.length > 0) {
-            const fetchedRecord = records.find(
-              (record) => 
-                record.code === finalData.code && 
-                record.name === finalData.name
-            ) || records[0];
-            
-            const recordId = fetchedRecord?._id || fetchedRecord?.id;
-            if (fetchedRecord && recordId) {
-              finalData = { ...finalData, _id: recordId };
+            const fetchedRecord = recordId
+              ? records.find(r => (r._id || r.id) === recordId)
+              : records.find(r => r.code === data.code);
+
+            if (fetchedRecord) {
+              finalData = { ...fetchedRecord };
+            } else if (records[0]) {
+              finalData = { ...records[0] };
             }
           }
         } catch (error) {
-    
+          console.error("Error fetching full record:", error);
         }
       }
-      
+
       setSelectedData(finalData);
       setOriginalData(finalData);
       setFormData(finalData);
@@ -127,10 +129,10 @@ const Shape = () => {
   };
 
   const handleEditToggle = () => {
- 
+
     if (fsmState === "saved" && formData) {
       if (!originalData || !originalData._id) {
-   
+
         setOriginalData(formData);
       }
     }
@@ -146,14 +148,14 @@ const Shape = () => {
 
   const handleCancelEdit = () => {
     if (fsmState === "editing") {
- 
+
       if (originalData) {
         setFormData(originalData);
         setSelectedData(originalData);
         setFsmState("saved");
       }
     } else if (fsmState === "dirty") {
-   
+
       setSelectedData(null);
       setOriginalData(null);
       setFormData(null);
@@ -162,7 +164,7 @@ const Shape = () => {
   };
 
   const handleCancelView = () => {
-  
+
     setSelectedData(null);
     setOriginalData(null);
     setFormData(null);
@@ -231,35 +233,35 @@ const Shape = () => {
   const handleSaveSuccess = async (savedData) => {
     setResponseMessage("");
 
-    let savedId = savedData?._id 
-      || savedData?.id 
+    let savedId = savedData?._id
+      || savedData?.id
       || (savedData?.data && savedData.data._id)
       || (savedData?.data && savedData.data.id);
-    
+
     if (!savedId && formData?.code) {
       let fetchedRecord = null;
       for (let attempt = 0; attempt < 3; attempt++) {
         try {
           await new Promise(resolve => setTimeout(resolve, 500 + (attempt * 500)));
-          
+
           const response = await axios.get(
             `${API_URL}/master?master_type=master_stone_shape&code=${encodeURIComponent(formData.code)}`
           );
-          
+
           let records = [];
           if (Array.isArray(response.data)) {
             records = response.data;
           } else if (response.data && typeof response.data === 'object') {
             records = [response.data];
           }
-          
+
           if (records && records.length > 0) {
             fetchedRecord = records.find(
-              (record) => 
-                record.code === formData.code && 
+              (record) =>
+                record.code === formData.code &&
                 record.name === formData.name
             ) || records[0];
-            
+
             const recordId = fetchedRecord?._id || fetchedRecord?.id;
             if (fetchedRecord && recordId) {
               savedId = recordId;
@@ -270,7 +272,7 @@ const Shape = () => {
 
         }
       }
-      
+
       if (fetchedRecord && (fetchedRecord._id || fetchedRecord.id)) {
         const recordId = fetchedRecord._id || fetchedRecord.id;
         const dataToUse = {
@@ -281,7 +283,7 @@ const Shape = () => {
           master_status: fetchedRecord.master_status || formData.master_status,
           master_info: fetchedRecord.master_info || formData.master_info,
         };
-        
+
         setFormData(dataToUse);
         setOriginalData(dataToUse);
         setSelectedData(dataToUse);
@@ -313,14 +315,14 @@ const Shape = () => {
           }
         });
       }
-      
+
       setFormData(dataToUse);
       setOriginalData(dataToUse);
       setSelectedData(dataToUse);
       setFsmState("saved");
       setRefreshTrigger(prev => prev + 1);
     } else {
- 
+
       if (formData) {
         setOriginalData(formData);
         setSelectedData(formData);
@@ -339,13 +341,13 @@ const Shape = () => {
 
   const endpointPath = "/master";
   const navigatePath = "/stone-master/shape";
-  const method = (fsmState === "dirty" && !formData?._id) || (fsmState === "initial" && !formData?._id) 
-    ? "post" 
+  const method = (fsmState === "dirty" && !formData?._id) || (fsmState === "initial" && !formData?._id)
+    ? "post"
     : "put";
 
   const payLoadData = {
-    ...(method === "put" && (originalData?._id || formData?._id || selectedData?._id) ? { 
-      _id: originalData?._id || formData?._id || selectedData?._id 
+    ...(method === "put" && (originalData?._id || formData?._id || selectedData?._id) ? {
+      _id: originalData?._id || formData?._id || selectedData?._id
     } : {}),
     code: formData?.code || "",
     name: formData?.name || "",
@@ -359,11 +361,11 @@ const Shape = () => {
 
 
   return (
-    <Box sx={{ 
+    <Box sx={{
       // display: "flex"
-       }}>
+    }}>
       <NavBar />
-      <Box  sx={{marginLeft: "222px" , Height : "100vh " , paddingBottom : "130px"}}>
+      <Box sx={{ marginLeft: "222px", Height: "100vh ", paddingBottom: "130px" }}>
         <Header />
         <Box sx={{ display: "flex" }}>
           <Box>
@@ -385,7 +387,7 @@ const Shape = () => {
             refreshTrigger={refreshTrigger}
           />
         </Box>
-        
+
         <ConfirmCancelDialog
           open={showConfirmDialog}
           onClose={handleConfirmDialogClose}
@@ -393,12 +395,12 @@ const Shape = () => {
 
         <Footer
           selectedData={(() => {
-       
+
             const idToUse = formData?._id || originalData?._id || selectedData?._id;
             if (idToUse) {
               return { ...formData, _id: idToUse };
             }
-   
+
             return formData && '_id' in formData ? formData : { ...formData };
           })()}
           onCancelEdit={handleCancelEdit}

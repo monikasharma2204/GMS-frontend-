@@ -94,7 +94,7 @@ const InventoryPrimaryBody = ({ }) => {
     <>
       <Box
         sx={{
-          padding: "24px 24px 32px 24px",
+          padding: "24px 9px 32px 24px",
         }}
       >
         <Box
@@ -262,76 +262,12 @@ const InventoryPrimaryBody = ({ }) => {
                     marginRight: "24px",
                   }}
                 />
-                <Typography
-                  sx={{
-                    color: "#343434",
-                    fontFamily: "Calibri",
-                    fontSize: "16px",
-                    fontStyle: "normal",
-                    fontWeight: 400,
-                    lineHeight: "normal",
-                  }}
-                >
-                  Rows per page
-                </Typography>
-                <FormControl
-                  defaultValue="10"
-                  sx={{
-                    height: "40px",
-                    width: "69px",
-                    marginLeft: "8px",
-                  }}
-                >
-                  <Select
-                    sx={{
-                      height: "40px",
-                      width: "69px",
-                      backgroundColor: "#FFF",
-                      color: "var(--Main-Text, #343434)",
-                      fontFamily: "Calibri",
-                      fontSize: "16px",
-                      fontStyle: "normal",
-                      fontWeight: 400,
-                    }}
-                    value={rowPP}
-                    onChange={handleChange}
-                  >
-                    <MenuItem
-                      value={10}
-                      sx={{
-                        color: "var(--Main-Text, #343434)",
-                        fontFamily: "Calibri",
-                        fontSize: "16px",
-                        fontStyle: "normal",
-                        fontWeight: 400,
-                      }}
-                    >
-                      10
-                    </MenuItem>
-                    <MenuItem
-                      value={20}
-                      sx={{
-                        color: "var(--Main-Text, #343434)",
-                        fontFamily: "Calibri",
-                        fontSize: "16px",
-                        fontStyle: "normal",
-                        fontWeight: 400,
-                      }}
-                    >
-                      20
-                    </MenuItem>
-                    <MenuItem
-                      value={30}
-                      sx={{
-                        color: "var(--Main-Text, #343434)",
-                        fontFamily: "Calibri",
-                        fontSize: "16px",
-                        fontStyle: "normal",
-                        fontWeight: 400,
-                      }}
-                    >
-                      30
-                    </MenuItem>
+                <Typography sx={{ color: "#343434", fontFamily: "Calibri", fontSize: "16px", fontWeight: 400 }}>Rows per page</Typography>
+                <FormControl sx={{ borderRadius: "8px", height: "34px", width: "69px", marginLeft: "8px" }}>
+                  <Select sx={{ padding: "0px", borderRadius: "8px", height: "34px", width: "69px", backgroundColor: "#FFF", fontFamily: "Calibri" }} value={rowPP} onChange={handleChange}>
+                    <MenuItem value={10}>10</MenuItem>
+                    <MenuItem value={20}>20</MenuItem>
+                    <MenuItem value={30}>30</MenuItem>
                   </Select>
                 </FormControl>
               </Box>

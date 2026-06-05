@@ -1755,6 +1755,7 @@ const MemoReturn = () => {
               triggerFSMDirty={triggerFSMDirty}
               fsmState={fsmState}
               editMemoStatus={editMemoStatus}
+              hasUnsavedData={() => hasUnsavedData}
             // isApproved={isApproved}
             />
           </Box>

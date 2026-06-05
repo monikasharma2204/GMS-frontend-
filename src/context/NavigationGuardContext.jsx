@@ -1,8 +1,7 @@
 import React, { createContext, useContext, useState, useCallback, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import UnsavedChangesDialog from "../component/Common/UnsavedChangesDialog";
+import ConfirmCancelDialog from "../component/Commons/ConfirmCancelDialog";
 
-// Transaction page paths that should be protected
 const TRANSACTION_PATHS = [
   "/quotation",
   "/reserve",
@@ -14,6 +13,8 @@ const TRANSACTION_PATHS = [
   "/memo/memo-in",
   "/sale",
   "/inventory/load",
+  "/finance/outstandingreceivble",
+  "/finance/outstandingpayable",
 ];
 
 const NavigationGuardContext = createContext(null);
@@ -37,8 +38,8 @@ export const NavigationGuardProvider = ({ children }) => {
 
   const handleNavigation = useCallback((targetPath) => {
     const isTransactionPage = TRANSACTION_PATHS.includes(location.pathname);
-    
-    // Only intercept if we're on a transaction page and have unsaved changes
+
+
     if (isTransactionPage && isDirty && targetPath !== location.pathname) {
       setPendingNavigation(targetPath);
       setShowDialog(true);
@@ -51,7 +52,7 @@ export const NavigationGuardProvider = ({ children }) => {
   const handleDialogClose = useCallback((confirmed) => {
     setShowDialog(false);
     if (confirmed && pendingNavigation) {
-      // User chose to leave without saving - clear the state
+
       if (cleanupCallback) {
         cleanupCallback();
       }
@@ -65,24 +66,23 @@ export const NavigationGuardProvider = ({ children }) => {
     }
   }, [pendingNavigation, navigate, cleanupCallback]);
 
-  // Intercept all Link clicks when on a transaction page
   useEffect(() => {
     const isTransactionPage = TRANSACTION_PATHS.includes(location.pathname);
-    
+
     if (!isTransactionPage || !isDirty) {
       return;
     }
 
-    // Intercept all Link clicks
+
     const handleLinkClick = (e) => {
-      // Check if the click is on a Link component
+
       const linkElement = e.target.closest('a[href]');
       if (linkElement && linkElement.hasAttribute('href')) {
         const href = linkElement.getAttribute('href');
-        
-        // Only intercept internal navigation (not external links or same page)
+
+
         if (href && href.startsWith('/') && href !== location.pathname) {
-          // Check if it's not already being handled by ProtectedLink
+
           if (!linkElement.hasAttribute('data-protected-link')) {
             e.preventDefault();
             e.stopPropagation();
@@ -92,7 +92,7 @@ export const NavigationGuardProvider = ({ children }) => {
       }
     };
 
-    // Add event listener to document to catch all Link clicks
+
     document.addEventListener('click', handleLinkClick, true);
 
     return () => {
@@ -110,10 +110,13 @@ export const NavigationGuardProvider = ({ children }) => {
       }}
     >
       {children}
-      <UnsavedChangesDialog
+      <ConfirmCancelDialog
         open={showDialog}
         onClose={handleDialogClose}
-        onConfirm={handleDialogClose}
+        title="Unsaved Changes"
+        message="You have unsaved changes. If you leave this page, your data will be lost. Are you sure you want to leave?"
+        noButtonText="Cancel"
+        yesButtonText="Leave without saving"
       />
     </NavigationGuardContext.Provider>
   );

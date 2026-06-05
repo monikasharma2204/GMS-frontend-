@@ -418,7 +418,8 @@ export const DropdownMenuReport = {
   alignItems: "center",
   borderRadius: "10px",
   // height: "32px",
-  padding: "5px 12px 5px 2px",
+  // padding: "5px 12px 5px 2px",
+  padding: "9px 20px 9px 2px",
   "&:hover.hovered-box": {
     backgroundColor: "#066B6E",
   },
@@ -437,7 +438,8 @@ export const DropdownMenuTransfer = {
   alignItems: "center",
   borderRadius: "10px",
   // height: "32px",
-  padding: "5px 20px 5px 2px",
+  // padding: "5px 20px 5px 2px",
+  padding: "9px 20px 9px 2px",
   "&:hover.hovered-box": {
     backgroundColor: "#066B6E",
   },

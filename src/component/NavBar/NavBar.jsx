@@ -169,9 +169,9 @@ const NavBar = () => {
           }}
         >
           <Home />
-          <Dashboard />
+          {/* <Dashboard /> */}
           <Company handleClick={handleClickCompany} showRedBox={showRedBox} />
-          <UserAndPermission />
+          {/* <UserAndPermission /> */}
           <Account handleClick={handleClickAccount} showRedBox={showRedBox} />
           <StoneMaster
             handleClick={handleClickStoneMaster}

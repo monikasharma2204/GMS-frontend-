@@ -14,6 +14,8 @@ const TRANSACTION_PATHS = [
   "/memo/memo-in",
   "/sale",
   "/inventory/load",
+  "/finance/outstandingreceivble",
+  "/finance/outstandingpayable",
 ];
 
 const useTransactionNavigationGuard = (isDirty, cleanupCallback) => {
@@ -22,7 +24,7 @@ const useTransactionNavigationGuard = (isDirty, cleanupCallback) => {
 
   const isTransactionPage = TRANSACTION_PATHS.includes(location.pathname);
 
-  // Register cleanup callback
+
   useEffect(() => {
     if (isTransactionPage && cleanupCallback) {
       registerCleanup(cleanupCallback);
@@ -38,7 +40,7 @@ const useTransactionNavigationGuard = (isDirty, cleanupCallback) => {
     if (isTransactionPage) {
       setDirty(isDirty);
     }
-    // Clean up when leaving the page
+
     return () => {
       if (isTransactionPage) {
         setDirty(false);
@@ -46,7 +48,7 @@ const useTransactionNavigationGuard = (isDirty, cleanupCallback) => {
     };
   }, [isDirty, isTransactionPage, setDirty]);
 
-  // Reset dirty state when component unmounts (user navigated away)
+
   useEffect(() => {
     return () => {
       if (isTransactionPage) {

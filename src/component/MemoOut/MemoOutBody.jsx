@@ -85,6 +85,7 @@ const MemoOutBody = ({
   editMemoStatus,
   triggerFSMDirty,
   isDayBookDataLoaded,
+  showWarning,
 }) => {
 
   const [memoInfo, setMemoInfo] = useRecoilState(memoInfoState);
@@ -462,6 +463,7 @@ const MemoOutBody = ({
                 setRows={setRows}
                 triggerFSMDirty={triggerFSMDirty}
                 disabled={shouldDisableFields}
+                showWarning={showWarning}
               />
             </Box>
             <Box

@@ -43,7 +43,6 @@ import MemoOutReturn from "./Page/Memo/MemoOutReturn";
 import MemoOut from "./Page/Memo/MemoOut";
 import Load from "./Page/Inventory/Load.jsx";
 import SalePage from "./Page/Sale/SalePage.jsx"
-import Primary from "./Page/Inventory/Primary.jsx";
 import Consignment from "./Page/Inventory/Consignment.jsx";
 import StockMovement from "./Page/Inventory/StockMovement.jsx";
 
@@ -53,7 +52,8 @@ import ConsignmentReportPage from "./Page/Inventory/Report/ConsignmentReportPage
 import ConsignmentTransferPage from "./Page/Inventory/Transfer/ConsignmentTransferPage.jsx";
 import MergeSplitStock from "./Page/Inventory/Transfer/MergeSplitStock.jsx";
 import StockMovementReportPage from "./Page/Inventory/Report/StockMovementReportPage.jsx";
-import ConsignmentCheckPage from "./Page/Inventory/Report/ConsignmentCheckPage.jsx";
+import StockMovementAdjPage from "./Page/Inventory/Report/StockMovementAdjPage.jsx";
+import ConsignmentMovementReportPage from "./Page/Inventory/Report/ConsignmentMovementReportPage.jsx";
 import LocationTransferStock from "./Page/Inventory/Transfer/LocationTransferStock.jsx";
 
 import Currency from "Page/Currency/Currency";
@@ -64,8 +64,10 @@ import './recoil.config.ts';
 import Quotation from "Page/Quotation/QuotationsOrder";
 import ReservePage from "Page/Reserve/ReservePage";
 import DashboardPage from "Page/DashboardPage/DashboardPage"
-import DashboardPageSecond from "Page/DashboardPage-second/DashboardPageSecond"
+import DashboardPageSecond from "./Page/DashboardPage-second/DashboardPageSecond"
 import NavigationGuardWrapper from "./component/Common/NavigationGuardWrapper";
+import Receivable from "./Page/Finance/Receivable";
+import Payable from "./Page/Finance/Payable";
 
 
 
@@ -299,7 +301,11 @@ const router = createBrowserRouter([
       },
       {
         path: "inventory/report/stock-adj",
-        element: <ConsignmentCheckPage />,
+        element: <StockMovementAdjPage />,
+      },
+      {
+        path: "inventory/report/consignment-movement",
+        element: <ConsignmentMovementReportPage />,
       },
       {
         path: "inventory/transfer/merge-split",
@@ -345,6 +351,14 @@ const router = createBrowserRouter([
       {
         path: "settings/sub-location/:action/:id",
         element: <SubLocation />,
+      },
+      {
+        path: "finance/outstandingreceivble",
+        element: <Receivable />,
+      },
+      {
+        path: "finance/outstandingpayable",
+        element: <Payable />,
       },
     ],
   },

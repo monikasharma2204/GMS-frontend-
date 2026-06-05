@@ -3,10 +3,14 @@ import { Box, Button, Typography, Modal, Checkbox } from "@mui/material";
 import MenuItem from "@mui/material/MenuItem";
 import FormControl from "@mui/material/FormControl";
 import Select from "@mui/material/Select";
+import useTableSort from "../../hooks/useTableSort";
 import moment from "moment";
 import * as XLSX from "xlsx";
 import { formatNumberWithCommas } from "../../helpers/numberHelper.js";
 import ConfirmCancelDialog from "../Commons/ConfirmCancelDialog";
+import SortIcon from "../Commons/SortIcon/SortIcon";
+import AccountFilterPopover from "../Commons/AccountFilterPopover/AccountFilterPopover";
+import { useAccountFilter } from "../Commons/AccountFilterPopover/useAccountFilter";
 
 const style = {
   position: "absolute",
@@ -41,17 +45,21 @@ const ModalDayBook = ({
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [pendingEditData, setPendingEditData] = useState(null);
 
+  const { filteredData, handleAccountClick, popoverProps, isFilterActive } = useAccountFilter(data, selectedItemIds, open);
+
+  const { sortedData, requestSort, sortConfig, setSortConfig } = useTableSort(filteredData, { key: 'createdAt', direction: 'desc' });
+
   const handleOpen = () => {
     setOpen(true);
-    setSelectedItemIds([]); // Reset selection when opening
+    setSelectedItemIds([]);
   };
 
   const handleClose = () => {
     setOpen(false);
-    setSelectedItemIds([]); // Reset selection when closing
+    setSelectedItemIds([]);
   };
 
-  // Handle checkbox selection - allow multiple selection
+
   const handleCheckboxSelection = (item) => {
     setSelectedItemIds(prev => {
       if (prev.includes(item._id)) {
@@ -68,18 +76,18 @@ const ModalDayBook = ({
   const handleOKClick = () => {
     if (selectedItemIds.length === 1) {
       // Find the selected item and call handleEdit with it
-      const selectedItem = data.find(item => item._id === selectedItemIds[0]);
+      const selectedItem = sortedData.find(item => item._id === selectedItemIds[0]);
       if (selectedItem) {
         const selectedInvoiceId = String(selectedItem._id || selectedItem.id || "");
         const currentId = String(currentInvoiceId || "");
         const isSameInvoice = currentId && selectedInvoiceId && currentId === selectedInvoiceId;
-        
+
         const editData = {
           ...selectedItem,
           items: selectedItem.inventory_item || selectedItem.items || [],
           isDayBookEdit: true,
         };
-        
+
         if (isSameInvoice) {
           handleEdit(editData);
           handleClose();
@@ -93,7 +101,7 @@ const ModalDayBook = ({
       }
     }
   };
-  
+
   const proceedWithSelection = (confirmed) => {
     if (confirmed && pendingEditData) {
       handleEdit(pendingEditData);
@@ -106,19 +114,19 @@ const ModalDayBook = ({
 
   const isOKEnabled = selectedItemIds.length === 1;
 
-  
+
   const handleSelectAll = () => {
-    if (selectedItemIds.length === data.length) {
+    if (selectedItemIds.length === sortedData.length) {
       // If all items are selected, deselect all
       setSelectedItemIds([]);
     } else {
       // If not all items are selected, select all
-      setSelectedItemIds(data.map(item => item._id));
+      setSelectedItemIds(sortedData.map(item => item._id));
     }
   };
 
   // Check if "select all" checkbox should be checked
-  const isAllSelected = data.length > 0 && selectedItemIds.length === data.length;
+  const isAllSelected = sortedData.length > 0 && selectedItemIds.length === sortedData.length;
 
   const [age, setAge] = React.useState("");
 
@@ -126,7 +134,17 @@ const ModalDayBook = ({
     setAge(event.target.value);
   };
 
-  const hasData = Array.isArray(data) && data.length > 0;
+  const hasData = Array.isArray(sortedData) && sortedData.length > 0;
+
+
+    const toFixedDecimal = (value, decimals) => {
+      const number = Number(String(value ?? 0).replace(/,/g, ""));
+      return (Number.isFinite(number) ? number : 0).toFixed(decimals);
+    };
+  
+    const formatDecimalWithCommas = (value, decimals) =>
+      formatNumberWithCommas(toFixedDecimal(value, decimals));
+
 
   const formatDateValue = (value) => {
     if (!value) return "";
@@ -149,18 +167,14 @@ const ModalDayBook = ({
   };
 
   const buildExportRows = () => {
-    const sourceRows = Array.isArray(data) ? data : [];
     const rowsToExport =
       selectedItemIds.length > 0
-        ? sourceRows.filter((item) => selectedItemIds.includes(item._id))
-        : sourceRows;
+        ? sortedData.filter((item) => selectedItemIds.includes(item._id))
+        : sortedData;
 
     return rowsToExport.map((item, exportIndex) => {
-      const summary = getSummary(item?.items);
-      const position = sourceRows.findIndex(
-        (memoItem) => memoItem._id === item._id
-      );
-      const rowIndex = position >= 0 ? position + 1 : exportIndex + 1;
+      const summary = getSummary(item?.items || []);
+      const rowIndex = exportIndex + 1;
 
       return {
         "#": rowIndex,
@@ -172,8 +186,8 @@ const ModalDayBook = ({
         "Ref 1": item?.ref_1 || "",
         "Ref 2": item?.ref_2 || "",
         Pcs: summary?.pcs ?? 0,
-        Weight: summary?.weight ?? 0,
-        Amount: summary?.amount ?? 0,
+         Weight: toFixedDecimal(summary?.weight, 3),
+    Amount: toFixedDecimal(item?.summary?.grand_total, 2),
         Currency: item?.currency?.code || "",
         Remark: item?.remark || "",
       };
@@ -503,7 +517,7 @@ const ModalDayBook = ({
                       // justifyContent: "center",
                     }}
                   >
-                    <Checkbox 
+                    <Checkbox
                       checked={isAllSelected}
                       onChange={handleSelectAll}
                     />
@@ -520,14 +534,16 @@ const ModalDayBook = ({
                     </Typography>
                   </Box>
 
-                 
+
 
                   <Box
+                    onClick={() => requestSort('createdAt')}
                     sx={{
                       width: "140px",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
+                      cursor: "pointer",
                     }}
                   >
                     <Typography
@@ -541,26 +557,17 @@ const ModalDayBook = ({
                     >
                       TranDate
                     </Typography>
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="19"
-                      height="18"
-                      viewBox="0 0 19 18"
-                      fill="none"
-                    >
-                      <path
-                        d="M6.5 12H3.5L8 16.5V1.5H6.5V12ZM11 3.75V16.5H12.5V6H15.5L11 1.5V3.75Z"
-                        fill="#343434"
-                      />
-                    </svg>
+                    <SortIcon sortConfig={sortConfig} columnKey="createdAt" />
                   </Box>
 
                   <Box
+                    onClick={() => requestSort('doc_date')}
                     sx={{
                       width: "140px",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
+                      cursor: "pointer",
                     }}
                   >
                     <Typography
@@ -574,26 +581,17 @@ const ModalDayBook = ({
                     >
                       Doc Date
                     </Typography>
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="19"
-                      height="18"
-                      viewBox="0 0 19 18"
-                      fill="none"
-                    >
-                      <path
-                        d="M6.5 12H3.5L8 16.5V1.5H6.5V12ZM11 3.75V16.5H12.5V6H15.5L11 1.5V3.75Z"
-                        fill="#343434"
-                      />
-                    </svg>
+                    <SortIcon sortConfig={sortConfig} columnKey="doc_date" />
                   </Box>
 
                   <Box
+                    onClick={() => requestSort('due_date')}
                     sx={{
                       width: "140px",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
+                      cursor: "pointer",
                     }}
                   >
                     <Typography
@@ -607,18 +605,7 @@ const ModalDayBook = ({
                     >
                       Due Date
                     </Typography>
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="19"
-                      height="18"
-                      viewBox="0 0 19 18"
-                      fill="none"
-                    >
-                      <path
-                        d="M6.5 12H3.5L8 16.5V1.5H6.5V12ZM11 3.75V16.5H12.5V6H15.5L11 1.5V3.75Z"
-                        fill="#343434"
-                      />
-                    </svg>
+                    <SortIcon sortConfig={sortConfig} columnKey="due_date" />
                   </Box>
 
                   <Box
@@ -638,16 +625,18 @@ const ModalDayBook = ({
                         fontWeight: 700,
                       }}
                     >
-                    Invoice NO.
+                      Invoice NO.
                     </Typography>
                   </Box>
 
                   <Box
+                    onClick={handleAccountClick}
                     sx={{
                       width: "140px",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
+                      cursor: "pointer",
                     }}
                   >
                     <Typography
@@ -670,7 +659,7 @@ const ModalDayBook = ({
                     >
                       <path
                         d="M2.83333 1.75H12.1667C12.3214 1.75 12.4697 1.81146 12.5791 1.92085C12.6885 2.03025 12.75 2.17862 12.75 2.33333V3.2585C12.75 3.4132 12.6885 3.56155 12.5791 3.67092L8.83758 7.41242C8.72818 7.52179 8.6667 7.67014 8.66667 7.82483V11.5028C8.66666 11.5914 8.64645 11.6789 8.60755 11.7586C8.56866 11.8383 8.51211 11.9081 8.44221 11.9626C8.3723 12.0172 8.29088 12.0551 8.20414 12.0734C8.11739 12.0918 8.0276 12.0901 7.94158 12.0686L6.77492 11.7769C6.64877 11.7453 6.53681 11.6725 6.4568 11.57C6.37679 11.4674 6.33334 11.3411 6.33333 11.2111V7.82483C6.3333 7.67014 6.27182 7.52179 6.16242 7.41242L2.42092 3.67092C2.31151 3.56155 2.25003 3.4132 2.25 3.2585V2.33333C2.25 2.17862 2.31146 2.03025 2.42085 1.92085C2.53025 1.81146 2.67862 1.75 2.83333 1.75Z"
-                        stroke="#666666"
+                        stroke={(popoverProps.open || isFilterActive) ? "#17C653" : "#343434"}
                         strokeWidth="1.5"
                         strokeLinecap="round"
                         strokeLinejoin="round"
@@ -825,8 +814,8 @@ const ModalDayBook = ({
                     </Typography>
                   </Box>
                 </Box>
-                {data.length > 0 ? (
-                  data.map((item, index) => (
+                {sortedData.length > 0 ? (
+                  sortedData.map((item, index) => (
                     // item.inventory_item.map((inventory, inventory_index) => {
                     // return (
                     <Box
@@ -1057,7 +1046,10 @@ const ModalDayBook = ({
                           }}
                         >
                           {/* Weight */}
-                          {calculateSums(item.items).weight}
+                     {formatDecimalWithCommas(
+                            calculateSums(item.items).weight,
+                            3
+                          )}
                         </Typography>
                       </Box>
 
@@ -1079,9 +1071,9 @@ const ModalDayBook = ({
                           }}
                         >
                           {/* Amount */}
-                          {formatNumberWithCommas(
-                            calculateSums(item.items).amount
-                          )}
+                        {formatNumberWithCommas(
+                          toFixedDecimal(item?.summary?.grand_total, 2)
+                        )}
                         </Typography>
                       </Box>
 
@@ -1218,7 +1210,8 @@ const ModalDayBook = ({
           </Box>
         </Modal>
       </Box>
-      
+      <AccountFilterPopover {...popoverProps} sortConfig={sortConfig} setSortConfig={setSortConfig} />
+
       <ConfirmCancelDialog
         open={showConfirmDialog}
         onClose={proceedWithSelection}

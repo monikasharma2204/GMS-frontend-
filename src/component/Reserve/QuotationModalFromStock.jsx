@@ -8,6 +8,9 @@ import { useRecoilState, useRecoilValue, useRecoilValueLoadable } from "recoil";
 import { atom } from "recoil";
 import apiRequest from "helpers/apiHelper.js";
 import { getSubLocationInfo } from "recoil/selector/SubLocationSelector";
+import useTableSort from "../../hooks/useTableSort";
+import { useColumnFilters } from "../Commons/ColumnFilterPopover/useColumnFilters";
+import ColumnFilterPopover from "../Commons/ColumnFilterPopover/ColumnFilterPopover";
 
 export const selectedRowsState = atom({
   key: "quotationSelectedRowsState_QuotationModalFromStockReserve",
@@ -31,6 +34,21 @@ const textStyle = {
   fontStyle: "normal",
   fontWeight: 400,
 };
+
+const formatWeight = (weight) => {
+  const value = Number(weight);
+  return Number.isFinite(value) ? value.toFixed(3) : "0.000";
+};
+
+const formatCurrency = (amount) => {
+  const num = parseFloat(amount);
+  return isNaN(num) ? "0.00" : num.toLocaleString("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+};
+
+
 const QuotationModalFromStock = ({
   rowData,
   setRowData,
@@ -45,6 +63,40 @@ const QuotationModalFromStock = ({
   const [loading, setLoading] = useState(true);
 
   const [selectedRows, setSelectedRows] = useRecoilState(selectedRowsState);
+
+  const { filteredData, handleFilterClick, popoverProps, isFilterActive } = useColumnFilters(rowData, open);
+  const { sortedData, requestSort, sortConfig, setSortConfig } = useTableSort(filteredData, { key: 'stone_code', direction: 'asc' });
+
+  const renderFilterIcon = (columnKey) => {
+    const active = isFilterActive(columnKey) || (popoverProps.open && popoverProps.activeColumnKey === columnKey);
+    return (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="12"
+        height="12"
+        viewBox="0 0 12 12"
+        fill="none"
+        style={{ marginLeft: "4px", flexShrink: 0 }}
+      >
+        <g clipPath="url(#clip0_filter_icon)">
+          <path
+            d="M2 1.5H10C10.1326 1.5 10.2598 1.55268 10.3536 1.64645C10.4473 1.74021 10.5 1.86739 10.5 2V2.793C10.5 2.9256 10.4473 3.05275 10.3535 3.1465L7.1465 6.3535C7.05273 6.44725 7.00003 6.5744 7 6.707V9.8595C7 9.9355 6.98267 10.0105 6.94933 10.0788C6.91599 10.1471 6.86752 10.2069 6.80761 10.2537C6.74769 10.3004 6.6779 10.3329 6.60355 10.3486C6.52919 10.3644 6.45222 10.363 6.3785 10.3445L5.3785 10.0945C5.27038 10.0674 5.1744 10.005 5.10583 9.9171C5.03725 9.82923 5 9.72096 5 9.6095V6.707C4.99997 6.5744 4.94727 6.44725 4.8535 6.3535L1.6465 3.1465C1.55273 3.05275 1.50003 2.9256 1.5 2.793V2C1.5 1.86739 1.55268 1.74021 1.64645 1.64645C1.74021 1.55268 1.86739 1.5 2 1.5Z"
+            stroke={active ? "#17C653" : "#343434"}
+            fill="none"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </g>
+        <defs>
+          <clipPath id="clip0_filter_icon">
+            <rect width="12" height="12" fill="white" />
+          </clipPath>
+        </defs>
+      </svg>
+    );
+  };
+
 
   useEffect(() => {
     const fetchStock = async () => {
@@ -105,12 +157,12 @@ const QuotationModalFromStock = ({
   };
 
   const handleCheckboxSelectAllChange = () => {
-    if (selectedRows.length === rowData.length) {
+    if (selectedRows.length === sortedData.length && sortedData.length > 0) {
       // Uncheck all if everything is already selected
       setSelectedRows([]);
     } else {
       // Select all
-      setSelectedRows(rowData);
+      setSelectedRows(sortedData);
     }
   };
 
@@ -445,8 +497,8 @@ const QuotationModalFromStock = ({
                   >
                     <Checkbox
                       checked={
-                        selectedRows.length === rowData.length &&
-                        rowData.length > 0
+                        selectedRows.length === sortedData.length &&
+                        sortedData.length > 0
                       }
                       onChange={() => handleCheckboxSelectAllChange()}
                     />
@@ -464,11 +516,16 @@ const QuotationModalFromStock = ({
                   </Box>
 
                   <Box
+                    onClick={(e) => handleFilterClick(e, 'location_name')}
                     sx={{
                       width: "140px",
                       display: "flex",
                       alignItems: "center",
                       padding: "12px 8px",
+                      cursor: "pointer",
+                      "&:hover": {
+                        bgcolor: "rgba(0, 0, 0, 0.04)"
+                      }
                     }}
                   >
                     <Typography
@@ -482,36 +539,20 @@ const QuotationModalFromStock = ({
                     >
                       Location
                     </Typography>
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="12"
-                      height="12"
-                      viewBox="0 0 12 12"
-                      fill="none"
-                    >
-                      <g clipPath="url(#clip0_2622_213943)">
-                        <path
-                          d="M2 1.5H10C10.1326 1.5 10.2598 1.55268 10.3536 1.64645C10.4473 1.74021 10.5 1.86739 10.5 2V2.793C10.5 2.9256 10.4473 3.05275 10.3535 3.1465L7.1465 6.3535C7.05273 6.44725 7.00003 6.5744 7 6.707V9.8595C7 9.9355 6.98267 10.0105 6.94933 10.0788C6.91599 10.1471 6.86752 10.2069 6.80761 10.2537C6.74769 10.3004 6.6779 10.3329 6.60355 10.3486C6.52919 10.3644 6.45222 10.363 6.3785 10.3445L5.3785 10.0945C5.27038 10.0674 5.1744 10.005 5.10583 9.9171C5.03725 9.82923 5 9.72096 5 9.6095V6.707C4.99997 6.5744 4.94727 6.44725 4.8535 6.3535L1.6465 3.1465C1.55273 3.05275 1.50003 2.9256 1.5 2.793V2C1.5 1.86739 1.55268 1.74021 1.64645 1.64645C1.74021 1.55268 1.86739 1.5 2 1.5Z"
-                          stroke="#666666"
-                          strokeWidth="1.5"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </g>
-                      <defs>
-                        <clipPath id="clip0_2622_213943">
-                          <rect width="12" height="12" fill="white" />
-                        </clipPath>
-                      </defs>
-                    </svg>
+                    {renderFilterIcon('location_name')}
                   </Box>
 
                   <Box
+                    onClick={(e) => handleFilterClick(e, 'type')}
                     sx={{
                       width: "140px",
                       display: "flex",
                       alignItems: "center",
                       padding: "12px 8px",
+                      cursor: "pointer",
+                      "&:hover": {
+                        bgcolor: "rgba(0, 0, 0, 0.04)"
+                      }
                     }}
                   >
                     <Typography
@@ -525,37 +566,21 @@ const QuotationModalFromStock = ({
                     >
                       Type
                     </Typography>
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="12"
-                      height="12"
-                      viewBox="0 0 12 12"
-                      fill="none"
-                    >
-                      <g clipPath="url(#clip0_2622_213943)">
-                        <path
-                          d="M2 1.5H10C10.1326 1.5 10.2598 1.55268 10.3536 1.64645C10.4473 1.74021 10.5 1.86739 10.5 2V2.793C10.5 2.9256 10.4473 3.05275 10.3535 3.1465L7.1465 6.3535C7.05273 6.44725 7.00003 6.5744 7 6.707V9.8595C7 9.9355 6.98267 10.0105 6.94933 10.0788C6.91599 10.1471 6.86752 10.2069 6.80761 10.2537C6.74769 10.3004 6.6779 10.3329 6.60355 10.3486C6.52919 10.3644 6.45222 10.363 6.3785 10.3445L5.3785 10.0945C5.27038 10.0674 5.1744 10.005 5.10583 9.9171C5.03725 9.82923 5 9.72096 5 9.6095V6.707C4.99997 6.5744 4.94727 6.44725 4.8535 6.3535L1.6465 3.1465C1.55273 3.05275 1.50003 2.9256 1.5 2.793V2C1.5 1.86739 1.55268 1.74021 1.64645 1.64645C1.74021 1.55268 1.86739 1.5 2 1.5Z"
-                          stroke="#666666"
-                          strokeWidth="1.5"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </g>
-                      <defs>
-                        <clipPath id="clip0_2622_213943">
-                          <rect width="12" height="12" fill="white" />
-                        </clipPath>
-                      </defs>
-                    </svg>
+                    {renderFilterIcon('type')}
                   </Box>
 
                   <Box
+                    onClick={(e) => handleFilterClick(e, 'stone_code')}
                     sx={{
-                      width: "185px",
+                      width: "230px",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "start",
                       padding: "12px 8px",
+                      cursor: "pointer",
+                      "&:hover": {
+                        bgcolor: "rgba(0, 0, 0, 0.04)"
+                      }
                     }}
                   >
                     <Typography
@@ -569,37 +594,21 @@ const QuotationModalFromStock = ({
                     >
                       Stone Code
                     </Typography>
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="12"
-                      height="12"
-                      viewBox="0 0 12 12"
-                      fill="none"
-                    >
-                      <g clipPath="url(#clip0_2622_213958)">
-                        <path
-                          d="M2 1.5H10C10.1326 1.5 10.2598 1.55268 10.3536 1.64645C10.4473 1.74021 10.5 1.86739 10.5 2V2.793C10.5 2.9256 10.4473 3.05275 10.3535 3.1465L7.1465 6.3535C7.05273 6.44725 7.00003 6.5744 7 6.707V9.8595C7 9.9355 6.98267 10.0105 6.94933 10.0788C6.91599 10.1471 6.86752 10.2069 6.80761 10.2537C6.74769 10.3004 6.6779 10.3329 6.60355 10.3486C6.52919 10.3644 6.45222 10.363 6.3785 10.3445L5.3785 10.0945C5.27038 10.0674 5.1744 10.005 5.10583 9.9171C5.03725 9.82923 5 9.72096 5 9.6095V6.707C4.99997 6.5744 4.94727 6.44725 4.8535 6.3535L1.6465 3.1465C1.55273 3.05275 1.50003 2.9256 1.5 2.793V2C1.5 1.86739 1.55268 1.74021 1.64645 1.64645C1.74021 1.55268 1.86739 1.5 2 1.5Z"
-                          stroke="#666666"
-                          strokeWidth="1.5"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </g>
-                      <defs>
-                        <clipPath id="clip0_2622_213958">
-                          <rect width="12" height="12" fill="white" />
-                        </clipPath>
-                      </defs>
-                    </svg>
+                    {renderFilterIcon('stone_code')}
                   </Box>
 
                   <Box
+                    onClick={(e) => handleFilterClick(e, 'stock_id')}
                     sx={{
                       width: "140px",
                       display: "flex",
                       alignItems: "center",
                       padding: "12px 8px",
-                      justifyContent: "start", // Centers both items horizontally
+                      justifyContent: "start",
+                      cursor: "pointer",
+                      "&:hover": {
+                        bgcolor: "rgba(0, 0, 0, 0.04)"
+                      }
                     }}
                   >
                     <Typography
@@ -613,28 +622,7 @@ const QuotationModalFromStock = ({
                     >
                       Stock ID
                     </Typography>
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="12"
-                      height="12"
-                      viewBox="0 0 12 12"
-                      fill="none"
-                    >
-                      <g clipPath="url(#clip0_2622_213958)">
-                        <path
-                          d="M2 1.5H10C10.1326 1.5 10.2598 1.55268 10.3536 1.64645C10.4473 1.74021 10.5 1.86739 10.5 2V2.793C10.5 2.9256 10.4473 3.05275 10.3535 3.1465L7.1465 6.3535C7.05273 6.44725 7.00003 6.5744 7 6.707V9.8595C7 9.9355 6.98267 10.0105 6.94933 10.0788C6.91599 10.1471 6.86752 10.2069 6.80761 10.2537C6.74769 10.3004 6.6779 10.3329 6.60355 10.3486C6.52919 10.3644 6.45222 10.363 6.3785 10.3445L5.3785 10.0945C5.27038 10.0674 5.1744 10.005 5.10583 9.9171C5.03725 9.82923 5 9.72096 5 9.6095V6.707C4.99997 6.5744 4.94727 6.44725 4.8535 6.3535L1.6465 3.1465C1.55273 3.05275 1.50003 2.9256 1.5 2.793V2C1.5 1.86739 1.55268 1.74021 1.64645 1.64645C1.74021 1.55268 1.86739 1.5 2 1.5Z"
-                          stroke="#666666"
-                          strokeWidth="1.5"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </g>
-                      <defs>
-                        <clipPath id="clip0_2622_213958">
-                          <rect width="12" height="12" fill="white" />
-                        </clipPath>
-                      </defs>
-                    </svg>
+                    {renderFilterIcon('stock_id')}
                   </Box>
 
                   <Box
@@ -660,11 +648,16 @@ const QuotationModalFromStock = ({
                   </Box>
 
                   <Box
+                    onClick={(e) => handleFilterClick(e, 'stone')}
                     sx={{
                       width: "120px",
                       display: "flex",
                       alignItems: "center",
                       padding: "12px 8px",
+                      cursor: "pointer",
+                      "&:hover": {
+                        bgcolor: "rgba(0, 0, 0, 0.04)"
+                      }
                     }}
                   >
                     <Typography
@@ -678,37 +671,21 @@ const QuotationModalFromStock = ({
                     >
                       Stone
                     </Typography>
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="12"
-                      height="12"
-                      viewBox="0 0 12 12"
-                      fill="none"
-                    >
-                      <g clipPath="url(#clip0_2622_213958)">
-                        <path
-                          d="M2 1.5H10C10.1326 1.5 10.2598 1.55268 10.3536 1.64645C10.4473 1.74021 10.5 1.86739 10.5 2V2.793C10.5 2.9256 10.4473 3.05275 10.3535 3.1465L7.1465 6.3535C7.05273 6.44725 7.00003 6.5744 7 6.707V9.8595C7 9.9355 6.98267 10.0105 6.94933 10.0788C6.91599 10.1471 6.86752 10.2069 6.80761 10.2537C6.74769 10.3004 6.6779 10.3329 6.60355 10.3486C6.52919 10.3644 6.45222 10.363 6.3785 10.3445L5.3785 10.0945C5.27038 10.0674 5.1744 10.005 5.10583 9.9171C5.03725 9.82923 5 9.72096 5 9.6095V6.707C4.99997 6.5744 4.94727 6.44725 4.8535 6.3535L1.6465 3.1465C1.55273 3.05275 1.50003 2.9256 1.5 2.793V2C1.5 1.86739 1.55268 1.74021 1.64645 1.64645C1.74021 1.55268 1.86739 1.5 2 1.5Z"
-                          stroke="#666666"
-                          strokeWidth="1.5"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </g>
-                      <defs>
-                        <clipPath id="clip0_2622_213958">
-                          <rect width="12" height="12" fill="white" />
-                        </clipPath>
-                      </defs>
-                    </svg>
+                    {renderFilterIcon('stone')}
                   </Box>
 
                   <Box
+                    onClick={(e) => handleFilterClick(e, 'shape')}
                     sx={{
                       width: "100px",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "start",
                       padding: "12px 8px",
+                      cursor: "pointer",
+                      "&:hover": {
+                        bgcolor: "rgba(0, 0, 0, 0.04)"
+                      }
                     }}
                   >
                     <Typography
@@ -722,37 +699,21 @@ const QuotationModalFromStock = ({
                     >
                       Shape
                     </Typography>
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="12"
-                      height="12"
-                      viewBox="0 0 12 12"
-                      fill="none"
-                    >
-                      <g clipPath="url(#clip0_2622_213958)">
-                        <path
-                          d="M2 1.5H10C10.1326 1.5 10.2598 1.55268 10.3536 1.64645C10.4473 1.74021 10.5 1.86739 10.5 2V2.793C10.5 2.9256 10.4473 3.05275 10.3535 3.1465L7.1465 6.3535C7.05273 6.44725 7.00003 6.5744 7 6.707V9.8595C7 9.9355 6.98267 10.0105 6.94933 10.0788C6.91599 10.1471 6.86752 10.2069 6.80761 10.2537C6.74769 10.3004 6.6779 10.3329 6.60355 10.3486C6.52919 10.3644 6.45222 10.363 6.3785 10.3445L5.3785 10.0945C5.27038 10.0674 5.1744 10.005 5.10583 9.9171C5.03725 9.82923 5 9.72096 5 9.6095V6.707C4.99997 6.5744 4.94727 6.44725 4.8535 6.3535L1.6465 3.1465C1.55273 3.05275 1.50003 2.9256 1.5 2.793V2C1.5 1.86739 1.55268 1.74021 1.64645 1.64645C1.74021 1.55268 1.86739 1.5 2 1.5Z"
-                          stroke="#666666"
-                          strokeWidth="1.5"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </g>
-                      <defs>
-                        <clipPath id="clip0_2622_213958">
-                          <rect width="12" height="12" fill="white" />
-                        </clipPath>
-                      </defs>
-                    </svg>
+                    {renderFilterIcon('shape')}
                   </Box>
 
                   <Box
+                    onClick={(e) => handleFilterClick(e, 'size')}
                     sx={{
                       width: "100px",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "start",
                       padding: "12px 8px",
+                      cursor: "pointer",
+                      "&:hover": {
+                        bgcolor: "rgba(0, 0, 0, 0.04)"
+                      }
                     }}
                   >
                     <Typography
@@ -766,37 +727,21 @@ const QuotationModalFromStock = ({
                     >
                       Size
                     </Typography>
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="12"
-                      height="12"
-                      viewBox="0 0 12 12"
-                      fill="none"
-                    >
-                      <g clipPath="url(#clip0_2622_213958)">
-                        <path
-                          d="M2 1.5H10C10.1326 1.5 10.2598 1.55268 10.3536 1.64645C10.4473 1.74021 10.5 1.86739 10.5 2V2.793C10.5 2.9256 10.4473 3.05275 10.3535 3.1465L7.1465 6.3535C7.05273 6.44725 7.00003 6.5744 7 6.707V9.8595C7 9.9355 6.98267 10.0105 6.94933 10.0788C6.91599 10.1471 6.86752 10.2069 6.80761 10.2537C6.74769 10.3004 6.6779 10.3329 6.60355 10.3486C6.52919 10.3644 6.45222 10.363 6.3785 10.3445L5.3785 10.0945C5.27038 10.0674 5.1744 10.005 5.10583 9.9171C5.03725 9.82923 5 9.72096 5 9.6095V6.707C4.99997 6.5744 4.94727 6.44725 4.8535 6.3535L1.6465 3.1465C1.55273 3.05275 1.50003 2.9256 1.5 2.793V2C1.5 1.86739 1.55268 1.74021 1.64645 1.64645C1.74021 1.55268 1.86739 1.5 2 1.5Z"
-                          stroke="#666666"
-                          strokeWidth="1.5"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </g>
-                      <defs>
-                        <clipPath id="clip0_2622_213958">
-                          <rect width="12" height="12" fill="white" />
-                        </clipPath>
-                      </defs>
-                    </svg>
+                    {renderFilterIcon('size')}
                   </Box>
 
                   <Box
+                    onClick={(e) => handleFilterClick(e, 'color')}
                     sx={{
                       width: "120px",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "start",
                       padding: "12px 8px",
+                      cursor: "pointer",
+                      "&:hover": {
+                        bgcolor: "rgba(0, 0, 0, 0.04)"
+                      }
                     }}
                   >
                     <Typography
@@ -810,37 +755,21 @@ const QuotationModalFromStock = ({
                     >
                       Color
                     </Typography>
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="12"
-                      height="12"
-                      viewBox="0 0 12 12"
-                      fill="none"
-                    >
-                      <g clipPath="url(#clip0_2622_213958)">
-                        <path
-                          d="M2 1.5H10C10.1326 1.5 10.2598 1.55268 10.3536 1.64645C10.4473 1.74021 10.5 1.86739 10.5 2V2.793C10.5 2.9256 10.4473 3.05275 10.3535 3.1465L7.1465 6.3535C7.05273 6.44725 7.00003 6.5744 7 6.707V9.8595C7 9.9355 6.98267 10.0105 6.94933 10.0788C6.91599 10.1471 6.86752 10.2069 6.80761 10.2537C6.74769 10.3004 6.6779 10.3329 6.60355 10.3486C6.52919 10.3644 6.45222 10.363 6.3785 10.3445L5.3785 10.0945C5.27038 10.0674 5.1744 10.005 5.10583 9.9171C5.03725 9.82923 5 9.72096 5 9.6095V6.707C4.99997 6.5744 4.94727 6.44725 4.8535 6.3535L1.6465 3.1465C1.55273 3.05275 1.50003 2.9256 1.5 2.793V2C1.5 1.86739 1.55268 1.74021 1.64645 1.64645C1.74021 1.55268 1.86739 1.5 2 1.5Z"
-                          stroke="#666666"
-                          strokeWidth="1.5"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </g>
-                      <defs>
-                        <clipPath id="clip0_2622_213958">
-                          <rect width="12" height="12" fill="white" />
-                        </clipPath>
-                      </defs>
-                    </svg>
+                    {renderFilterIcon('color')}
                   </Box>
 
                   <Box
+                    onClick={(e) => handleFilterClick(e, 'cutting')}
                     sx={{
                       width: "100px",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "start",
                       padding: "12px 8px",
+                      cursor: "pointer",
+                      "&:hover": {
+                        bgcolor: "rgba(0, 0, 0, 0.04)"
+                      }
                     }}
                   >
                     <Typography
@@ -854,37 +783,21 @@ const QuotationModalFromStock = ({
                     >
                       Cutting
                     </Typography>
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="12"
-                      height="12"
-                      viewBox="0 0 12 12"
-                      fill="none"
-                    >
-                      <g clipPath="url(#clip0_2622_213958)">
-                        <path
-                          d="M2 1.5H10C10.1326 1.5 10.2598 1.55268 10.3536 1.64645C10.4473 1.74021 10.5 1.86739 10.5 2V2.793C10.5 2.9256 10.4473 3.05275 10.3535 3.1465L7.1465 6.3535C7.05273 6.44725 7.00003 6.5744 7 6.707V9.8595C7 9.9355 6.98267 10.0105 6.94933 10.0788C6.91599 10.1471 6.86752 10.2069 6.80761 10.2537C6.74769 10.3004 6.6779 10.3329 6.60355 10.3486C6.52919 10.3644 6.45222 10.363 6.3785 10.3445L5.3785 10.0945C5.27038 10.0674 5.1744 10.005 5.10583 9.9171C5.03725 9.82923 5 9.72096 5 9.6095V6.707C4.99997 6.5744 4.94727 6.44725 4.8535 6.3535L1.6465 3.1465C1.55273 3.05275 1.50003 2.9256 1.5 2.793V2C1.5 1.86739 1.55268 1.74021 1.64645 1.64645C1.74021 1.55268 1.86739 1.5 2 1.5Z"
-                          stroke="#666666"
-                          strokeWidth="1.5"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </g>
-                      <defs>
-                        <clipPath id="clip0_2622_213958">
-                          <rect width="12" height="12" fill="white" />
-                        </clipPath>
-                      </defs>
-                    </svg>
+                    {renderFilterIcon('cutting')}
                   </Box>
 
                   <Box
+                    onClick={(e) => handleFilterClick(e, 'quality')}
                     sx={{
                       width: "100px",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "start",
                       padding: "12px 8px",
+                      cursor: "pointer",
+                      "&:hover": {
+                        bgcolor: "rgba(0, 0, 0, 0.04)"
+                      }
                     }}
                   >
                     <Typography
@@ -898,37 +811,21 @@ const QuotationModalFromStock = ({
                     >
                       Quality
                     </Typography>
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="12"
-                      height="12"
-                      viewBox="0 0 12 12"
-                      fill="none"
-                    >
-                      <g clipPath="url(#clip0_2622_213958)">
-                        <path
-                          d="M2 1.5H10C10.1326 1.5 10.2598 1.55268 10.3536 1.64645C10.4473 1.74021 10.5 1.86739 10.5 2V2.793C10.5 2.9256 10.4473 3.05275 10.3535 3.1465L7.1465 6.3535C7.05273 6.44725 7.00003 6.5744 7 6.707V9.8595C7 9.9355 6.98267 10.0105 6.94933 10.0788C6.91599 10.1471 6.86752 10.2069 6.80761 10.2537C6.74769 10.3004 6.6779 10.3329 6.60355 10.3486C6.52919 10.3644 6.45222 10.363 6.3785 10.3445L5.3785 10.0945C5.27038 10.0674 5.1744 10.005 5.10583 9.9171C5.03725 9.82923 5 9.72096 5 9.6095V6.707C4.99997 6.5744 4.94727 6.44725 4.8535 6.3535L1.6465 3.1465C1.55273 3.05275 1.50003 2.9256 1.5 2.793V2C1.5 1.86739 1.55268 1.74021 1.64645 1.64645C1.74021 1.55268 1.86739 1.5 2 1.5Z"
-                          stroke="#666666"
-                          strokeWidth="1.5"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </g>
-                      <defs>
-                        <clipPath id="clip0_2622_213958">
-                          <rect width="12" height="12" fill="white" />
-                        </clipPath>
-                      </defs>
-                    </svg>
+                    {renderFilterIcon('quality')}
                   </Box>
 
                   <Box
+                    onClick={(e) => handleFilterClick(e, 'clarity')}
                     sx={{
                       width: "100px",
                       display: "flex",
                       alignItems: "center",
                       padding: "12px 8px",
                       justifyContent: "start",
+                      cursor: "pointer",
+                      "&:hover": {
+                        bgcolor: "rgba(0, 0, 0, 0.04)"
+                      }
                     }}
                   >
                     <Typography
@@ -942,36 +839,20 @@ const QuotationModalFromStock = ({
                     >
                       Clarity
                     </Typography>
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="12"
-                      height="12"
-                      viewBox="0 0 12 12"
-                      fill="none"
-                    >
-                      <g clipPath="url(#clip0_2622_213958)">
-                        <path
-                          d="M2 1.5H10C10.1326 1.5 10.2598 1.55268 10.3536 1.64645C10.4473 1.74021 10.5 1.86739 10.5 2V2.793C10.5 2.9256 10.4473 3.05275 10.3535 3.1465L7.1465 6.3535C7.05273 6.44725 7.00003 6.5744 7 6.707V9.8595C7 9.9355 6.98267 10.0105 6.94933 10.0788C6.91599 10.1471 6.86752 10.2069 6.80761 10.2537C6.74769 10.3004 6.6779 10.3329 6.60355 10.3486C6.52919 10.3644 6.45222 10.363 6.3785 10.3445L5.3785 10.0945C5.27038 10.0674 5.1744 10.005 5.10583 9.9171C5.03725 9.82923 5 9.72096 5 9.6095V6.707C4.99997 6.5744 4.94727 6.44725 4.8535 6.3535L1.6465 3.1465C1.55273 3.05275 1.50003 2.9256 1.5 2.793V2C1.5 1.86739 1.55268 1.74021 1.64645 1.64645C1.74021 1.55268 1.86739 1.5 2 1.5Z"
-                          stroke="#666666"
-                          strokeWidth="1.5"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </g>
-                      <defs>
-                        <clipPath id="clip0_2622_213958">
-                          <rect width="12" height="12" fill="white" />
-                        </clipPath>
-                      </defs>
-                    </svg>
+                    {renderFilterIcon('clarity')}
                   </Box>
 
                   <Box
+                    onClick={(e) => handleFilterClick(e, 'cer_type')}
                     sx={{
                       width: "140px",
                       display: "flex",
                       alignItems: "center",
                       padding: "12px 8px",
+                      cursor: "pointer",
+                      "&:hover": {
+                        bgcolor: "rgba(0, 0, 0, 0.04)"
+                      }
                     }}
                   >
                     <Typography
@@ -985,28 +866,7 @@ const QuotationModalFromStock = ({
                     >
                       Cer Type
                     </Typography>
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="12"
-                      height="12"
-                      viewBox="0 0 12 12"
-                      fill="none"
-                    >
-                      <g clipPath="url(#clip0_2622_213958)">
-                        <path
-                          d="M2 1.5H10C10.1326 1.5 10.2598 1.55268 10.3536 1.64645C10.4473 1.74021 10.5 1.86739 10.5 2V2.793C10.5 2.9256 10.4473 3.05275 10.3535 3.1465L7.1465 6.3535C7.05273 6.44725 7.00003 6.5744 7 6.707V9.8595C7 9.9355 6.98267 10.0105 6.94933 10.0788C6.91599 10.1471 6.86752 10.2069 6.80761 10.2537C6.74769 10.3004 6.6779 10.3329 6.60355 10.3486C6.52919 10.3644 6.45222 10.363 6.3785 10.3445L5.3785 10.0945C5.27038 10.0674 5.1744 10.005 5.10583 9.9171C5.03725 9.82923 5 9.72096 5 9.6095V6.707C4.99997 6.5744 4.94727 6.44725 4.8535 6.3535L1.6465 3.1465C1.55273 3.05275 1.50003 2.9256 1.5 2.793V2C1.5 1.86739 1.55268 1.74021 1.64645 1.64645C1.74021 1.55268 1.86739 1.5 2 1.5Z"
-                          stroke="#666666"
-                          strokeWidth="1.5"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </g>
-                      <defs>
-                        <clipPath id="clip0_2622_213958">
-                          <rect width="12" height="12" fill="white" />
-                        </clipPath>
-                      </defs>
-                    </svg>
+                    {renderFilterIcon('cer_type')}
                   </Box>
 
                   <Box
@@ -1104,6 +964,7 @@ const QuotationModalFromStock = ({
                       display: "flex",
                       alignItems: "center",
                       padding: "12px 8px",
+                      justifyContent : "center"
                     }}
                   >
                     <Typography
@@ -1184,7 +1045,7 @@ const QuotationModalFromStock = ({
                       Loading...
                     </Typography>
                   </Box>
-                ) : rowData.length === 0 ? (
+                ) : sortedData.length === 0 ? (
                   <Box
                     sx={{
                       display: "flex",
@@ -1205,7 +1066,7 @@ const QuotationModalFromStock = ({
                     </Typography>
                   </Box>
                 ) : (
-                  rowData.map((row, rowIndex) => (
+                  sortedData.map((row, rowIndex) => (
                     <Box
                       key={rowIndex} // Use _id instead of index for key
                       sx={{
@@ -1259,7 +1120,7 @@ const QuotationModalFromStock = ({
                       </Box>
                       <Box
                         sx={{
-                          width: "185px",
+                          width: "230px",
                           display: "flex",
                           alignItems: "center",
                           padding: "12px 8px",
@@ -1402,7 +1263,7 @@ const QuotationModalFromStock = ({
                           padding: "12px 8px",
                         }}
                       >
-                        <Typography sx={textStyle}>{row.weight}</Typography>
+                          <Typography sx={textStyle}>{formatWeight(row.weight)}</Typography>
                       </Box>
                       <Box
                         sx={{
@@ -1414,7 +1275,7 @@ const QuotationModalFromStock = ({
                         }}
                       >
                         <Typography sx={textStyle}>
-                          {row.type === "Pmr." ? row.sale_price : row.price}
+                         <Typography sx={textStyle}>{formatCurrency(row.price)}</Typography>
                         </Typography>
                       </Box>
                       <Box
@@ -1423,9 +1284,10 @@ const QuotationModalFromStock = ({
                           display: "flex",
                           alignItems: "center",
                           padding: "12px 8px",
+                          justifyContent : "center"
                         }}
                       >
-                        <Typography sx={textStyle}>{row.unit_price}</Typography>
+                        <Typography sx={textStyle}>{row.unit}</Typography>
                       </Box>
                       <Box
                         sx={{
@@ -1436,7 +1298,7 @@ const QuotationModalFromStock = ({
                           padding: "12px 8px",
                         }}
                       >
-                        <Typography sx={textStyle}>{row.amount}</Typography>
+                         <Typography sx={textStyle}>{formatCurrency(row.amount)}</Typography>
                       </Box>
                       <Box
                         sx={{
@@ -1529,6 +1391,13 @@ const QuotationModalFromStock = ({
                 </Typography>
               </Button>
             </Box>
+
+            {/* Column Filter Popover */}
+            <ColumnFilterPopover
+              {...popoverProps}
+              sortConfig={sortConfig}
+              setSortConfig={setSortConfig}
+            />
           </Box>
         </Modal>
       </Box>

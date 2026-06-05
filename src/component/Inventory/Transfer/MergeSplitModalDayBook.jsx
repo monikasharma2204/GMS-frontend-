@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import apiRequest from "../../../helpers/apiHelper";
 import {
   Box,
   Typography,
@@ -20,8 +21,12 @@ import {
   MenuItem,
 } from "@mui/material";
 import moment from "moment";
-import apiRequest from "../../../helpers/apiHelper";
+import { API_URL } from "../../../config/config";
+import useTableSort from "../../../hooks/useTableSort";
 import { formatNumberWithCommas } from "../../../helpers/numberHelper";
+import AccountFilterPopover from "../../Commons/AccountFilterPopover/AccountFilterPopover";
+import { useColumnFilter } from "../../Commons/AccountFilterPopover/useColumnFilter";
+import FilterIcon from "../../Commons/FilterIcon/FilterIcon";
 
 const style = {
   position: "absolute",
@@ -34,12 +39,27 @@ const style = {
   borderRadius: "8px",
 };
 
+const getStatusFilterLabel = (item) => (item?.status?.toLowerCase() === "approved" ? "Approved" : "Unapproved");
+
 const MergeSplitModalDayBook = ({ open, onClose, onSelect }) => {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
   const [selectedIds, setSelectedIds] = useState([]);
   const [rowsPerPage, setRowsPerPage] = useState(10);
+
+  const searchedData = data.filter(item =>
+    item.invoice_no?.toLowerCase().includes(search.toLowerCase()) ||
+    item.ref_1?.toLowerCase().includes(search.toLowerCase())
+  );
+  const {
+    filteredData,
+    handleFilterClick: handleStatusClick,
+    popoverProps: statusPopoverProps,
+    isFilterActive: isStatusFilterActive,
+  } = useColumnFilter(searchedData, open, getStatusFilterLabel);
+
+  const { sortedData, requestSort, sortConfig } = useTableSort(filteredData, { key: 'createdAt', direction: 'desc' });
 
   const fetchData = async () => {
     setLoading(true);
@@ -60,10 +80,7 @@ const MergeSplitModalDayBook = ({ open, onClose, onSelect }) => {
     }
   }, [open]);
 
-  const filteredData = data.filter(item =>
-    item.invoice_no?.toLowerCase().includes(search.toLowerCase()) ||
-    item.ref_1?.toLowerCase().includes(search.toLowerCase())
-  );
+
 
   const handleSelect = (id) => {
     setSelectedIds(prev =>
@@ -81,17 +98,18 @@ const MergeSplitModalDayBook = ({ open, onClose, onSelect }) => {
   };
 
   const handleSelectAll = () => {
-    if (filteredData.length === 0) return;
-    const allSelected = filteredData.every(item => selectedIds.includes(item._id));
+    if (sortedData.length === 0) return;
+    const allSelected = sortedData.every(item => selectedIds.includes(item._id));
     if (allSelected) {
-      setSelectedIds(prev => prev.filter(id => !filteredData.find(f => f._id === id)));
+      setSelectedIds(prev => prev.filter(id => !sortedData.find(f => f._id === id)));
     } else {
-      const newIds = filteredData.map(f => f._id);
+      const newIds = sortedData.map(f => f._id);
       setSelectedIds(prev => [...new Set([...prev, ...newIds])]);
     }
   };
 
   return (
+    <>
     <Modal open={open} onClose={onClose}>
       <Box sx={style}>
         {/* Header */}
@@ -287,7 +305,7 @@ const MergeSplitModalDayBook = ({ open, onClose, onSelect }) => {
                 }}
               >
                 <Checkbox
-                  checked={filteredData.length > 0 && filteredData.every(item => selectedIds.includes(item._id))}
+                  checked={sortedData.length > 0 && sortedData.every(item => selectedIds.includes(item._id))}
                   onChange={handleSelectAll}
                 />
                 <Typography
@@ -303,26 +321,79 @@ const MergeSplitModalDayBook = ({ open, onClose, onSelect }) => {
                 </Typography>
               </Box>
 
-              <Box sx={{ width: "120px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <Box onClick={handleStatusClick} sx={{ width: "120px", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
                 <Typography sx={{ color: "var(--Main-Text, #343434)", fontFamily: "Calibri", fontSize: "16px", fontWeight: 700 }}>
                   Status
                 </Typography>
+                <FilterIcon active={statusPopoverProps.open || isStatusFilterActive} />
               </Box>
 
-              <Box sx={{ width: "140px", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <Typography sx={{ color: "var(--Main-Text, #343434)", fontFamily: "Calibri", fontSize: "16px", fontWeight: 700 }}>
+              <Box
+                onClick={() => requestSort('createdAt')}
+                sx={{
+                  width: "140px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  cursor: "pointer",
+                }}
+              >
+                <Typography
+                  sx={{
+                    color: "var(--Main-Text, #343434)",
+                    fontFamily: "Calibri",
+                    fontSize: "16px",
+                    fontWeight: 700,
+                  }}
+                >
                   TranDate
                 </Typography>
-                <svg xmlns="http://www.w3.org/2000/svg" width="19" height="18" viewBox="0 0 19 18" fill="none">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="19"
+                  height="18"
+                  viewBox="0 0 19 18"
+                  fill="none"
+                  style={{
+                    transform: sortConfig.key === 'createdAt' && sortConfig.direction === 'asc' ? 'rotate(180deg)' : 'none',
+                    transition: 'transform 0.2s'
+                  }}
+                >
                   <path d="M6.5 12H3.5L8 16.5V1.5H6.5V12ZM11 3.75V16.5H12.5V6H15.5L11 1.5V3.75Z" fill="#343434" />
                 </svg>
               </Box>
 
-              <Box sx={{ width: "140px", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <Typography sx={{ color: "var(--Main-Text, #343434)", fontFamily: "Calibri", fontSize: "16px", fontWeight: 700 }}>
+              <Box
+                onClick={() => requestSort('doc_date')}
+                sx={{
+                  width: "140px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  cursor: "pointer",
+                }}
+              >
+                <Typography
+                  sx={{
+                    color: "var(--Main-Text, #343434)",
+                    fontFamily: "Calibri",
+                    fontSize: "16px",
+                    fontWeight: 700,
+                  }}
+                >
                   Doc Date
                 </Typography>
-                <svg xmlns="http://www.w3.org/2000/svg" width="19" height="18" viewBox="0 0 19 18" fill="none">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="19"
+                  height="18"
+                  viewBox="0 0 19 18"
+                  fill="none"
+                  style={{
+                    transform: sortConfig.key === 'doc_date' && sortConfig.direction === 'asc' ? 'rotate(180deg)' : 'none',
+                    transition: 'transform 0.2s'
+                  }}
+                >
                   <path d="M6.5 12H3.5L8 16.5V1.5H6.5V12ZM11 3.75V16.5H12.5V6H15.5L11 1.5V3.75Z" fill="#343434" />
                 </svg>
               </Box>
@@ -339,7 +410,7 @@ const MergeSplitModalDayBook = ({ open, onClose, onSelect }) => {
                 </Typography>
               </Box>
 
-              <Box sx={{ width: "80px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <Box sx={{ width: "106px", display: "flex", alignItems: "center", justifyContent: "center" }}>
                 <Typography sx={{ color: "var(--Main-Text, #343434)", fontFamily: "Calibri", fontSize: "16px", fontWeight: 700 }}>
                   Pcs
                 </Typography>
@@ -368,12 +439,12 @@ const MergeSplitModalDayBook = ({ open, onClose, onSelect }) => {
               <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100px" }}>
                 <CircularProgress size={32} />
               </Box>
-            ) : filteredData.length === 0 ? (
+            ) : sortedData.length === 0 ? (
               <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100px", color: "#999", fontFamily: "Calibri" }}>
                 No records found
               </Box>
             ) : (
-              filteredData.map((item, idx) => (
+              sortedData.map((item, idx) => (
                 <Box
                   key={item._id}
                   onClick={() => handleSelect(item._id)}
@@ -453,7 +524,7 @@ const MergeSplitModalDayBook = ({ open, onClose, onSelect }) => {
                     </Typography>
                   </Box>
 
-                  <Box sx={{ width: "80px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <Box sx={{ width: "106px", display: "flex", alignItems: "center", justifyContent: "center" }}>
                     <Typography sx={{ color: "var(--Main-Text, #343434)", fontFamily: "Calibri", fontSize: "16px", fontWeight: 400 }}>
                       {(item.merge_and_split_items || []).reduce((sum, s) => sum + (Number(s.pcs) || 0), 0)}
                     </Typography>
@@ -538,6 +609,8 @@ const MergeSplitModalDayBook = ({ open, onClose, onSelect }) => {
         </Box>
       </Box>
     </Modal>
+    <AccountFilterPopover {...statusPopoverProps} showSort={false} />
+    </>
   );
 };
 

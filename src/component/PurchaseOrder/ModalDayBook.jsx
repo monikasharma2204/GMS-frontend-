@@ -3,10 +3,16 @@ import { Box, Button, Typography, Modal, Checkbox } from "@mui/material";
 import MenuItem from "@mui/material/MenuItem";
 import FormControl from "@mui/material/FormControl";
 import Select from "@mui/material/Select";
+import useTableSort from "../../hooks/useTableSort";
 import moment from "moment";
 import { formatNumberWithCommas } from "../../helpers/numberHelper.js";
 import * as XLSX from "xlsx";
 import ConfirmCancelDialog from "../Commons/ConfirmCancelDialog";
+import SortIcon from "../Commons/SortIcon/SortIcon";
+import AccountFilterPopover from "../Commons/AccountFilterPopover/AccountFilterPopover";
+import { useAccountFilter } from "../Commons/AccountFilterPopover/useAccountFilter";
+import { useColumnFilter } from "../Commons/AccountFilterPopover/useColumnFilter";
+import FilterIcon from "../Commons/FilterIcon/FilterIcon";
 
 const style = {
   position: "absolute",
@@ -18,6 +24,8 @@ const style = {
   bgcolor: "background.paper",
   borderRadius: "8px",
 };
+
+const getStatusFilterLabel = (item) => (item?.status === "approved" ? "Approved" : "Unapproved");
 
 const ModalDayBook = ({
   data,
@@ -43,9 +51,19 @@ const ModalDayBook = ({
   };
 
   const [age, setAge] = React.useState("");
-  const [selectedItemsCount, setSelectedItemsCount] = React.useState(0);
+  const [selectedItemIds, setSelectedItemIds] = useState([]);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [pendingEditData, setPendingEditData] = useState(null);
+
+  const { filteredData: accountFilteredData, handleAccountClick, popoverProps, isFilterActive } = useAccountFilter(data, selectedItemIds, open);
+  const {
+    filteredData,
+    handleFilterClick: handleStatusClick,
+    popoverProps: statusPopoverProps,
+    isFilterActive: isStatusFilterActive,
+  } = useColumnFilter(accountFilteredData, open, getStatusFilterLabel);
+
+  const { sortedData, requestSort, sortConfig, setSortConfig } = useTableSort(filteredData);
   const hasData = Array.isArray(data) && data.length > 0;
 
   const handleChange = (event) => {
@@ -53,17 +71,17 @@ const ModalDayBook = ({
   };
 
   React.useEffect(() => {
-    const count = data.filter(item => item.checked).length;
-    setSelectedItemsCount(count);
+    const selectedIds = data.filter(item => item.checked).map(item => item._id);
+    setSelectedItemIds(selectedIds);
   }, [data]);
 
   const handleSelectAll = () => {
-    if (!Array.isArray(data) || data.length === 0) return;
+    if (!Array.isArray(sortedData) || sortedData.length === 0) return;
 
-    const allSelected = data.every((item) => item.checked);
+    const allSelected = sortedData.every((item) => item.checked);
     const newCheckedState = !allSelected;
 
-    data.forEach((item) => {
+    sortedData.forEach((item) => {
       if (item.checked !== newCheckedState) {
         handleCheckboxChange(item);
       }
@@ -74,7 +92,17 @@ const ModalDayBook = ({
     handleCheckboxChange(item);
   };
 
-  const isOkButtonEnabled = selectedItemsCount === 1;
+  const isOkButtonEnabled = selectedItemIds.length === 1;
+
+
+    const toFixedDecimal = (value, decimals) => {
+      const number = Number(String(value ?? 0).replace(/,/g, ""));
+      return (Number.isFinite(number) ? number : 0).toFixed(decimals);
+    };
+  
+    const formatDecimalWithCommas = (value, decimals) =>
+      formatNumberWithCommas(toFixedDecimal(value, decimals));
+    
 
   const getSummary = (items = []) => {
     if (typeof calculateSums === "function") {
@@ -92,22 +120,18 @@ const ModalDayBook = ({
 
   const buildExportRows = () => {
     const rowsToExport =
-      (Array.isArray(data) && data.filter((item) => item.checked)) || [];
+      selectedItemIds.length > 0
+        ? sortedData.filter((item) => selectedItemIds.includes(item._id))
+        : sortedData;
 
-    const effectiveRows =
-      rowsToExport.length > 0 ? rowsToExport : Array.isArray(data) ? data : [];
-
-    return effectiveRows.map((item, exportIndex) => {
-      const summary = getSummary(item?.items);
-      const position = Array.isArray(data)
-        ? data.findIndex((poItem) => poItem._id === item._id)
-        : -1;
-      const rowIndex = position >= 0 ? position + 1 : exportIndex + 1;
+    return rowsToExport.map((item, exportIndex) => {
+      const summary = getSummary(item?.items || []);
+      const rowIndex = exportIndex + 1;
 
       return {
         "#": rowIndex,
         Status: item?.status || "",
-        TranDate: moment(item?.transaction_date).format("DD/MM/YYYY"),
+        TranDate: moment(item?.createdAt).format("DD/MM/YYYY"),
         DocDate: moment(item?.doc_date).format("DD/MM/YYYY"),
         DueDate: moment(item?.due_date).format("DD/MM/YYYY"),
         "PO No.": item?.invoice_no || "",
@@ -115,8 +139,8 @@ const ModalDayBook = ({
         "Ref 1": item?.ref_1 || "",
         "Ref 2": item?.ref_2 || "",
         Pcs: summary?.pcs ?? 0,
-        Weight: summary?.weight ?? 0,
-        Amount: summary?.amount ?? 0,
+             Weight: toFixedDecimal(summary?.weight, 3),
+    Amount: toFixedDecimal(item?.summary?.grand_total, 2),
         Currency: item?.currency?.code || "",
         Remark: item?.remark || "",
       };
@@ -124,7 +148,7 @@ const ModalDayBook = ({
   };
 
   const handleDownloadExcel = () => {
-    if (!hasData) return;
+    if (!sortedData || sortedData.length === 0) return;
     const exportRows = buildExportRows();
     if (!exportRows.length) return;
 
@@ -449,9 +473,9 @@ const ModalDayBook = ({
                   >
                     <Checkbox
                       checked={
-                        Array.isArray(data) &&
-                        data.length > 0 &&
-                        data.every((item) => item.checked)
+                        Array.isArray(sortedData) &&
+                        sortedData.length > 0 &&
+                        sortedData.every((item) => item.checked)
                       }
                       onChange={handleSelectAll}
                     />
@@ -469,11 +493,13 @@ const ModalDayBook = ({
                   </Box>
 
                   <Box
+                    onClick={handleStatusClick}
                     sx={{
                       width: "120px",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
+                      cursor: "pointer",
                     }}
                   >
                     <Typography
@@ -487,14 +513,17 @@ const ModalDayBook = ({
                     >
                       Status
                     </Typography>
+                    <FilterIcon active={statusPopoverProps.open || isStatusFilterActive} />
                   </Box>
 
                   <Box
+                    onClick={() => requestSort('createdAt')}
                     sx={{
                       width: "140px",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
+                      cursor: "pointer",
                     }}
                   >
                     <Typography
@@ -508,26 +537,17 @@ const ModalDayBook = ({
                     >
                       TranDate
                     </Typography>
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="19"
-                      height="18"
-                      viewBox="0 0 19 18"
-                      fill="none"
-                    >
-                      <path
-                        d="M6.5 12H3.5L8 16.5V1.5H6.5V12ZM11 3.75V16.5H12.5V6H15.5L11 1.5V3.75Z"
-                        fill="#343434"
-                      />
-                    </svg>
+                    <SortIcon sortConfig={sortConfig} columnKey="createdAt" />
                   </Box>
 
                   <Box
+                    onClick={() => requestSort('doc_date')}
                     sx={{
                       width: "140px",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
+                      cursor: "pointer",
                     }}
                   >
                     <Typography
@@ -541,26 +561,17 @@ const ModalDayBook = ({
                     >
                       Doc Date
                     </Typography>
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="19"
-                      height="18"
-                      viewBox="0 0 19 18"
-                      fill="none"
-                    >
-                      <path
-                        d="M6.5 12H3.5L8 16.5V1.5H6.5V12ZM11 3.75V16.5H12.5V6H15.5L11 1.5V3.75Z"
-                        fill="#343434"
-                      />
-                    </svg>
+                    <SortIcon sortConfig={sortConfig} columnKey="doc_date" />
                   </Box>
 
                   <Box
+                    onClick={() => requestSort('due_date')}
                     sx={{
                       width: "140px",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
+                      cursor: "pointer",
                     }}
                   >
                     <Typography
@@ -574,18 +585,7 @@ const ModalDayBook = ({
                     >
                       Due Date
                     </Typography>
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="19"
-                      height="18"
-                      viewBox="0 0 19 18"
-                      fill="none"
-                    >
-                      <path
-                        d="M6.5 12H3.5L8 16.5V1.5H6.5V12ZM11 3.75V16.5H12.5V6H15.5L11 1.5V3.75Z"
-                        fill="#343434"
-                      />
-                    </svg>
+                    <SortIcon sortConfig={sortConfig} columnKey="due_date" />
                   </Box>
 
                   <Box
@@ -610,11 +610,13 @@ const ModalDayBook = ({
                   </Box>
 
                   <Box
+                    onClick={handleAccountClick}
                     sx={{
                       width: "140px",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
+                      cursor: "pointer",
                     }}
                   >
                     <Typography
@@ -637,7 +639,7 @@ const ModalDayBook = ({
                     >
                       <path
                         d="M2.83333 1.75H12.1667C12.3214 1.75 12.4697 1.81146 12.5791 1.92085C12.6885 2.03025 12.75 2.17862 12.75 2.33333V3.2585C12.75 3.4132 12.6885 3.56155 12.5791 3.67092L8.83758 7.41242C8.72818 7.52179 8.6667 7.67014 8.66667 7.82483V11.5028C8.66666 11.5914 8.64645 11.6789 8.60755 11.7586C8.56866 11.8383 8.51211 11.9081 8.44221 11.9626C8.3723 12.0172 8.29088 12.0551 8.20414 12.0734C8.11739 12.0918 8.0276 12.0901 7.94158 12.0686L6.77492 11.7769C6.64877 11.7453 6.53681 11.6725 6.4568 11.57C6.37679 11.4674 6.33334 11.3411 6.33333 11.2111V7.82483C6.3333 7.67014 6.27182 7.52179 6.16242 7.41242L2.42092 3.67092C2.31151 3.56155 2.25003 3.4132 2.25 3.2585V2.33333C2.25 2.17862 2.31146 2.03025 2.42085 1.92085C2.53025 1.81146 2.67862 1.75 2.83333 1.75Z"
-                        stroke="#666666"
+                        stroke={(popoverProps.open || isFilterActive) ? "#17C653" : "#343434"}
                         strokeWidth="1.5"
                         strokeLinecap="round"
                         strokeLinejoin="round"
@@ -792,8 +794,8 @@ const ModalDayBook = ({
                     </Typography>
                   </Box>
                 </Box>
-                {data.length > 0 ? (
-                  data.map((item, index) => (
+                {sortedData.length > 0 ? (
+                  sortedData.map((item, index) => (
                     // item.inventory_item.map((inventory, inventory_index) => {
                     // return (
                     <Box
@@ -873,7 +875,7 @@ const ModalDayBook = ({
                           }}
                         >
                           {/* TranDate */}
-                          {moment(item.transaction_date).format("DD/MM/YYYY")}
+                          {moment(item.createdAt).format("DD/MM/YYYY")}
                         </Typography>
                       </Box>
 
@@ -1047,7 +1049,10 @@ const ModalDayBook = ({
                           }}
                         >
                           {/* Weight */}
-                          {item?.items ? calculateSums(item.items).weight : (item.weight || 0)}
+                           {formatDecimalWithCommas(
+                                                    calculateSums(item.items).weight,
+                                                    3
+                                                  )}
                         </Typography>
                       </Box>
 
@@ -1069,9 +1074,9 @@ const ModalDayBook = ({
                           }}
                         >
                           {/* Amount */}
-                          {formatNumberWithCommas(
-                            item?.items ? calculateSums(item.items).amount : (item.amount || 0)
-                          )}
+                       {formatNumberWithCommas(
+                         toFixedDecimal(item?.summary?.grand_total, 2)
+                       )}
                         </Typography>
                       </Box>
 
@@ -1172,7 +1177,7 @@ const ModalDayBook = ({
                 onClick={() => {
                   if (isOkButtonEnabled) {
                     // Find the selected item and trigger edit
-                    const selectedItem = data.find(item => item.checked);
+                    const selectedItem = sortedData.find(item => item.checked);
                     if (selectedItem) {
 
                       const selectedInvoiceId = String(selectedItem._id || selectedItem.id || "");
@@ -1239,7 +1244,8 @@ const ModalDayBook = ({
           </Box>
         </Modal>
       </Box>
-
+      <AccountFilterPopover {...popoverProps} sortConfig={sortConfig} setSortConfig={setSortConfig} />
+      <AccountFilterPopover {...statusPopoverProps} showSort={false} />
       <ConfirmCancelDialog
         open={showConfirmDialog}
         onClose={(confirmed) => {

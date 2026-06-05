@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Box, FormControlLabel, Typography, Checkbox } from "@mui/material";
 import axios from "axios";
-import {API_URL} from "config/config.js";
+import { API_URL } from "config/config.js";
 
 const Shapes = ({ selectedData, isEditing, onShapeChange }) => {
   const [items, setItems] = useState([]);
@@ -9,52 +9,77 @@ const Shapes = ({ selectedData, isEditing, onShapeChange }) => {
   const [selectAll, setSelectAll] = useState(false);
 
   useEffect(() => {
-    // Fetch shape items and filter for active status
+    // Fetch shape items once on mount
     axios
-      .get(API_URL+"/master?master_type=master_stone_shape")
+      .get(API_URL + "/master?master_type=master_stone_shape")
       .then((response) => {
         const activeItems = response.data.filter(
           (item) => item.master_status === "active"
         );
         setItems(activeItems);
-        // Initialize selectedItems based on selectedData
-        if (selectedData?.master_info?.master_shapes?.length > 0) {
-          setSelectedItems(selectedData.master_info.master_shapes);
-        } else {
-          setSelectedItems([]);
-        }
       })
       .catch((error) => {
         console.error("Error fetching data:", error);
       });
+  }, []);
+
+
+  useEffect(() => {
+    let masterInfo = selectedData?.master_info;
+
+
+    if (typeof masterInfo === 'string') {
+      try {
+        masterInfo = JSON.parse(masterInfo);
+      } catch (e) {
+        console.error("Shapes component - error parsing master_info string:", e);
+      }
+    }
+
+
+    const shapeIds = masterInfo?.master_shapes || selectedData?.master_shapes || [];
+
+    if (Array.isArray(shapeIds)) {
+
+      const validIds = shapeIds.map(id => {
+        if (typeof id === 'object' && id !== null) {
+          return (id._id || id.id || id).toString();
+        }
+        return id?.toString();
+      }).filter(id => id);
+
+      setSelectedItems(validIds);
+    } else {
+      setSelectedItems([]);
+    }
   }, [selectedData]);
 
   const handleCheckboxChange = (id) => {
+    const idStr = id.toString();
     setSelectedItems((prevSelectedItems) => {
-      const updatedSelectedItems = prevSelectedItems.includes(id)
-        ? prevSelectedItems.filter((item) => item !== id)
-        : [...prevSelectedItems, id];
-  
-      // ส่งค่าที่อัพเดตไปยัง prop onShapeChange
+      const updatedSelectedItems = prevSelectedItems.includes(idStr)
+        ? prevSelectedItems.filter((item) => item !== idStr)
+        : [...prevSelectedItems, idStr];
+
       onShapeChange(updatedSelectedItems);
       return updatedSelectedItems;
     });
-  };;  
+  };
 
   const handleSelectAllChange = () => {
     if (selectAll) {
       setSelectedItems([]);
-      onShapeChange([]); // ส่งค่าที่ว่างไปยัง prop onShapeChange
+      onShapeChange([]);
     } else {
-      const allItemIds = items.map((item) => item._id);
+      const allItemIds = items.map((item) => (item._id || item.id)?.toString());
       setSelectedItems(allItemIds);
-      onShapeChange(allItemIds); // ส่งค่าที่เลือกทั้งหมดไปยัง prop onShapeChange
+      onShapeChange(allItemIds);
     }
     setSelectAll(!selectAll);
   };
 
   useEffect(() => {
-    if (selectedItems.length === items.length) {
+    if (items.length > 0 && selectedItems.length === items.length) {
       setSelectAll(true);
     } else {
       setSelectAll(false);
@@ -89,39 +114,42 @@ const Shapes = ({ selectedData, isEditing, onShapeChange }) => {
             Shapes
           </Typography>
         </Box>
-        <Box>
+        <Box sx={{ display: "flex", flexWrap: "wrap" }}>
           <FormControlLabel
             control={
-              <>
-                <Checkbox
-                  disabled={!isEditing}
-                  checked={selectAll}
-                  onChange={handleSelectAllChange}
-                />
-                <Typography
-                  sx={{
-                    marginRight: "30px",
-                    color: "#343434",
-                    fontFamily: "Calibri",
-                    fontSize: "16px",
-                    fontWeight: 400,
-                  }}
-                >
-                  Select All
-                </Typography>
-              </>
+              <Checkbox
+                disabled={!isEditing}
+                checked={selectAll}
+                onChange={handleSelectAllChange}
+              />
+            }
+            label={
+              <Typography
+                sx={{
+                  marginRight: "30px",
+                  color: "#343434",
+                  fontFamily: "Calibri",
+                  fontSize: "16px",
+                  fontWeight: 400,
+                }}
+              >
+                Select All
+              </Typography>
             }
           />
-          {items.map((item) => (
-            <FormControlLabel
-              key={item._id}
-              control={
-                <>
+          {items.map((item) => {
+            const itemId = (item._id || item.id)?.toString();
+            return (
+              <FormControlLabel
+                key={itemId}
+                control={
                   <Checkbox
                     disabled={!isEditing}
-                    checked={selectedItems.includes(item._id)}
-                    onChange={() => handleCheckboxChange(item._id)}
+                    checked={selectedItems.includes(itemId)}
+                    onChange={() => handleCheckboxChange(item._id || item.id)}
                   />
+                }
+                label={
                   <Typography
                     sx={{
                       marginRight: "30px",
@@ -133,10 +161,10 @@ const Shapes = ({ selectedData, isEditing, onShapeChange }) => {
                   >
                     {item.name}
                   </Typography>
-                </>
-              }
-            />
-          ))}
+                }
+              />
+            );
+          })}
         </Box>
       </Box>
     </Box>

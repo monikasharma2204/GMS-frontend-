@@ -6,7 +6,14 @@ import Select from "@mui/material/Select";
 import moment from "moment";
 import * as XLSX from "xlsx";
 import { formatNumberWithCommas } from "../../helpers/numberHelper.js";
-import apiRequest from "../../helpers/apiHelper.js";
+import { API_URL } from "../../config/config";
+import useTableSort from "../../hooks/useTableSort";
+import apiRequest from "../../helpers/apiHelper";
+import SortIcon from "../Commons/SortIcon/SortIcon";
+import AccountFilterPopover from "../Commons/AccountFilterPopover/AccountFilterPopover";
+import { useAccountFilter } from "../Commons/AccountFilterPopover/useAccountFilter";
+import { useColumnFilter } from "../Commons/AccountFilterPopover/useColumnFilter";
+import FilterIcon from "../Commons/FilterIcon/FilterIcon";
 
 const style = {
   position: "absolute",
@@ -19,6 +26,11 @@ const style = {
   borderRadius: "8px",
 };
 
+
+
+
+const getStatusFilterLabel = (item) => (item?.status === "approved" ? "Approved" : "Unapproved");
+
 const LoadModalDayBook = ({
   open,
   setOpen,
@@ -26,11 +38,20 @@ const LoadModalDayBook = ({
   handleEdit,
 }) => {
   const [loadData, setLoadData] = useState([]);
-  const [filteredData, setFilteredData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [approving, setApproving] = useState(false);
   const [selectedItemsCount, setSelectedItemsCount] = useState(0);
   const [age, setAge] = useState("");
+
+  const { filteredData: accountFilteredData, handleAccountClick, popoverProps, isFilterActive } = useAccountFilter(loadData, [], open);
+  const {
+    filteredData,
+    handleFilterClick: handleStatusClick,
+    popoverProps: statusPopoverProps,
+    isFilterActive: isStatusFilterActive,
+  } = useColumnFilter(accountFilteredData, open, getStatusFilterLabel);
+
+  const { sortedData, requestSort, sortConfig, setSortConfig } = useTableSort(filteredData, { key: 'createdAt', direction: 'desc' });
 
   const handleOpen = () => {
     setOpen(true);
@@ -64,15 +85,23 @@ const LoadModalDayBook = ({
     };
   };
 
+
+    const toFixedDecimal = (value, decimals) => {
+    const number = Number(String(value ?? 0).replace(/,/g, ""));
+    return (Number.isFinite(number) ? number : 0).toFixed(decimals);
+  };
+
+  
+    const formatDecimalWithCommas = (value, decimals) =>
+      formatNumberWithCommas(toFixedDecimal(value, decimals));
+
   const buildExportRows = () => {
-    const sourceRows = Array.isArray(filteredData) ? filteredData : [];
     const rowsToExport =
-      sourceRows.filter((item) => item.checked) || [];
-    const effectiveRows = rowsToExport.length > 0 ? rowsToExport : sourceRows;
+      sortedData.filter((item) => item.checked) || [];
+    const effectiveRows = rowsToExport.length > 0 ? rowsToExport : sortedData;
 
     return effectiveRows.map((item, exportIndex) => {
-      const position = sourceRows.findIndex((load) => load._id === item._id);
-      const rowIndex = position >= 0 ? position + 1 : exportIndex + 1;
+      const rowIndex = exportIndex + 1;
       const summary = getLoadSummary(item);
 
       return {
@@ -86,8 +115,9 @@ const LoadModalDayBook = ({
         "Ref 1": item?.ref_1 || "",
         "Ref 2": item?.ref_2 || "",
         Pcs: summary?.pcs ?? 0,
-        Weight: summary?.weight ?? 0,
-        Amount: summary?.amount ?? 0,
+       
+          Weight: toFixedDecimal(summary?.weight, 3),
+    Amount: toFixedDecimal(item?.summary?.amount, 2),
         Remark: item?.note || "",
       };
     });
@@ -106,7 +136,6 @@ const LoadModalDayBook = ({
     XLSX.writeFile(workbook, `load_daybook_${timestamp}.xlsx`);
   };
 
-  // Fetch Load data from API
   const fetchLoadData = async () => {
     setLoading(true);
     try {
@@ -116,7 +145,6 @@ const LoadModalDayBook = ({
         checked: false
       }));
       setLoadData(dataWithCheckbox);
-      setFilteredData(dataWithCheckbox);
     } catch (error) {
       console.error("Failed to fetch load data:", error);
     } finally {
@@ -124,23 +152,17 @@ const LoadModalDayBook = ({
     }
   };
 
-  // Count selected items whenever data changes
-  React.useEffect(() => {
-    const count = filteredData.filter(item => item.checked).length;
-    setSelectedItemsCount(count);
-  }, [filteredData]);
 
-  // Check if OK button should be enabled (exactly 1 item selected)
+  React.useEffect(() => {
+    const count = sortedData.filter(item => item.checked).length;
+    setSelectedItemsCount(count);
+  }, [sortedData]);
+
+
   const isOkButtonEnabled = selectedItemsCount === 1;
 
-  // Handle checkbox change
+
   const handleCheckboxChange = (item) => {
-    const updatedData = filteredData.map(load =>
-      load._id === item._id
-        ? { ...load, checked: !load.checked }
-        : load
-    );
-    setFilteredData(updatedData);
     setLoadData(prev => prev.map(load =>
       load._id === item._id
         ? { ...load, checked: !load.checked }
@@ -149,17 +171,10 @@ const LoadModalDayBook = ({
   };
 
   const handleSelectAll = () => {
-    if (!Array.isArray(filteredData) || filteredData.length === 0) return;
+    if (!Array.isArray(sortedData) || sortedData.length === 0) return;
 
-    const allSelected = filteredData.every(item => item.checked);
+    const allSelected = sortedData.every(item => item.checked);
     const newCheckedState = !allSelected;
-
-    setFilteredData(prev =>
-      prev.map(item => ({
-        ...item,
-        checked: newCheckedState,
-      }))
-    );
 
     setLoadData(prev =>
       prev.map(item => ({
@@ -169,21 +184,20 @@ const LoadModalDayBook = ({
     );
   };
 
-  // Handle submit
+
   const handleSubmit = () => {
-    const selectedLoads = filteredData.filter(item => item.checked);
+    const selectedLoads = sortedData.filter(item => item.checked);
     if (onLoadSelect) {
       onLoadSelect(selectedLoads);
     }
     handleClose();
   };
 
-  // Handle approve API call
   const handleApprove = async (loadId) => {
     setApproving(true);
     try {
       await apiRequest("PUT", `/load/${loadId}/approve`, {});
-      // Refresh the data after approval
+
       await fetchLoadData();
     } catch (error) {
       console.error("Failed to approve load:", error);
@@ -192,7 +206,7 @@ const LoadModalDayBook = ({
     }
   };
 
-  // Calculate sums for Load items
+
   const calculateSums = (items) => {
     return items.reduce((sum, item) => ({
       pcs: sum.pcs + (item.pcs || 0),
@@ -213,7 +227,7 @@ const LoadModalDayBook = ({
             width: "115px",
             padding: "12px",
             borderRadius: "4px",
-            // border: "1px solid #BFBFBF",
+
             gap: "8px",
             marginRight: "24px",
             backgroundColor: "#C6A969",
@@ -514,8 +528,8 @@ const LoadModalDayBook = ({
                   >
                     <Checkbox
                       checked={
-                        filteredData.length > 0 &&
-                        filteredData.every(item => item.checked)
+                        sortedData.length > 0 &&
+                        sortedData.every(item => item.checked)
                       }
                       onChange={handleSelectAll}
                     />
@@ -533,11 +547,13 @@ const LoadModalDayBook = ({
                   </Box>
 
                   <Box
+                    onClick={handleStatusClick}
                     sx={{
                       width: "120px",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
+                      cursor: "pointer",
                     }}
                   >
                     <Typography
@@ -551,14 +567,17 @@ const LoadModalDayBook = ({
                     >
                       Status
                     </Typography>
+                    <FilterIcon active={statusPopoverProps.open || isStatusFilterActive} />
                   </Box>
 
                   <Box
+                    onClick={() => requestSort('createdAt')}
                     sx={{
                       width: "140px",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
+                      cursor: "pointer",
                     }}
                   >
                     <Typography
@@ -572,26 +591,17 @@ const LoadModalDayBook = ({
                     >
                       TranDate
                     </Typography>
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="19"
-                      height="18"
-                      viewBox="0 0 19 18"
-                      fill="none"
-                    >
-                      <path
-                        d="M6.5 12H3.5L8 16.5V1.5H6.5V12ZM11 3.75V16.5H12.5V6H15.5L11 1.5V3.75Z"
-                        fill="#343434"
-                      />
-                    </svg>
+                    <SortIcon sortConfig={sortConfig} columnKey="createdAt" />
                   </Box>
 
                   <Box
+                    onClick={() => requestSort('doc_date')}
                     sx={{
                       width: "140px",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
+                      cursor: "pointer",
                     }}
                   >
                     <Typography
@@ -605,26 +615,17 @@ const LoadModalDayBook = ({
                     >
                       Doc Date
                     </Typography>
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="19"
-                      height="18"
-                      viewBox="0 0 19 18"
-                      fill="none"
-                    >
-                      <path
-                        d="M6.5 12H3.5L8 16.5V1.5H6.5V12ZM11 3.75V16.5H12.5V6H15.5L11 1.5V3.75Z"
-                        fill="#343434"
-                      />
-                    </svg>
+                    <SortIcon sortConfig={sortConfig} columnKey="doc_date" />
                   </Box>
 
                   <Box
+                    onClick={() => requestSort('due_date')}
                     sx={{
                       width: "140px",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
+                      cursor: "pointer",
                     }}
                   >
                     <Typography
@@ -638,18 +639,7 @@ const LoadModalDayBook = ({
                     >
                       Due Date
                     </Typography>
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="19"
-                      height="18"
-                      viewBox="0 0 19 18"
-                      fill="none"
-                    >
-                      <path
-                        d="M6.5 12H3.5L8 16.5V1.5H6.5V12ZM11 3.75V16.5H12.5V6H15.5L11 1.5V3.75Z"
-                        fill="#343434"
-                      />
-                    </svg>
+                    <SortIcon sortConfig={sortConfig} columnKey="due_date" />
                   </Box>
 
                   <Box
@@ -674,11 +664,13 @@ const LoadModalDayBook = ({
                   </Box>
 
                   <Box
+                    onClick={handleAccountClick}
                     sx={{
                       width: "140px",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
+                      cursor: "pointer",
                     }}
                   >
                     <Typography
@@ -837,316 +829,331 @@ const LoadModalDayBook = ({
                     </Typography>
                   </Box>
                 </Box>
-                {filteredData.length > 0 ? (
-                  filteredData.map((item, index) => (
-                    // item.inventory_item.map((inventory, inventory_index) => {
-                    // return (
-                    <Box
-                      key={index}
-                      sx={{
-                        width: "fit-content",
-                        height: "42px",
-                        bgcolor: "#FFF",
-                        display: "flex",
-                        borderBottom: "1px solid var(--Line-Table, #C6C6C8)",
-                      }}
-                    >
+                {sortedData.length > 0 ? (
+                  sortedData.map((item, index) => {
+                    const summary = getLoadSummary(item);
+                    return (
                       <Box
+                        key={item._id}
                         sx={{
-                          width: "100px",
+                          width: "fit-content",
+                          height: "42px",
+                          bgcolor: "#FFF",
                           display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                        }}
-                      >
-                        <Checkbox
-                          checked={Boolean(item.checked)}
-                          onChange={() => handleCheckboxChange(item)}
-                        />
-                        <Typography
-                          sx={{
-                            color: "var(--Main-Text, #343434)",
-                            fontFamily: "Calibri",
-                            fontSize: "16px",
-                            fontStyle: "normal",
-                            fontWeight: 400,
-                          }}
-                        >
-                          {index + 1}
-                        </Typography>
-                      </Box>
-
-                      <Box
-                        sx={{
-                          width: "120px",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
+                          borderBottom: "1px solid var(--Line-Table, #EDEDED)",
+                          "&:hover": {
+                            bgcolor: "#F5F8FF",
+                          },
                         }}
                       >
                         <Box
                           sx={{
-                            backgroundColor: item.status === "approved" ? "#00AA3A33" : "#E6E6E6",
-                            color: item.status === "approved" ? "#00AA3A" : "#57646E",
-                            padding: "6px 10px",
-                            borderRadius: "5px",
-                            fontFamily: "Calibri",
-                            fontSize: "14px",
-                            fontWeight: 500,
-                            textTransform: "capitalize",
+                            width: "100px",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
                           }}
                         >
-                          {item.status === "approved" ? "Approved" : "Unapproved"}
+                          <Checkbox
+                            checked={item.checked}
+                            onChange={() => handleCheckboxChange(item)}
+                          />
+                          <Typography
+                            sx={{
+                              color: "var(--jw-main-text-jwmain-text, #343434)",
+                              fontFamily: "Calibri",
+                              fontSize: "16px",
+                              fontStyle: "normal",
+                              fontWeight: 400,
+                              lineHeight: "normal",
+                            }}
+                          >
+                            {index + 1}
+                          </Typography>
+                        </Box>
+
+                        <Box
+                          sx={{
+                            width: "120px",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                          }}
+                        >
+                          <Box
+                            sx={{
+                              backgroundColor: item.status === "approved" ? "#00AA3A33" : "#E6E6E6",
+                              color: item.status === "approved" ? "#00AA3A" : "#57646E",
+                              padding: "6px 10px",
+                              borderRadius: "5px",
+                              fontFamily: "Calibri",
+                              fontSize: "14px",
+                              fontWeight: 500,
+                              textTransform: "capitalize",
+                            }}
+                          >
+                            {item.status === "approved" ? "Approved" : "Unapproved"}
+                          </Box>
+                        </Box>
+
+                        <Box
+                          sx={{
+                            width: "140px",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                          }}
+                        >
+                          <Typography
+                            sx={{
+                              color: "var(--Main-Text, #343434)",
+                              fontFamily: "Calibri",
+                              fontSize: "16px",
+                              fontStyle: "normal",
+                              fontWeight: 400,
+                            }}
+                          >
+                            {/* TranDate */}
+                            {moment(item.createdAt).format("DD/MM/YYYY")}
+                          </Typography>
+                        </Box>
+
+                        <Box
+                          sx={{
+                            width: "140px",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                          }}
+                        >
+                          <Typography
+                            sx={{
+                              color: "var(--Main-Text, #343434)",
+                              fontFamily: "Calibri",
+                              fontSize: "16px",
+                              fontStyle: "normal",
+                              fontWeight: 400,
+                            }}
+                          >
+                            {/* Doc Date */}
+                            {moment(item.doc_date).format("DD/MM/YYYY")}
+                          </Typography>
+                        </Box>
+
+                        <Box
+                          sx={{
+                            width: "140px",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                          }}
+                        >
+                          <Typography
+                            sx={{
+                              color: "var(--Main-Text, #343434)",
+                              fontFamily: "Calibri",
+                              fontSize: "16px",
+                              fontStyle: "normal",
+                              fontWeight: 400,
+                            }}
+                          >
+                            {/* Due Date */}
+                            {moment(item.due_date).format("DD/MM/YYYY")}
+                          </Typography>
+                        </Box>
+
+                        <Box
+                          sx={{
+                            width: "140px",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                          }}
+                        >
+                          <Typography
+                            sx={{
+                              color: "var(--Main-Text, #343434)",
+                              fontFamily: "Calibri",
+                              fontSize: "16px",
+                              fontStyle: "normal",
+                              fontWeight: 400,
+                            }}
+                          >
+                            {item.invoice_no}
+                          </Typography>
+                        </Box>
+
+                        <Box
+                          sx={{
+                            width: "140px",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                          }}
+                        >
+                          <Typography
+                            sx={{
+                              color: "var(--Main-Text, #343434)",
+                              fontFamily: "Calibri",
+                              fontSize: "16px",
+                              fontStyle: "normal",
+                              fontWeight: 400,
+                            }}
+                          >
+                            {item.account}
+                          </Typography>
+                        </Box>
+
+                        <Box
+                          sx={{
+                            width: "140px",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                          }}
+                        >
+                          <Typography
+                            sx={{
+                              color: "var(--Main-Text, #343434)",
+                              fontFamily: "Calibri",
+                              fontSize: "16px",
+                              fontStyle: "normal",
+                              fontWeight: 400,
+                            }}
+                          >
+                            {/* Ref 1 */}
+                            {item.ref_1}
+                          </Typography>
+                        </Box>
+
+                        <Box
+                          sx={{
+                            width: "140px",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                          }}
+                        >
+                          <Typography
+                            sx={{
+                              color: "var(--Main-Text, #343434)",
+                              fontFamily: "Calibri",
+                              fontSize: "16px",
+                              fontStyle: "normal",
+                              fontWeight: 400,
+                            }}
+                          >
+                            {/* Ref 2 */}
+                            {item.ref_2}
+                          </Typography>
+                        </Box>
+
+                        <Box
+                          sx={{
+                            width: "80px",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                          }}
+                        >
+                          <Typography
+                            sx={{
+                              color: "var(--Main-Text, #343434)",
+                              fontFamily: "Calibri",
+                              fontSize: "16px",
+                              fontStyle: "normal",
+                              fontWeight: 400,
+                            }}
+                          >
+                            {/* Pcs */}
+                            {item?.load_item ? calculateSums(item.load_item).pcs : (item.pcs || 0)}
+                          </Typography>
+                        </Box>
+
+                        <Box
+                          sx={{
+                            width: "100px",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                          }}
+                        >
+                          <Typography
+                            sx={{
+                              color: "var(--Main-Text, #343434)",
+                              fontFamily: "Calibri",
+                              fontSize: "16px",
+                              fontStyle: "normal",
+                              fontWeight: 400,
+                            }}
+                          >
+                            {/* Weight */}
+                           {formatNumberWithCommas(
+  toFixedDecimal(
+    item?.load_item
+      ? calculateSums(item.load_item).weight
+      : item.weight,
+    3
+  )
+)}
+                          </Typography>
+                        </Box>
+
+                        <Box
+                          sx={{
+                            width: "100px",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                          }}
+                        >
+                          <Typography
+                            sx={{
+                              color: "var(--Main-Text, #343434)",
+                              fontFamily: "Calibri",
+                              fontSize: "16px",
+                              fontStyle: "normal",
+                              fontWeight: 700,
+                            }}
+                          >
+                            {/* Amount */}
+                           {formatNumberWithCommas(
+  toFixedDecimal(
+    item?.load_item
+      ? calculateSums(item.load_item).amount
+      : item.amount,
+    2
+  )
+)}
+                          </Typography>
+                        </Box>
+
+
+
+                        <Box
+                          sx={{
+                            width: "286px",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                          }}
+                        >
+                          <Typography
+                            sx={{
+                              color: "var(--Main-Text, #343434)",
+                              fontFamily: "Calibri",
+                              fontSize: "16px",
+                              fontStyle: "normal",
+                              fontWeight: 700,
+                            }}
+                          >
+                            {/* Remark */}
+                            {item.note}
+                          </Typography>
                         </Box>
                       </Box>
-
-                      <Box
-                        sx={{
-                          width: "140px",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                        }}
-                      >
-                        <Typography
-                          sx={{
-                            color: "var(--Main-Text, #343434)",
-                            fontFamily: "Calibri",
-                            fontSize: "16px",
-                            fontStyle: "normal",
-                            fontWeight: 400,
-                          }}
-                        >
-                          {/* TranDate */}
-                          {moment(item.createdAt).format("DD/MM/YYYY")}
-                        </Typography>
-                      </Box>
-
-                      <Box
-                        sx={{
-                          width: "140px",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                        }}
-                      >
-                        <Typography
-                          sx={{
-                            color: "var(--Main-Text, #343434)",
-                            fontFamily: "Calibri",
-                            fontSize: "16px",
-                            fontStyle: "normal",
-                            fontWeight: 400,
-                          }}
-                        >
-                          {/* Doc Date */}
-                          {moment(item.doc_date).format("DD/MM/YYYY")}
-                        </Typography>
-                      </Box>
-
-                      <Box
-                        sx={{
-                          width: "140px",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                        }}
-                      >
-                        <Typography
-                          sx={{
-                            color: "var(--Main-Text, #343434)",
-                            fontFamily: "Calibri",
-                            fontSize: "16px",
-                            fontStyle: "normal",
-                            fontWeight: 400,
-                          }}
-                        >
-                          {/* Due Date */}
-                          {moment(item.due_date).format("DD/MM/YYYY")}
-                        </Typography>
-                      </Box>
-
-                      <Box
-                        sx={{
-                          width: "140px",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                        }}
-                      >
-                        <Typography
-                          sx={{
-                            color: "var(--Main-Text, #343434)",
-                            fontFamily: "Calibri",
-                            fontSize: "16px",
-                            fontStyle: "normal",
-                            fontWeight: 400,
-                          }}
-                        >
-                          {item.invoice_no}
-                        </Typography>
-                      </Box>
-
-                      <Box
-                        sx={{
-                          width: "140px",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                        }}
-                      >
-                        <Typography
-                          sx={{
-                            color: "var(--Main-Text, #343434)",
-                            fontFamily: "Calibri",
-                            fontSize: "16px",
-                            fontStyle: "normal",
-                            fontWeight: 400,
-                          }}
-                        >
-                          {item.account}
-                        </Typography>
-                      </Box>
-
-                      <Box
-                        sx={{
-                          width: "140px",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                        }}
-                      >
-                        <Typography
-                          sx={{
-                            color: "var(--Main-Text, #343434)",
-                            fontFamily: "Calibri",
-                            fontSize: "16px",
-                            fontStyle: "normal",
-                            fontWeight: 400,
-                          }}
-                        >
-                          {/* Ref 1 */}
-                          {item.ref_1}
-                        </Typography>
-                      </Box>
-
-                      <Box
-                        sx={{
-                          width: "140px",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                        }}
-                      >
-                        <Typography
-                          sx={{
-                            color: "var(--Main-Text, #343434)",
-                            fontFamily: "Calibri",
-                            fontSize: "16px",
-                            fontStyle: "normal",
-                            fontWeight: 400,
-                          }}
-                        >
-                          {/* Ref 2 */}
-                          {item.ref_2}
-                        </Typography>
-                      </Box>
-
-                      <Box
-                        sx={{
-                          width: "80px",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                        }}
-                      >
-                        <Typography
-                          sx={{
-                            color: "var(--Main-Text, #343434)",
-                            fontFamily: "Calibri",
-                            fontSize: "16px",
-                            fontStyle: "normal",
-                            fontWeight: 400,
-                          }}
-                        >
-                          {/* Pcs */}
-                          {item?.load_item ? calculateSums(item.load_item).pcs : (item.pcs || 0)}
-                        </Typography>
-                      </Box>
-
-                      <Box
-                        sx={{
-                          width: "100px",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                        }}
-                      >
-                        <Typography
-                          sx={{
-                            color: "var(--Main-Text, #343434)",
-                            fontFamily: "Calibri",
-                            fontSize: "16px",
-                            fontStyle: "normal",
-                            fontWeight: 400,
-                          }}
-                        >
-                          {/* Weight */}
-                          {item?.load_item ? calculateSums(item.load_item).weight : (item.weight || 0)}
-                        </Typography>
-                      </Box>
-
-                      <Box
-                        sx={{
-                          width: "100px",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                        }}
-                      >
-                        <Typography
-                          sx={{
-                            color: "var(--Main-Text, #343434)",
-                            fontFamily: "Calibri",
-                            fontSize: "16px",
-                            fontStyle: "normal",
-                            fontWeight: 700,
-                          }}
-                        >
-                          {/* Amount */}
-                          {formatNumberWithCommas(
-                            item?.load_item ? calculateSums(item.load_item).amount : (item.amount || 0)
-                          )}
-                        </Typography>
-                      </Box>
-
-
-
-                      <Box
-                        sx={{
-                          width: "286px",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                        }}
-                      >
-                        <Typography
-                          sx={{
-                            color: "var(--Main-Text, #343434)",
-                            fontFamily: "Calibri",
-                            fontSize: "16px",
-                            fontStyle: "normal",
-                            fontWeight: 700,
-                          }}
-                        >
-                          {/* Remark */}
-                          {item.note}
-                        </Typography>
-                      </Box>
-                    </Box>
-                    // )
-                    // })))
-                  ))
+                    );
+                  })
                 ) : (
                   <p>No data to display</p>
                 )}
@@ -1196,14 +1203,14 @@ const LoadModalDayBook = ({
               <Button
                 onClick={() => {
                   if (isOkButtonEnabled) {
-                    // Find the selected item and trigger edit
-                    const selectedItem = filteredData.find(item => item.checked);
+
+                    const selectedItem = sortedData.find(item => item.checked);
                     if (selectedItem && handleEdit) {
-                      // Transform the data structure to match what handleEdit expects
+
                       const editData = {
                         ...selectedItem,
                         load_item: selectedItem.load_item || [],
-                        isFromDayBook: true // Mark as coming from DayBook
+                        isFromDayBook: true
                       };
                       handleEdit(editData);
                     }
@@ -1250,6 +1257,8 @@ const LoadModalDayBook = ({
           </Box>
         </Modal>
       </Box>
+      <AccountFilterPopover {...popoverProps} sortConfig={sortConfig} setSortConfig={setSortConfig} />
+      <AccountFilterPopover {...statusPopoverProps} showSort={false} />
     </>
   );
 };

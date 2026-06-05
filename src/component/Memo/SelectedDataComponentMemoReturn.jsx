@@ -52,6 +52,15 @@ const SelectedDataComponentMemoReturn = ({
         }}
       >
         <Box
+          onScroll={() => {
+            if (
+              document.activeElement &&
+              (document.activeElement.getAttribute("aria-autocomplete") ||
+                document.activeElement.getAttribute("role") === "combobox")
+            ) {
+              document.activeElement.blur();
+            }
+          }}
           sx={{
             display: "flex",
             height: "294px",

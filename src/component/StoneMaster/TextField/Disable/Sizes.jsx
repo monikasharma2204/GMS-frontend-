@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Box, FormControlLabel, Typography, Checkbox } from "@mui/material";
 import axios from "axios";
-import {API_URL} from "config/config.js";
+import { API_URL } from "config/config.js";
 
 const Sizes = ({ selectedData, isEditing, onSizeChange }) => {
   const [items, setItems] = useState([]);
@@ -11,7 +11,7 @@ const Sizes = ({ selectedData, isEditing, onSizeChange }) => {
   // Fetch items on component mount
   useEffect(() => {
     axios
-      .get(API_URL+"/master?master_type=master_stone_size")
+      .get(API_URL + "/master?master_type=master_stone_size")
       .then((response) => {
         const activeItems = response.data.filter(
           (item) => item.master_status === "active"
@@ -25,61 +25,61 @@ const Sizes = ({ selectedData, isEditing, onSizeChange }) => {
 
   // Update selectedItems whenever selectedData changes
   useEffect(() => {
-    // console.log("Sizes component - selectedData changed:", selectedData);
-    // console.log("Sizes component - selectedData._id:", selectedData?._id);
-    // console.log("Sizes component - size_ids:", selectedData?.master_info?.size_ids);
-    // console.log("Sizes component - master_info:", selectedData?.master_info);
-    
-    // Check if size_ids exists and is an array
-    const sizeIds = selectedData?.master_info?.size_ids;
-    // console.log("Sizes component - sizeIds type:", typeof sizeIds);
-    // console.log("Sizes component - sizeIds is array:", Array.isArray(sizeIds));
-    
-    if (sizeIds && Array.isArray(sizeIds) && sizeIds.length > 0) {
-      console.log("Setting selectedItems to:", sizeIds);
-      setSelectedItems(sizeIds);
+    let masterInfo = selectedData?.master_info;
+
+
+    if (typeof masterInfo === 'string') {
+      try {
+        masterInfo = JSON.parse(masterInfo);
+      } catch (e) {
+        console.error("Sizes component - error parsing master_info string:", e);
+      }
+    }
+
+
+    const sizeIds = masterInfo?.size_ids || selectedData?.size_ids || [];
+
+    if (Array.isArray(sizeIds)) {
+
+      const validIds = sizeIds.map(id => {
+        if (typeof id === 'object' && id !== null) {
+          return (id._id || id.id || id).toString();
+        }
+        return id?.toString();
+      }).filter(id => id);
+
+      setSelectedItems(validIds);
     } else {
-      console.log("Clearing selectedItems - no valid size_ids found");
       setSelectedItems([]);
     }
   }, [selectedData]);
 
   const handleCheckboxChange = (id) => {
-    // console.log("Disable/Sizes - handleCheckboxChange called with id:", id);
-    // console.log("Disable/Sizes - current selectedItems:", selectedItems);
-    
+    const idStr = id.toString();
     setSelectedItems((prevSelectedItems) => {
-      const updatedSelectedItems = prevSelectedItems.includes(id)
-        ? prevSelectedItems.filter((item) => item !== id)
-        : [...prevSelectedItems, id];
-  
-      // console.log("Disable/Sizes - updatedSelectedItems:", updatedSelectedItems);
-      // console.log("Disable/Sizes - calling onSizeChange with:", updatedSelectedItems);
-      
-      // ส่งค่าที่อัพเดตไปยัง prop onSizeChange
+      const updatedSelectedItems = prevSelectedItems.includes(idStr)
+        ? prevSelectedItems.filter((item) => item !== idStr)
+        : [...prevSelectedItems, idStr];
+
       onSizeChange(updatedSelectedItems);
       return updatedSelectedItems;
     });
-  };;  
+  };
 
   const handleSelectAllChange = () => {
-    console.log("Disable/Sizes - handleSelectAllChange called, current selectAll:", selectAll);
-    
     if (selectAll) {
-      console.log("Disable/Sizes - clearing all selections");
       setSelectedItems([]);
-      onSizeChange([]); // ส่งค่าที่ว่างไปยัง prop onSizeChange
+      onSizeChange([]);
     } else {
-      const allItemIds = items.map((item) => item._id);
-      // console.log("Disable/Sizes - selecting all items:", allItemIds);
+      const allItemIds = items.map((item) => (item._id || item.id)?.toString());
       setSelectedItems(allItemIds);
-      onSizeChange(allItemIds); // ส่งค่าที่เลือกทั้งหมดไปยัง prop onSizeChange
+      onSizeChange(allItemIds);
     }
     setSelectAll(!selectAll);
   };
 
   useEffect(() => {
-    if (selectedItems.length === items.length) {
+    if (items.length > 0 && selectedItems.length === items.length) {
       setSelectAll(true);
     } else {
       setSelectAll(false);
@@ -111,42 +111,45 @@ const Sizes = ({ selectedData, isEditing, onSizeChange }) => {
               fontWeight: 700,
             }}
           >
-            Shapes
+            Sizes
           </Typography>
         </Box>
-        <Box>
+        <Box sx={{ display: "flex", flexWrap: "wrap" }}>
           <FormControlLabel
             control={
-              <>
-                <Checkbox
-                  disabled={!isEditing}
-                  checked={selectAll}
-                  onChange={handleSelectAllChange}
-                />
-                <Typography
-                  sx={{
-                    marginRight: "30px",
-                    color: "#343434",
-                    fontFamily: "Calibri",
-                    fontSize: "16px",
-                    fontWeight: 400,
-                  }}
-                >
-                  Select All
-                </Typography>
-              </>
+              <Checkbox
+                disabled={!isEditing}
+                checked={selectAll}
+                onChange={handleSelectAllChange}
+              />
+            }
+            label={
+              <Typography
+                sx={{
+                  marginRight: "30px",
+                  color: "#343434",
+                  fontFamily: "Calibri",
+                  fontSize: "16px",
+                  fontWeight: 400,
+                }}
+              >
+                Select All
+              </Typography>
             }
           />
-          {items.map((item) => (
-            <FormControlLabel
-              key={item._id}
-              control={
-                <>
+          {items.map((item) => {
+            const itemId = (item._id || item.id)?.toString();
+            return (
+              <FormControlLabel
+                key={itemId}
+                control={
                   <Checkbox
                     disabled={!isEditing}
-                    checked={selectedItems.includes(item._id)}
-                    onChange={() => handleCheckboxChange(item._id)}
+                    checked={selectedItems.includes(itemId)}
+                    onChange={() => handleCheckboxChange(item._id || item.id)}
                   />
+                }
+                label={
                   <Typography
                     sx={{
                       marginRight: "30px",
@@ -158,10 +161,10 @@ const Sizes = ({ selectedData, isEditing, onSizeChange }) => {
                   >
                     {item.name}
                   </Typography>
-                </>
-              }
-            />
-          ))}
+                }
+              />
+            );
+          })}
         </Box>
       </Box>
     </Box>

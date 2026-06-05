@@ -10,6 +10,11 @@ import apiRequest from "helpers/apiHelper.js";
 import { memoInfoState } from "recoil/PurchaseOrder/MemoState";
 import dayjs from "dayjs";
 
+import ColumnFilterPopover from "../Commons/ColumnFilterPopover/ColumnFilterPopover";
+import { useColumnFilters } from "../Commons/ColumnFilterPopover/useColumnFilters";
+import SortIcon from "../Commons/SortIcon/SortIcon";
+import useTableSort from "../../hooks/useTableSort";
+
 export const selectedRowsState = atom({
   key: "quotationSelectedRowsState_PurchaseModalFromStock",
   default: [], // Initially empty
@@ -32,7 +37,28 @@ const textStyle = {
   fontStyle: "normal",
   fontWeight: 400,
 };
-const PurchaseModalFromStock = ({ data, state, handleSubmit, isApproved = false }) => {
+
+
+const formatWeight = (weight) => {
+  const value = Number(weight);
+  return Number.isFinite(value) ? value.toFixed(3) : "0.000";
+};
+
+const formatCurrency = (amount) => {
+  const num = parseFloat(amount);
+  return isNaN(num) ? "0.00" : num.toLocaleString("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+};
+
+
+const PurchaseModalFromStock = ({
+  data,
+  state,
+  handleSubmit,
+  isApproved = false,
+}) => {
   const [open, setOpen] = useState(false);
   const [checked, setChecked] = useState(false);
   const [rowData, setRowData] = useState([]);
@@ -43,13 +69,51 @@ const PurchaseModalFromStock = ({ data, state, handleSubmit, isApproved = false 
 
   const [openSelectAccountModal, setOpenSelectAccountModal] = useState(false);
 
+  const { filteredData, handleFilterClick, popoverProps, isFilterActive } =
+    useColumnFilters(rowData, open);
+  const { sortedData, requestSort, sortConfig, setSortConfig } = useTableSort(
+    filteredData,
+    { key: "doc_date", direction: "desc" },
+  );
+
+  const renderFilterIcon = (columnKey) => {
+    const active =
+      isFilterActive(columnKey) ||
+      (popoverProps.open && popoverProps.activeColumnKey === columnKey);
+    return (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="12"
+        height="12"
+        viewBox="0 0 12 12"
+        fill="none"
+        style={{ marginLeft: "4px", flexShrink: 0 }}
+      >
+        <g clipPath={`url(#clip0_memo_pending_filter_${columnKey})`}>
+          <path
+            d="M2 1.5H10C10.1326 1.5 10.2598 1.55268 10.3536 1.64645C10.4473 1.74021 10.5 1.86739 10.5 2V2.793C10.5 2.9256 10.4473 3.05275 10.3535 3.1465L7.1465 6.3535C7.05273 6.44725 7.00003 6.5744 7 6.707V9.8595C7 9.9355 6.98267 10.0105 6.94933 10.0788C6.91599 10.1471 6.86752 10.2069 6.80761 10.2537C6.74769 10.3004 6.6779 10.3329 6.60355 10.3486C6.52919 10.3644 6.45222 10.363 6.3785 10.3445L5.3785 10.0945C5.27038 10.0674 5.1744 10.005 5.10583 9.9171C5.03725 9.82923 5 9.72096 5 9.6095V6.707C4.99997 6.5744 4.94727 6.44725 4.8535 6.3535L1.6465 3.1465C1.55273 3.05275 1.50003 2.9256 1.5 2.793V2C1.5 1.86739 1.55268 1.74021 1.64645 1.64645C1.74021 1.55268 1.86739 1.5 2 1.5Z"
+            stroke={active ? "#17C653" : "#666666"}
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </g>
+        <defs>
+          <clipPath id={`clip0_memo_pending_filter_${columnKey}`}>
+            <rect width="12" height="12" fill="white" />
+          </clipPath>
+        </defs>
+      </svg>
+    );
+  };
+
   useEffect(() => {
     const fetchMemoIn = async () => {
       try {
-        setLoading(true); // Set loading to true before fetch
+        setLoading(true);
         const response = await apiRequest(
           "GET",
-          `/consignments/memo-pending?account=${memoInfo?.account?.label || ""}`
+          `/consignments/memo-pending?account=${memoInfo?.account?.label || ""}`,
         );
         setRowData(response);
         console.log("Stock data fetched:", response);
@@ -75,7 +139,7 @@ const PurchaseModalFromStock = ({ data, state, handleSubmit, isApproved = false 
   const handleCheckboxChange = (row) => {
     setSelectedRows((prev) => {
       const isSelected = prev.some(
-        (selectedRow) => selectedRow._id === row._id
+        (selectedRow) => selectedRow._id === row._id,
       );
       return isSelected
         ? prev.filter((selectedRow) => selectedRow._id !== row._id)
@@ -84,12 +148,12 @@ const PurchaseModalFromStock = ({ data, state, handleSubmit, isApproved = false 
   };
 
   const handleCheckboxSelectAllChange = () => {
-    if (selectedRows.length === rowData.length) {
+    if (selectedRows.length === sortedData.length && sortedData.length > 0) {
       // Uncheck all if everything is already selected
       setSelectedRows([]);
     } else {
       // Select all
-      setSelectedRows(rowData);
+      setSelectedRows(sortedData);
     }
   };
 
@@ -117,7 +181,6 @@ const PurchaseModalFromStock = ({ data, state, handleSubmit, isApproved = false 
     setAge(event.target.value);
   };
 
-  
   return (
     <>
       <Box>
@@ -545,8 +608,8 @@ const PurchaseModalFromStock = ({ data, state, handleSubmit, isApproved = false 
                   >
                     <Checkbox
                       checked={
-                        selectedRows.length === rowData.length &&
-                        rowData.length > 0
+                        selectedRows.length === sortedData.length &&
+                        sortedData.length > 0
                       }
                       onChange={() => handleCheckboxSelectAllChange()}
                     />
@@ -564,11 +627,14 @@ const PurchaseModalFromStock = ({ data, state, handleSubmit, isApproved = false 
                   </Box>
 
                   <Box
+                    onClick={() => requestSort("doc_date")}
                     sx={{
                       width: "140px",
                       display: "flex",
                       alignItems: "center",
+                      justifyContent: "center",
                       padding: "12px 8px",
+                      cursor: "pointer",
                     }}
                   >
                     <Typography
@@ -582,36 +648,18 @@ const PurchaseModalFromStock = ({ data, state, handleSubmit, isApproved = false 
                     >
                       Doc Date
                     </Typography>
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="12"
-                      height="12"
-                      viewBox="0 0 12 12"
-                      fill="none"
-                    >
-                      <g clipPath="url(#clip0_2622_213943)">
-                        <path
-                          d="M2 1.5H10C10.1326 1.5 10.2598 1.55268 10.3536 1.64645C10.4473 1.74021 10.5 1.86739 10.5 2V2.793C10.5 2.9256 10.4473 3.05275 10.3535 3.1465L7.1465 6.3535C7.05273 6.44725 7.00003 6.5744 7 6.707V9.8595C7 9.9355 6.98267 10.0105 6.94933 10.0788C6.91599 10.1471 6.86752 10.2069 6.80761 10.2537C6.74769 10.3004 6.6779 10.3329 6.60355 10.3486C6.52919 10.3644 6.45222 10.363 6.3785 10.3445L5.3785 10.0945C5.27038 10.0674 5.1744 10.005 5.10583 9.9171C5.03725 9.82923 5 9.72096 5 9.6095V6.707C4.99997 6.5744 4.94727 6.44725 4.8535 6.3535L1.6465 3.1465C1.55273 3.05275 1.50003 2.9256 1.5 2.793V2C1.5 1.86739 1.55268 1.74021 1.64645 1.64645C1.74021 1.55268 1.86739 1.5 2 1.5Z"
-                          stroke="#666666"
-                          strokeWidth="1.5"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </g>
-                      <defs>
-                        <clipPath id="clip0_2622_213943">
-                          <rect width="12" height="12" fill="white" />
-                        </clipPath>
-                      </defs>
-                    </svg>
+                    <SortIcon sortConfig={sortConfig} columnKey="doc_date" />
                   </Box>
 
                   <Box
+                    onClick={() => requestSort("due_date")}
                     sx={{
                       width: "140px",
                       display: "flex",
                       alignItems: "center",
+                      justifyContent: "center",
                       padding: "12px 8px",
+                      cursor: "pointer",
                     }}
                   >
                     <Typography
@@ -625,37 +673,21 @@ const PurchaseModalFromStock = ({ data, state, handleSubmit, isApproved = false 
                     >
                       Due Date
                     </Typography>
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="12"
-                      height="12"
-                      viewBox="0 0 12 12"
-                      fill="none"
-                    >
-                      <g clipPath="url(#clip0_2622_213943)">
-                        <path
-                          d="M2 1.5H10C10.1326 1.5 10.2598 1.55268 10.3536 1.64645C10.4473 1.74021 10.5 1.86739 10.5 2V2.793C10.5 2.9256 10.4473 3.05275 10.3535 3.1465L7.1465 6.3535C7.05273 6.44725 7.00003 6.5744 7 6.707V9.8595C7 9.9355 6.98267 10.0105 6.94933 10.0788C6.91599 10.1471 6.86752 10.2069 6.80761 10.2537C6.74769 10.3004 6.6779 10.3329 6.60355 10.3486C6.52919 10.3644 6.45222 10.363 6.3785 10.3445L5.3785 10.0945C5.27038 10.0674 5.1744 10.005 5.10583 9.9171C5.03725 9.82923 5 9.72096 5 9.6095V6.707C4.99997 6.5744 4.94727 6.44725 4.8535 6.3535L1.6465 3.1465C1.55273 3.05275 1.50003 2.9256 1.5 2.793V2C1.5 1.86739 1.55268 1.74021 1.64645 1.64645C1.74021 1.55268 1.86739 1.5 2 1.5Z"
-                          stroke="#666666"
-                          strokeWidth="1.5"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </g>
-                      <defs>
-                        <clipPath id="clip0_2622_213943">
-                          <rect width="12" height="12" fill="white" />
-                        </clipPath>
-                      </defs>
-                    </svg>
+                    <SortIcon sortConfig={sortConfig} columnKey="due_date" />
                   </Box>
 
                   <Box
+                    onClick={(e) => handleFilterClick(e, "memo_no")}
                     sx={{
                       width: "140px",
                       display: "flex",
                       alignItems: "center",
-                      justifyContent: "start",
+                      justifyContent: "center",
                       padding: "12px 8px",
+                      cursor: "pointer",
+                      "&:hover": {
+                        bgcolor: "rgba(0, 0, 0, 0.04)",
+                      },
                     }}
                   >
                     <Typography
@@ -669,28 +701,7 @@ const PurchaseModalFromStock = ({ data, state, handleSubmit, isApproved = false 
                     >
                       Memo In NO.
                     </Typography>
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="12"
-                      height="12"
-                      viewBox="0 0 12 12"
-                      fill="none"
-                    >
-                      <g clipPath="url(#clip0_2622_213958)">
-                        <path
-                          d="M2 1.5H10C10.1326 1.5 10.2598 1.55268 10.3536 1.64645C10.4473 1.74021 10.5 1.86739 10.5 2V2.793C10.5 2.9256 10.4473 3.05275 10.3535 3.1465L7.1465 6.3535C7.05273 6.44725 7.00003 6.5744 7 6.707V9.8595C7 9.9355 6.98267 10.0105 6.94933 10.0788C6.91599 10.1471 6.86752 10.2069 6.80761 10.2537C6.74769 10.3004 6.6779 10.3329 6.60355 10.3486C6.52919 10.3644 6.45222 10.363 6.3785 10.3445L5.3785 10.0945C5.27038 10.0674 5.1744 10.005 5.10583 9.9171C5.03725 9.82923 5 9.72096 5 9.6095V6.707C4.99997 6.5744 4.94727 6.44725 4.8535 6.3535L1.6465 3.1465C1.55273 3.05275 1.50003 2.9256 1.5 2.793V2C1.5 1.86739 1.55268 1.74021 1.64645 1.64645C1.74021 1.55268 1.86739 1.5 2 1.5Z"
-                          stroke="#666666"
-                          strokeWidth="1.5"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </g>
-                      <defs>
-                        <clipPath id="clip0_2622_213958">
-                          <rect width="12" height="12" fill="white" />
-                        </clipPath>
-                      </defs>
-                    </svg>
+                    {renderFilterIcon("memo_no")}
                   </Box>
 
                   <Box
@@ -698,7 +709,8 @@ const PurchaseModalFromStock = ({ data, state, handleSubmit, isApproved = false 
                       width: "140px",
                       display: "flex",
                       alignItems: "center",
-                      justifyContent: "start",
+                         padding: "12px 8px",
+                      justifyContent: "center",
                       borderRight: "1px solid #C6C6C8",
                     }}
                   >
@@ -716,11 +728,17 @@ const PurchaseModalFromStock = ({ data, state, handleSubmit, isApproved = false 
                   </Box>
 
                   <Box
+                    onClick={(e) => handleFilterClick(e, "stone")}
                     sx={{
                       width: "120px",
                       display: "flex",
+                      justifyContent: "center",
                       alignItems: "center",
                       padding: "12px 8px",
+                      cursor: "pointer",
+                      "&:hover": {
+                        bgcolor: "rgba(0, 0, 0, 0.04)",
+                      },
                     }}
                   >
                     <Typography
@@ -734,37 +752,21 @@ const PurchaseModalFromStock = ({ data, state, handleSubmit, isApproved = false 
                     >
                       Stone
                     </Typography>
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="12"
-                      height="12"
-                      viewBox="0 0 12 12"
-                      fill="none"
-                    >
-                      <g clipPath="url(#clip0_2622_213958)">
-                        <path
-                          d="M2 1.5H10C10.1326 1.5 10.2598 1.55268 10.3536 1.64645C10.4473 1.74021 10.5 1.86739 10.5 2V2.793C10.5 2.9256 10.4473 3.05275 10.3535 3.1465L7.1465 6.3535C7.05273 6.44725 7.00003 6.5744 7 6.707V9.8595C7 9.9355 6.98267 10.0105 6.94933 10.0788C6.91599 10.1471 6.86752 10.2069 6.80761 10.2537C6.74769 10.3004 6.6779 10.3329 6.60355 10.3486C6.52919 10.3644 6.45222 10.363 6.3785 10.3445L5.3785 10.0945C5.27038 10.0674 5.1744 10.005 5.10583 9.9171C5.03725 9.82923 5 9.72096 5 9.6095V6.707C4.99997 6.5744 4.94727 6.44725 4.8535 6.3535L1.6465 3.1465C1.55273 3.05275 1.50003 2.9256 1.5 2.793V2C1.5 1.86739 1.55268 1.74021 1.64645 1.64645C1.74021 1.55268 1.86739 1.5 2 1.5Z"
-                          stroke="#666666"
-                          strokeWidth="1.5"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </g>
-                      <defs>
-                        <clipPath id="clip0_2622_213958">
-                          <rect width="12" height="12" fill="white" />
-                        </clipPath>
-                      </defs>
-                    </svg>
+                    {renderFilterIcon("stone")}
                   </Box>
 
                   <Box
+                    onClick={(e) => handleFilterClick(e, "shape")}
                     sx={{
                       width: "120px",
                       display: "flex",
                       alignItems: "center",
-                      justifyContent: "start",
+                      justifyContent: "center",
                       padding: "12px 8px",
+                      cursor: "pointer",
+                      "&:hover": {
+                        bgcolor: "rgba(0, 0, 0, 0.04)",
+                      },
                     }}
                   >
                     <Typography
@@ -778,37 +780,21 @@ const PurchaseModalFromStock = ({ data, state, handleSubmit, isApproved = false 
                     >
                       Shape
                     </Typography>
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="12"
-                      height="12"
-                      viewBox="0 0 12 12"
-                      fill="none"
-                    >
-                      <g clipPath="url(#clip0_2622_213958)">
-                        <path
-                          d="M2 1.5H10C10.1326 1.5 10.2598 1.55268 10.3536 1.64645C10.4473 1.74021 10.5 1.86739 10.5 2V2.793C10.5 2.9256 10.4473 3.05275 10.3535 3.1465L7.1465 6.3535C7.05273 6.44725 7.00003 6.5744 7 6.707V9.8595C7 9.9355 6.98267 10.0105 6.94933 10.0788C6.91599 10.1471 6.86752 10.2069 6.80761 10.2537C6.74769 10.3004 6.6779 10.3329 6.60355 10.3486C6.52919 10.3644 6.45222 10.363 6.3785 10.3445L5.3785 10.0945C5.27038 10.0674 5.1744 10.005 5.10583 9.9171C5.03725 9.82923 5 9.72096 5 9.6095V6.707C4.99997 6.5744 4.94727 6.44725 4.8535 6.3535L1.6465 3.1465C1.55273 3.05275 1.50003 2.9256 1.5 2.793V2C1.5 1.86739 1.55268 1.74021 1.64645 1.64645C1.74021 1.55268 1.86739 1.5 2 1.5Z"
-                          stroke="#666666"
-                          strokeWidth="1.5"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </g>
-                      <defs>
-                        <clipPath id="clip0_2622_213958">
-                          <rect width="12" height="12" fill="white" />
-                        </clipPath>
-                      </defs>
-                    </svg>
+                    {renderFilterIcon("shape")}
                   </Box>
 
                   <Box
+                    onClick={(e) => handleFilterClick(e, "size")}
                     sx={{
                       width: "120px",
                       display: "flex",
                       alignItems: "center",
-                      justifyContent: "start",
+                      justifyContent: "center",
                       padding: "12px 8px",
+                      cursor: "pointer",
+                      "&:hover": {
+                        bgcolor: "rgba(0, 0, 0, 0.04)",
+                      },
                     }}
                   >
                     <Typography
@@ -822,37 +808,21 @@ const PurchaseModalFromStock = ({ data, state, handleSubmit, isApproved = false 
                     >
                       Size
                     </Typography>
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="12"
-                      height="12"
-                      viewBox="0 0 12 12"
-                      fill="none"
-                    >
-                      <g clipPath="url(#clip0_2622_213958)">
-                        <path
-                          d="M2 1.5H10C10.1326 1.5 10.2598 1.55268 10.3536 1.64645C10.4473 1.74021 10.5 1.86739 10.5 2V2.793C10.5 2.9256 10.4473 3.05275 10.3535 3.1465L7.1465 6.3535C7.05273 6.44725 7.00003 6.5744 7 6.707V9.8595C7 9.9355 6.98267 10.0105 6.94933 10.0788C6.91599 10.1471 6.86752 10.2069 6.80761 10.2537C6.74769 10.3004 6.6779 10.3329 6.60355 10.3486C6.52919 10.3644 6.45222 10.363 6.3785 10.3445L5.3785 10.0945C5.27038 10.0674 5.1744 10.005 5.10583 9.9171C5.03725 9.82923 5 9.72096 5 9.6095V6.707C4.99997 6.5744 4.94727 6.44725 4.8535 6.3535L1.6465 3.1465C1.55273 3.05275 1.50003 2.9256 1.5 2.793V2C1.5 1.86739 1.55268 1.74021 1.64645 1.64645C1.74021 1.55268 1.86739 1.5 2 1.5Z"
-                          stroke="#666666"
-                          strokeWidth="1.5"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </g>
-                      <defs>
-                        <clipPath id="clip0_2622_213958">
-                          <rect width="12" height="12" fill="white" />
-                        </clipPath>
-                      </defs>
-                    </svg>
+                    {renderFilterIcon("size")}
                   </Box>
 
                   <Box
+                    onClick={(e) => handleFilterClick(e, "color")}
                     sx={{
                       width: "120px",
                       display: "flex",
                       alignItems: "center",
-                      justifyContent: "start",
+                      justifyContent: "center",
                       padding: "12px 8px",
+                      cursor: "pointer",
+                      "&:hover": {
+                        bgcolor: "rgba(0, 0, 0, 0.04)",
+                      },
                     }}
                   >
                     <Typography
@@ -866,37 +836,21 @@ const PurchaseModalFromStock = ({ data, state, handleSubmit, isApproved = false 
                     >
                       Color
                     </Typography>
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="12"
-                      height="12"
-                      viewBox="0 0 12 12"
-                      fill="none"
-                    >
-                      <g clipPath="url(#clip0_2622_213958)">
-                        <path
-                          d="M2 1.5H10C10.1326 1.5 10.2598 1.55268 10.3536 1.64645C10.4473 1.74021 10.5 1.86739 10.5 2V2.793C10.5 2.9256 10.4473 3.05275 10.3535 3.1465L7.1465 6.3535C7.05273 6.44725 7.00003 6.5744 7 6.707V9.8595C7 9.9355 6.98267 10.0105 6.94933 10.0788C6.91599 10.1471 6.86752 10.2069 6.80761 10.2537C6.74769 10.3004 6.6779 10.3329 6.60355 10.3486C6.52919 10.3644 6.45222 10.363 6.3785 10.3445L5.3785 10.0945C5.27038 10.0674 5.1744 10.005 5.10583 9.9171C5.03725 9.82923 5 9.72096 5 9.6095V6.707C4.99997 6.5744 4.94727 6.44725 4.8535 6.3535L1.6465 3.1465C1.55273 3.05275 1.50003 2.9256 1.5 2.793V2C1.5 1.86739 1.55268 1.74021 1.64645 1.64645C1.74021 1.55268 1.86739 1.5 2 1.5Z"
-                          stroke="#666666"
-                          strokeWidth="1.5"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </g>
-                      <defs>
-                        <clipPath id="clip0_2622_213958">
-                          <rect width="12" height="12" fill="white" />
-                        </clipPath>
-                      </defs>
-                    </svg>
+                    {renderFilterIcon("color")}
                   </Box>
 
                   <Box
+                    onClick={(e) => handleFilterClick(e, "cutting")}
                     sx={{
                       width: "120px",
                       display: "flex",
                       alignItems: "center",
-                      justifyContent: "start",
+                      justifyContent: "center",
                       padding: "12px 8px",
+                      cursor: "pointer",
+                      "&:hover": {
+                        bgcolor: "rgba(0, 0, 0, 0.04)",
+                      },
                     }}
                   >
                     <Typography
@@ -910,37 +864,21 @@ const PurchaseModalFromStock = ({ data, state, handleSubmit, isApproved = false 
                     >
                       Cutting
                     </Typography>
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="12"
-                      height="12"
-                      viewBox="0 0 12 12"
-                      fill="none"
-                    >
-                      <g clipPath="url(#clip0_2622_213958)">
-                        <path
-                          d="M2 1.5H10C10.1326 1.5 10.2598 1.55268 10.3536 1.64645C10.4473 1.74021 10.5 1.86739 10.5 2V2.793C10.5 2.9256 10.4473 3.05275 10.3535 3.1465L7.1465 6.3535C7.05273 6.44725 7.00003 6.5744 7 6.707V9.8595C7 9.9355 6.98267 10.0105 6.94933 10.0788C6.91599 10.1471 6.86752 10.2069 6.80761 10.2537C6.74769 10.3004 6.6779 10.3329 6.60355 10.3486C6.52919 10.3644 6.45222 10.363 6.3785 10.3445L5.3785 10.0945C5.27038 10.0674 5.1744 10.005 5.10583 9.9171C5.03725 9.82923 5 9.72096 5 9.6095V6.707C4.99997 6.5744 4.94727 6.44725 4.8535 6.3535L1.6465 3.1465C1.55273 3.05275 1.50003 2.9256 1.5 2.793V2C1.5 1.86739 1.55268 1.74021 1.64645 1.64645C1.74021 1.55268 1.86739 1.5 2 1.5Z"
-                          stroke="#666666"
-                          strokeWidth="1.5"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </g>
-                      <defs>
-                        <clipPath id="clip0_2622_213958">
-                          <rect width="12" height="12" fill="white" />
-                        </clipPath>
-                      </defs>
-                    </svg>
+                    {renderFilterIcon("cutting")}
                   </Box>
 
                   <Box
+                    onClick={(e) => handleFilterClick(e, "quality")}
                     sx={{
                       width: "120px",
                       display: "flex",
                       alignItems: "center",
-                      justifyContent: "start",
+                      justifyContent: "center",
                       padding: "12px 8px",
+                      cursor: "pointer",
+                      "&:hover": {
+                        bgcolor: "rgba(0, 0, 0, 0.04)",
+                      },
                     }}
                   >
                     <Typography
@@ -954,37 +892,21 @@ const PurchaseModalFromStock = ({ data, state, handleSubmit, isApproved = false 
                     >
                       Quality
                     </Typography>
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="12"
-                      height="12"
-                      viewBox="0 0 12 12"
-                      fill="none"
-                    >
-                      <g clipPath="url(#clip0_2622_213958)">
-                        <path
-                          d="M2 1.5H10C10.1326 1.5 10.2598 1.55268 10.3536 1.64645C10.4473 1.74021 10.5 1.86739 10.5 2V2.793C10.5 2.9256 10.4473 3.05275 10.3535 3.1465L7.1465 6.3535C7.05273 6.44725 7.00003 6.5744 7 6.707V9.8595C7 9.9355 6.98267 10.0105 6.94933 10.0788C6.91599 10.1471 6.86752 10.2069 6.80761 10.2537C6.74769 10.3004 6.6779 10.3329 6.60355 10.3486C6.52919 10.3644 6.45222 10.363 6.3785 10.3445L5.3785 10.0945C5.27038 10.0674 5.1744 10.005 5.10583 9.9171C5.03725 9.82923 5 9.72096 5 9.6095V6.707C4.99997 6.5744 4.94727 6.44725 4.8535 6.3535L1.6465 3.1465C1.55273 3.05275 1.50003 2.9256 1.5 2.793V2C1.5 1.86739 1.55268 1.74021 1.64645 1.64645C1.74021 1.55268 1.86739 1.5 2 1.5Z"
-                          stroke="#666666"
-                          strokeWidth="1.5"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </g>
-                      <defs>
-                        <clipPath id="clip0_2622_213958">
-                          <rect width="12" height="12" fill="white" />
-                        </clipPath>
-                      </defs>
-                    </svg>
+                    {renderFilterIcon("quality")}
                   </Box>
 
                   <Box
+                    onClick={(e) => handleFilterClick(e, "clarity")}
                     sx={{
                       width: "120px",
                       display: "flex",
                       alignItems: "center",
                       padding: "12px 8px",
-                      justifyContent: "start",
+                      justifyContent: "center",
+                      cursor: "pointer",
+                      "&:hover": {
+                        bgcolor: "rgba(0, 0, 0, 0.04)",
+                      },
                     }}
                   >
                     <Typography
@@ -998,36 +920,21 @@ const PurchaseModalFromStock = ({ data, state, handleSubmit, isApproved = false 
                     >
                       Clarity
                     </Typography>
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="12"
-                      height="12"
-                      viewBox="0 0 12 12"
-                      fill="none"
-                    >
-                      <g clipPath="url(#clip0_2622_213958)">
-                        <path
-                          d="M2 1.5H10C10.1326 1.5 10.2598 1.55268 10.3536 1.64645C10.4473 1.74021 10.5 1.86739 10.5 2V2.793C10.5 2.9256 10.4473 3.05275 10.3535 3.1465L7.1465 6.3535C7.05273 6.44725 7.00003 6.5744 7 6.707V9.8595C7 9.9355 6.98267 10.0105 6.94933 10.0788C6.91599 10.1471 6.86752 10.2069 6.80761 10.2537C6.74769 10.3004 6.6779 10.3329 6.60355 10.3486C6.52919 10.3644 6.45222 10.363 6.3785 10.3445L5.3785 10.0945C5.27038 10.0674 5.1744 10.005 5.10583 9.9171C5.03725 9.82923 5 9.72096 5 9.6095V6.707C4.99997 6.5744 4.94727 6.44725 4.8535 6.3535L1.6465 3.1465C1.55273 3.05275 1.50003 2.9256 1.5 2.793V2C1.5 1.86739 1.55268 1.74021 1.64645 1.64645C1.74021 1.55268 1.86739 1.5 2 1.5Z"
-                          stroke="#666666"
-                          strokeWidth="1.5"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </g>
-                      <defs>
-                        <clipPath id="clip0_2622_213958">
-                          <rect width="12" height="12" fill="white" />
-                        </clipPath>
-                      </defs>
-                    </svg>
+                    {renderFilterIcon("clarity")}
                   </Box>
 
                   <Box
+                    onClick={(e) => handleFilterClick(e, "cer_type")}
                     sx={{
-                      width: "120px",
+                      width: "140px",
                       display: "flex",
                       alignItems: "center",
+                      justifyContent: "center",
                       padding: "12px 8px",
+                      cursor: "pointer",
+                      "&:hover": {
+                        bgcolor: "rgba(0, 0, 0, 0.04)",
+                      },
                     }}
                   >
                     <Typography
@@ -1041,34 +948,14 @@ const PurchaseModalFromStock = ({ data, state, handleSubmit, isApproved = false 
                     >
                       Cer Type
                     </Typography>
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="12"
-                      height="12"
-                      viewBox="0 0 12 12"
-                      fill="none"
-                    >
-                      <g clipPath="url(#clip0_2622_213958)">
-                        <path
-                          d="M2 1.5H10C10.1326 1.5 10.2598 1.55268 10.3536 1.64645C10.4473 1.74021 10.5 1.86739 10.5 2V2.793C10.5 2.9256 10.4473 3.05275 10.3535 3.1465L7.1465 6.3535C7.05273 6.44725 7.00003 6.5744 7 6.707V9.8595C7 9.9355 6.98267 10.0105 6.94933 10.0788C6.91599 10.1471 6.86752 10.2069 6.80761 10.2537C6.74769 10.3004 6.6779 10.3329 6.60355 10.3486C6.52919 10.3644 6.45222 10.363 6.3785 10.3445L5.3785 10.0945C5.27038 10.0674 5.1744 10.005 5.10583 9.9171C5.03725 9.82923 5 9.72096 5 9.6095V6.707C4.99997 6.5744 4.94727 6.44725 4.8535 6.3535L1.6465 3.1465C1.55273 3.05275 1.50003 2.9256 1.5 2.793V2C1.5 1.86739 1.55268 1.74021 1.64645 1.64645C1.74021 1.55268 1.86739 1.5 2 1.5Z"
-                          stroke="#666666"
-                          strokeWidth="1.5"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </g>
-                      <defs>
-                        <clipPath id="clip0_2622_213958">
-                          <rect width="12" height="12" fill="white" />
-                        </clipPath>
-                      </defs>
-                    </svg>
+                    {renderFilterIcon("cer_type")}
                   </Box>
 
                   <Box
                     sx={{
                       width: "120px",
                       display: "flex",
+                      justifyContent: "center",
                       alignItems: "center",
                       padding: "12px 8px",
                     }}
@@ -1088,10 +975,10 @@ const PurchaseModalFromStock = ({ data, state, handleSubmit, isApproved = false 
 
                   <Box
                     sx={{
-                      width: "60px",
+                              width: "120px",
                       display: "flex",
                       alignItems: "center",
-                      justifyContent: "start",
+                      justifyContent: "center",
                       padding: "12px 8px",
                     }}
                   >
@@ -1113,7 +1000,7 @@ const PurchaseModalFromStock = ({ data, state, handleSubmit, isApproved = false 
                       width: "120px",
                       display: "flex",
                       alignItems: "center",
-                      justifyContent: "start",
+                         justifyContent: "center",
                       padding: "12px 8px",
                     }}
                   >
@@ -1135,7 +1022,7 @@ const PurchaseModalFromStock = ({ data, state, handleSubmit, isApproved = false 
                       width: "120px",
                       display: "flex",
                       alignItems: "center",
-                      justifyContent: "start",
+                         justifyContent: "center",
                       borderLeft: "1px solid #C6C6C8",
 
                       padding: "12px 8px",
@@ -1160,7 +1047,7 @@ const PurchaseModalFromStock = ({ data, state, handleSubmit, isApproved = false 
                       display: "flex",
                       alignItems: "center",
                       padding: "12px 8px",
-                      justifyContent: "start",
+                         justifyContent: "center",
                     }}
                   >
                     <Typography
@@ -1181,7 +1068,7 @@ const PurchaseModalFromStock = ({ data, state, handleSubmit, isApproved = false 
                       width: "120px",
                       display: "flex",
                       alignItems: "center",
-                      justifyContent: "start",
+                        justifyContent: "center",
                       padding: "12px 8px",
                     }}
                   >
@@ -1241,7 +1128,7 @@ const PurchaseModalFromStock = ({ data, state, handleSubmit, isApproved = false 
                       Loading...
                     </Typography>
                   </Box>
-                ) : rowData.length === 0 ? (
+               ) : sortedData.length === 0 ? (
                   <Box
                     sx={{
                       display: "flex",
@@ -1262,7 +1149,7 @@ const PurchaseModalFromStock = ({ data, state, handleSubmit, isApproved = false 
                     </Typography>
                   </Box>
                 ) : (
-                  rowData.map((row, rowIndex) => (
+                  sortedData.map((row, rowIndex) => (
                     <Box
                       key={row._id} // Use _id instead of index for key
                       sx={{
@@ -1284,7 +1171,7 @@ const PurchaseModalFromStock = ({ data, state, handleSubmit, isApproved = false 
                       >
                         <Checkbox
                           checked={selectedRows.some(
-                            (selectedRow) => selectedRow._id === row._id // Update ID comparison
+                            (selectedRow) => selectedRow._id === row._id, // Update ID comparison
                           )}
                           onChange={() => handleCheckboxChange(row)}
                         />
@@ -1297,6 +1184,7 @@ const PurchaseModalFromStock = ({ data, state, handleSubmit, isApproved = false 
                           width: "140px",
                           display: "flex",
                           alignItems: "center",
+                          justifyContent: "center",
                           padding: "12px 8px",
                         }}
                       >
@@ -1309,6 +1197,7 @@ const PurchaseModalFromStock = ({ data, state, handleSubmit, isApproved = false 
                           width: "140px",
                           display: "flex",
                           alignItems: "center",
+                           justifyContent: "center",
                           padding: "12px 8px",
                         }}
                       >
@@ -1321,6 +1210,7 @@ const PurchaseModalFromStock = ({ data, state, handleSubmit, isApproved = false 
                           width: "140px",
                           display: "flex",
                           alignItems: "center",
+                           justifyContent: "center",
                           padding: "12px 8px",
                         }}
                       >
@@ -1331,6 +1221,7 @@ const PurchaseModalFromStock = ({ data, state, handleSubmit, isApproved = false 
                           width: "140px",
                           display: "flex",
                           alignItems: "center",
+                           justifyContent: "center",
                           padding: "12px 8px",
                         }}
                       >
@@ -1341,6 +1232,7 @@ const PurchaseModalFromStock = ({ data, state, handleSubmit, isApproved = false 
                           width: "120px",
                           display: "flex",
                           alignItems: "center",
+                           justifyContent: "center",
                           padding: "12px 8px",
                         }}
                       >
@@ -1351,6 +1243,7 @@ const PurchaseModalFromStock = ({ data, state, handleSubmit, isApproved = false 
                           width: "120px",
                           display: "flex",
                           alignItems: "center",
+                           justifyContent: "center",
                           padding: "12px 8px",
                         }}
                       >
@@ -1361,7 +1254,7 @@ const PurchaseModalFromStock = ({ data, state, handleSubmit, isApproved = false 
                           width: "120px",
                           display: "flex",
                           alignItems: "center",
-                          justifyContent: "start",
+                         justifyContent: "center",padding: "12px 8px",
                         }}
                       >
                         <Typography sx={textStyle}>{row.size}</Typography>
@@ -1371,6 +1264,7 @@ const PurchaseModalFromStock = ({ data, state, handleSubmit, isApproved = false 
                           width: "120px",
                           display: "flex",
                           alignItems: "center",
+                           justifyContent: "center",
                           padding: "12px 8px",
                         }}
                       >
@@ -1380,7 +1274,7 @@ const PurchaseModalFromStock = ({ data, state, handleSubmit, isApproved = false 
                         sx={{
                           width: "120px",
                           display: "flex",
-                          alignItems: "center",
+                          alignItems: "center", justifyContent: "center",
                           padding: "12px 8px",
                         }}
                       >
@@ -1391,6 +1285,7 @@ const PurchaseModalFromStock = ({ data, state, handleSubmit, isApproved = false 
                           width: "120px",
                           display: "flex",
                           alignItems: "center",
+                           justifyContent: "center",
                           padding: "12px 8px",
                         }}
                       >
@@ -1400,7 +1295,7 @@ const PurchaseModalFromStock = ({ data, state, handleSubmit, isApproved = false 
                         sx={{
                           width: "120px",
                           display: "flex",
-                          alignItems: "center",
+                          alignItems: "center", justifyContent: "center",
                           padding: "12px 8px",
                         }}
                       >
@@ -1408,11 +1303,11 @@ const PurchaseModalFromStock = ({ data, state, handleSubmit, isApproved = false 
                       </Box>
                       <Box
                         sx={{
-                          width: "120px",
+                          width: "140px",
                           display: "flex",
                           alignItems: "center",
                           padding: "12px 8px",
-                          justifyContent: "start",
+                           justifyContent: "center",
                         }}
                       >
                         <Typography sx={textStyle}>{row.cer_type}</Typography>
@@ -1423,7 +1318,7 @@ const PurchaseModalFromStock = ({ data, state, handleSubmit, isApproved = false 
                           display: "flex",
                           alignItems: "center",
                           padding: "12px 8px",
-                          justifyContent: "start",
+                           justifyContent: "center",
                         }}
                       >
                         <Typography sx={textStyle}>{row.cer_no}</Typography>
@@ -1434,7 +1329,7 @@ const PurchaseModalFromStock = ({ data, state, handleSubmit, isApproved = false 
                           width: "120px",
                           display: "flex",
                           alignItems: "center",
-                          justifyContent: "start",
+                          justifyContent: "center",
                           padding: "12px 8px",
                         }}
                       >
@@ -1445,29 +1340,29 @@ const PurchaseModalFromStock = ({ data, state, handleSubmit, isApproved = false 
                           width: "120px",
                           display: "flex",
                           alignItems: "center",
-                          justifyContent: "start",
+                           justifyContent: "center",
                           padding: "12px 8px",
                         }}
                       >
-                        <Typography sx={textStyle}>{row.weight}</Typography>
+                            <Typography sx={textStyle}>{formatWeight(row.weight)}</Typography>
                       </Box>
                       <Box
                         sx={{
                           width: "120px",
                           display: "flex",
                           alignItems: "center",
-                          justifyContent: "start",
+                         justifyContent: "center",
                           padding: "12px 8px",
                         }}
                       >
-                        <Typography sx={textStyle}>{row.price}</Typography>
+                         <Typography sx={textStyle}>{formatCurrency(row.price)}</Typography>
                       </Box>
                       <Box
                         sx={{
                           width: "120px",
                           display: "flex",
                           alignItems: "center",
-                          justifyContent: "start",
+                          justifyContent: "center",
                           padding: "12px 8px",
                         }}
                       >
@@ -1478,11 +1373,11 @@ const PurchaseModalFromStock = ({ data, state, handleSubmit, isApproved = false 
                           width: "120px",
                           display: "flex",
                           alignItems: "center",
-                          justifyContent: "start",
+                         justifyContent: "center",
                           padding: "12px 8px",
                         }}
                       >
-                        <Typography sx={textStyle}>{row.amount}</Typography>
+                          <Typography sx={textStyle}>{formatCurrency(row.amount)}</Typography>
                       </Box>
                       <Box
                         sx={{
@@ -1490,7 +1385,7 @@ const PurchaseModalFromStock = ({ data, state, handleSubmit, isApproved = false 
                           display: "flex",
                           alignItems: "center",
                           padding: "12px 8px",
-                          justifyContent: "center",
+                         justifyContent: "center",
                         }}
                       >
                         <Typography sx={textStyle}>{row.remark}</Typography>
@@ -1578,6 +1473,13 @@ const PurchaseModalFromStock = ({ data, state, handleSubmit, isApproved = false 
           </Box>
         </Modal>
       </Box>
+
+        <ColumnFilterPopover
+                    {...popoverProps}
+                    sortConfig={sortConfig}
+                    setSortConfig={setSortConfig}
+                  />
+                  
     </>
   );
 };

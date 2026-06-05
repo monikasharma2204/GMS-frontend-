@@ -143,46 +143,46 @@ const StoneMaster = ({ handleClick, showRedBox  }) => {
         <Box sx={NewTab} 
         onClick={(e) => e.stopPropagation()}  >
           <Box>
-            <Box sx={Dropdownmenu}  className="hovered-box">
-              <Link to="/stone-master/stone-group">
+            <Link to="/stone-master/stone-group">
+              <Box sx={Dropdownmenu} className="hovered-box">
                 <Typography sx={TextMain} className={isStoneGroupActive ? "active" : ""}>Stone Group</Typography>
-              </Link>
-            </Box>
-            <Box sx={Dropdownmenu} className="hovered-box">
-              <Link to="/stone-master/stone/">
+              </Box>
+            </Link>
+            <Link to="/stone-master/stone/">
+              <Box sx={Dropdownmenu} className="hovered-box">
                 <Typography sx={TextMain} className={isStoneActive ? "active" : ""}>Stone</Typography>
-              </Link>
-            </Box>
-            <Box sx={Dropdownmenu} className="hovered-box">
-              <Link to="/stone-master/shape/">
+              </Box>
+            </Link>
+            <Link to="/stone-master/shape/">
+              <Box sx={Dropdownmenu} className="hovered-box">
                 <Typography sx={TextMain} className={isShapeActive ? "active" : ""}>Shape</Typography>
-              </Link>
-            </Box>
-            <Box sx={Dropdownmenu} className="hovered-box">
-              <Link to="/stone-master/size/">
+              </Box>
+            </Link>
+            <Link to="/stone-master/size/">
+              <Box sx={Dropdownmenu} className="hovered-box">
                 <Typography sx={TextMain} className={isSizeActive ? "active" : ""}>Size</Typography>
-              </Link>
-            </Box>
-            <Box sx={Dropdownmenu} className="hovered-box">
-              <Link to="/stone-master/color">
+              </Box>
+            </Link>
+            <Link to="/stone-master/color">
+              <Box sx={Dropdownmenu} className="hovered-box">
                 <Typography sx={TextMain} className={isColorActive ? "active" : ""}>Color</Typography>
-              </Link>
-            </Box>
-            <Box sx={Dropdownmenu} className="hovered-box">
-              <Link to="/stone-master/cutting/">
+              </Box>
+            </Link>
+            <Link to="/stone-master/cutting/">
+              <Box sx={Dropdownmenu} className="hovered-box">
                 <Typography sx={TextMain} className={isCuttingActive ? "active" : ""}>Cutting</Typography>
-              </Link>
-            </Box>
-            <Box sx={Dropdownmenu} className="hovered-box">
-              <Link to="/stone-master/quality/">
+              </Box>
+            </Link>
+            <Link to="/stone-master/quality/">
+              <Box sx={Dropdownmenu} className="hovered-box">
                 <Typography sx={TextMain} className={isQualityActive ? "active" : ""}>Quality</Typography>
-              </Link>
-            </Box>
-            <Box sx={Dropdownmenu} className="hovered-box">
-              <Link to="/stone-master/clarity/">
+              </Box>
+            </Link>
+            <Link to="/stone-master/clarity/">
+              <Box sx={Dropdownmenu} className="hovered-box">
                 <Typography sx={TextMain} className={isClarityActive ? "active" : ""}>Clarity</Typography>
-              </Link>
-            </Box>
+              </Box>
+            </Link>
            
           </Box>
         </Box>

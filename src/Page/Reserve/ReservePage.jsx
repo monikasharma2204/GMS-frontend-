@@ -29,6 +29,7 @@ import {
   reserveFormDataState,
 } from "../../recoil/state/ReserveFSMState";
 import ConfirmCancelDialog from "../../component/Commons/ConfirmCancelDialog";
+import ValidationWarningBanner from "../../component/Commons/ValidationWarningBanner";
 import {
   initialData,
   initialData2,
@@ -690,9 +691,9 @@ const ReservePage = () => {
         rowErrors.push("Pcs");
       }
 
-      if (!isNumeric(el.weight) || parseFloat(el.weight) <= 0) {
-        rowErrors.push("Weight");
-      }
+      // if (!isNumeric(el.weight) || parseFloat(el.weight) <= 0) {
+      //   rowErrors.push("Weight");
+      // }
 
       if (!isNumeric(el.price) || parseFloat(el.price) <= 0) {
         rowErrors.push("Price");
@@ -821,6 +822,9 @@ const ReservePage = () => {
         remark: el.remark,
         unit: el.unit || "cts",
         status: "active",
+        isFromStock: el.isFromStock,
+        availablePcs: el.availablePcs,
+        availableWeight: el.availableWeight,
 
         image: el.imageFile ? undefined : (el.image ? (() => {
           const img = el.image;
@@ -924,6 +928,36 @@ const ReservePage = () => {
   const [isOpenModalWarning, setIsOpenModalWarning] = useState(false);
   const [isOpenModalConfirm, setIsOpenModalConfrim] = useState(false);
   const [isOpenModalSuccess, setIsOpenModalSuccess] = useState(false);
+  const [showWarningBanner, setShowWarningBanner] = useState(false);
+  const [warningMessage, setWarningMessage] = useState("Please complete all required fields.");
+  const showWarning = useCallback((message) => {
+    setWarningMessage(message || "Please complete all required fields.");
+    setShowWarningBanner(true);
+    setTimeout(() => {
+      setShowWarningBanner(false);
+    }, 1800);
+  }, []);
+
+  const getStockAvailabilityMap = useCallback(async () => {
+    try {
+      const response = await apiRequest("GET", "/stocksandconsignments");
+      const stockRows = [
+        ...(response?.stocks || []),
+        ...(response?.consignments || []),
+      ];
+      return stockRows.reduce((map, stockRow) => {
+        [stockRow._id, stockRow.id, stockRow.stock_id].forEach((key) => {
+          if (key) {
+            map[String(key)] = stockRow;
+          }
+        });
+        return map;
+      }, {});
+    } catch (error) {
+      console.error("Error fetching stock availability:", error);
+      return {};
+    }
+  }, []);
 
   // FSM Handler Functions
   const handleEditToggle = () => {
@@ -1163,9 +1197,10 @@ const ReservePage = () => {
     }
   };
 
-  const handleEdit = (item) => {
+  const handleEdit = async (item) => {
     setOpen(false);
     setEditMemoStatus(false);
+    dispatch({ type: "RESET_STATE" });
 
 
     setDocDate(parseBackendDate(item.doc_date));
@@ -1284,14 +1319,25 @@ const ReservePage = () => {
 
 
 
-    const formattedItems = item.items.map((el) => ({
+    const stockAvailabilityMap = await getStockAvailabilityMap();
+    const formattedItems = item.items.map((el) => {
+      const stockRow =
+        stockAvailabilityMap[String(el.stock?._id || "")] ||
+        stockAvailabilityMap[String(el._id || "")] ||
+        stockAvailabilityMap[String(el.id || "")] ||
+        stockAvailabilityMap[String(el.stock_id || "")];
+
+      return ({
       ...el,
+      isFromStock: el.isFromStock || !!el.stock_id || !!el.stone_code,
       // Always display original_pcs in DayBook rows 
       pcs: Number(el.original_pcs ?? el.pcs ?? 0),
       original_pcs: Number(el.original_pcs ?? el.pcs ?? 0),
+      availablePcs: stockRow?.pcs ?? el.availablePcs,
       total_amount: Number(el.total_amount).toFixed(2),
       weight_per_piece: Number(el.weight_per_piece).toFixed(2),
       weight: Number(el.weight).toFixed(3),
+      availableWeight: stockRow?.weight ?? el.availableWeight,
       price: Number(el.price).toFixed(2),
       discount_percent: Number(el.discount_percent).toFixed(2),
       discount_amount: Number(el.discount_amount).toFixed(2),
@@ -1306,7 +1352,8 @@ const ReservePage = () => {
         ? (/^https?:\/\//.test(el.image) ? el.image : `${API_URL}${el.image}`)
         : null,
       isFromDayBook: true, // Mark items from DayBook as editable
-    }));
+    });
+    });
 
     setRows(formattedItems);
 
@@ -1796,6 +1843,7 @@ const ReservePage = () => {
               note={note}
               remark={remark}
               triggerFSMDirty={triggerFSMDirty}
+              showWarning={showWarning}
             />
           </Box>
         </Box>
@@ -1836,6 +1884,11 @@ const ReservePage = () => {
       {renderDialogConfirm()}
       {renderDialogError()}
       {renderDialogWarning()}
+      <ValidationWarningBanner
+        show={showWarningBanner}
+        message={warningMessage}
+        sx={{ position: "fixed", top: "100px", right: "25px", zIndex: 99999 }}
+      />
     </Box>
   );
 };

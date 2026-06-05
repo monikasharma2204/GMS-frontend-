@@ -1800,6 +1800,7 @@ const MemoOutReturn = () => {
               triggerFSMDirty={triggerFSMDirty}
               fsmState={fsmState}
               editMemoStatus={editMemoStatus}
+              hasUnsavedData={() => hasUnsavedData}
             />
           </Box>
         </Box>

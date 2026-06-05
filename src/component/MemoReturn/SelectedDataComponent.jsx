@@ -18,6 +18,7 @@ import {
   QuotationtableRowsState,
   QuotationtableRowsDropdownData,
 } from "recoil/MemoReturn/MemoReturn";
+import ReturnMemoPending from "./ReturnMemoPending";
 
 
 
@@ -44,7 +45,49 @@ const SelectedDataComponent = ({
   triggerFSMDirty,
   // isApproved = false,
   disabled = false,
+  fsmState,
+  hasUnsavedData,
 }) => {
+
+  const handleStockSubmit = (selectedStockRows = []) => {
+    // Map the stock data to match your table structure
+    const newRows = selectedStockRows?.map((stockRow) => ({
+      stone_code: stockRow.stone_code,
+      stock_id: stockRow.stock_id,
+      account: stockRow.account,
+      _id: stockRow._id,
+      uniqueId: stockRow._id,
+      stone: stockRow.stone,
+      shape: stockRow.shape,
+      size: stockRow.size,
+      color: stockRow.color,
+      cutting: stockRow.cutting,
+      quality: stockRow.quality,
+      clarity: stockRow.clarity,
+      cer_type: stockRow.cer_type,
+      cer_no: stockRow.cer_no,
+      location: stockRow.location,
+      type: stockRow.stock_type,
+      lot_no: stockRow.lot_no,
+      pcs: stockRow.pcs,
+      weight: stockRow.weight,
+      price: stockRow.price,
+      unit: stockRow.unit,
+      amount: stockRow.amount,
+      remark: stockRow.remark,
+      ref_no: stockRow.ref_no,
+      // Add any other fields needed with default values
+      discount_percent: stockRow.discount_percent,
+      discount_amount: stockRow.discount_amount,
+      totalAmount: stockRow.amount,
+      labour: "",
+      labour_price: 0,
+      isFromMemoPending: true,
+    }));
+
+    // Add the new rows to existing rows
+    setRows((prevRows) => [...prevRows, ...newRows]);
+  };
 
   const [dropdownOptions, setDropdownOptions] = useState({});
   const editMemoStatus = useRecoilValue(editMemoState);
@@ -189,10 +232,23 @@ const SelectedDataComponent = ({
         >
           Item
         </Typography>
-       
+        <ReturnMemoPending
+          handleSubmit={handleStockSubmit}
+          fsmState={fsmState}
+          hasUnsavedData={hasUnsavedData}
+        />
       </Box>
 
       <Box
+        onScroll={() => {
+          if (
+            document.activeElement &&
+            (document.activeElement.getAttribute("aria-autocomplete") ||
+              document.activeElement.getAttribute("role") === "combobox")
+          ) {
+            document.activeElement.blur();
+          }
+        }}
         sx={{
           height: "294px",
           overflowX: "scroll",

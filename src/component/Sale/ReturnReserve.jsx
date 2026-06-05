@@ -7,6 +7,10 @@ import Select from "@mui/material/Select";
 import { useRecoilState } from "recoil";
 import apiRequest from "helpers/apiHelper.js";
 import { QuotationtableRowsState } from "recoil/Sale/SaleState";
+import useTableSort from "../../hooks/useTableSort";
+import ColumnFilterPopover from "../Commons/ColumnFilterPopover/ColumnFilterPopover";
+import { useColumnFilters } from "../Commons/ColumnFilterPopover/useColumnFilters";
+import SortIcon from "../Commons/SortIcon/SortIcon";
 import {
   keyEditState,
   memoInfoState,
@@ -24,6 +28,8 @@ const style = {
   bgcolor: "background.paper",
   borderRadius: "8px",
 };
+
+
 const textStyle = {
   color: "var(--Main-Text, #343434)",
   fontFamily: "Calibri",
@@ -31,6 +37,20 @@ const textStyle = {
   fontStyle: "normal",
   fontWeight: 400,
 };
+
+const formatWeight = (weight) => {
+  const value = Number(weight);
+  return Number.isFinite(value) ? value.toFixed(3) : "0.000";
+};
+
+const formatCurrency = (amount) => {
+  const num = parseFloat(amount);
+  return isNaN(num) ? "0.00" : num.toLocaleString("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+};
+
 const ReturnReserve = ({ data, state, handleSubmit, handleEdit, disabled = false }) => {
   const [open, setOpen] = useState(false);
   const [rowData, setRowData] = useState([]);
@@ -42,6 +62,37 @@ const ReturnReserve = ({ data, state, handleSubmit, handleEdit, disabled = false
 
   const [selectedRows, setSelectedRows] = useState([]);
   const isOkButtonEnabled = selectedRows.length === 1;
+  const { filteredData, handleFilterClick, popoverProps, isFilterActive } = useColumnFilters(rowData, open);
+  const { sortedData, requestSort, sortConfig, setSortConfig } = useTableSort(filteredData, { key: 'doc_date', direction: 'desc' });
+
+  const renderFilterIcon = (columnKey) => {
+    const active = isFilterActive(columnKey) || (popoverProps.open && popoverProps.activeColumnKey === columnKey);
+    return (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="12"
+        height="12"
+        viewBox="0 0 12 12"
+        fill="none"
+        style={{ marginLeft: "4px", flexShrink: 0 }}
+      >
+        <g clipPath={`url(#clip0_memo_out_pending_filter_${columnKey})`}>
+          <path
+            d="M2 1.5H10C10.1326 1.5 10.2598 1.55268 10.3536 1.64645C10.4473 1.74021 10.5 1.86739 10.5 2V2.793C10.5 2.9256 10.4473 3.05275 10.3535 3.1465L7.1465 6.3535C7.05273 6.44725 7.00003 6.5744 7 6.707V9.8595C7 9.9355 6.98267 10.0105 6.94933 10.0788C6.91599 10.1471 6.86752 10.2069 6.80761 10.2537C6.74769 10.3004 6.6779 10.3329 6.60355 10.3486C6.52919 10.3644 6.45222 10.363 6.3785 10.3445L5.3785 10.0945C5.27038 10.0674 5.1744 10.005 5.10583 9.9171C5.03725 9.82923 5 9.72096 5 9.6095V6.707C4.99997 6.5744 4.94727 6.44725 4.8535 6.3535L1.6465 3.1465C1.55273 3.05275 1.50003 2.9256 1.5 2.793V2C1.5 1.86739 1.55268 1.74021 1.64645 1.64645C1.74021 1.55268 1.86739 1.5 2 1.5Z"
+            stroke={active ? "#17C653" : "#666666"}
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </g>
+        <defs>
+          <clipPath id={`clip0_memo_out_pending_filter_${columnKey}`}>
+            <rect width="12" height="12" fill="white" />
+          </clipPath>
+        </defs>
+      </svg>
+    );
+  };
 
   useEffect(() => {
 
@@ -53,8 +104,11 @@ const ReturnReserve = ({ data, state, handleSubmit, handleEdit, disabled = false
           `/reserves/by-account?account=${memoInfo?.account?.label || ""}`
         );
 
-        setRowData(response);
-        setMemoInfo({ ...memoInfo, memoPendingData: response });
+         const memoRows = Array.isArray(response)
+          ? response.map((row, index) => ({ ...row, __rowIndex: index }))
+          : [];
+        setRowData(memoRows);
+        setMemoInfo({...memoInfo,memoPendingData:memoRows});
 
       } catch (error) {
         console.error("Error fetching stock:", error);
@@ -77,10 +131,12 @@ const ReturnReserve = ({ data, state, handleSubmit, handleEdit, disabled = false
   };
 
   const toggleAll = () => {
-    if (selectedRows.length === rowData.length) {
+       if (selectedRows.length === sortedData.length && sortedData.length > 0) {
+      // Uncheck all if everything is already selected
       setSelectedRows([]);
     } else {
-      setSelectedRows(rowData);
+      // Select all
+      setSelectedRows(sortedData);
     }
   };
 
@@ -540,7 +596,10 @@ const ReturnReserve = ({ data, state, handleSubmit, handleEdit, disabled = false
                     }}
                   >
                     <Checkbox
-                      checked={selectedRows.length === rowData.length && rowData.length > 0}
+                      checked={
+                        selectedRows.length === sortedData.length &&
+                        sortedData.length > 0
+                      }
                       onChange={toggleAll}
                     />
                     <Typography
@@ -557,11 +616,13 @@ const ReturnReserve = ({ data, state, handleSubmit, handleEdit, disabled = false
                   </Box>
 
                   <Box
+                    onClick={() => requestSort('doc_date')}
                     sx={{
                       width: "140px",
                       display: "flex",
                       alignItems: "center",
                       padding: "12px 8px",
+                      cursor: "pointer",
                     }}
                   >
                     <Typography
@@ -575,36 +636,17 @@ const ReturnReserve = ({ data, state, handleSubmit, handleEdit, disabled = false
                     >
                       Doc Date
                     </Typography>
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="12"
-                      height="12"
-                      viewBox="0 0 12 12"
-                      fill="none"
-                    >
-                      <g clipPath="url(#clip0_2622_213943)">
-                        <path
-                          d="M2 1.5H10C10.1326 1.5 10.2598 1.55268 10.3536 1.64645C10.4473 1.74021 10.5 1.86739 10.5 2V2.793C10.5 2.9256 10.4473 3.05275 10.3535 3.1465L7.1465 6.3535C7.05273 6.44725 7.00003 6.5744 7 6.707V9.8595C7 9.9355 6.98267 10.0105 6.94933 10.0788C6.91599 10.1471 6.86752 10.2069 6.80761 10.2537C6.74769 10.3004 6.6779 10.3329 6.60355 10.3486C6.52919 10.3644 6.45222 10.363 6.3785 10.3445L5.3785 10.0945C5.27038 10.0674 5.1744 10.005 5.10583 9.9171C5.03725 9.82923 5 9.72096 5 9.6095V6.707C4.99997 6.5744 4.94727 6.44725 4.8535 6.3535L1.6465 3.1465C1.55273 3.05275 1.50003 2.9256 1.5 2.793V2C1.5 1.86739 1.55268 1.74021 1.64645 1.64645C1.74021 1.55268 1.86739 1.5 2 1.5Z"
-                          stroke="#666666"
-                          strokeWidth="1.5"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </g>
-                      <defs>
-                        <clipPath id="clip0_2622_213943">
-                          <rect width="12" height="12" fill="white" />
-                        </clipPath>
-                      </defs>
-                    </svg>
+                    <SortIcon sortConfig={sortConfig} columnKey="doc_date" />
                   </Box>
 
                   <Box
+                    onClick={() => requestSort('due_date')}
                     sx={{
                       width: "140px",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
+                      cursor: "pointer",
                     }}
                   >
                     <Typography
@@ -618,26 +660,17 @@ const ReturnReserve = ({ data, state, handleSubmit, handleEdit, disabled = false
                     >
                       Due Date
                     </Typography>
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="19"
-                      height="18"
-                      viewBox="0 0 19 18"
-                      fill="none"
-                    >
-                      <path
-                        d="M6.5 12H3.5L8 16.5V1.5H6.5V12ZM11 3.75V16.5H12.5V6H15.5L11 1.5V3.75Z"
-                        fill="#343434"
-                      />
-                    </svg>
+                    <SortIcon sortConfig={sortConfig} columnKey="due_date" />
                   </Box>
 
                   <Box
+                    onClick={(e) => handleFilterClick(e, 'invoice_no')}
                     sx={{
                       width: "140px",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
+                      cursor: "pointer",
                     }}
                   >
                     <Typography
@@ -651,6 +684,7 @@ const ReturnReserve = ({ data, state, handleSubmit, handleEdit, disabled = false
                     >
                       Reserve No.
                     </Typography>
+                    {renderFilterIcon('invoice_no')}
                   </Box>
 
                   <Box
@@ -672,21 +706,6 @@ const ReturnReserve = ({ data, state, handleSubmit, handleEdit, disabled = false
                     >
                       Account
                     </Typography>
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="15"
-                      height="14"
-                      viewBox="0 0 15 14"
-                      fill="none"
-                    >
-                      <path
-                        d="M2.83333 1.75H12.1667C12.3214 1.75 12.4697 1.81146 12.5791 1.92085C12.6885 2.03025 12.75 2.17862 12.75 2.33333V3.2585C12.75 3.4132 12.6885 3.56155 12.5791 3.67092L8.83758 7.41242C8.72818 7.52179 8.6667 7.67014 8.66667 7.82483V11.5028C8.66666 11.5914 8.64645 11.6789 8.60755 11.7586C8.56866 11.8383 8.51211 11.9081 8.44221 11.9626C8.3723 12.0172 8.29088 12.0551 8.20414 12.0734C8.11739 12.0918 8.0276 12.0901 7.94158 12.0686L6.77492 11.7769C6.64877 11.7453 6.53681 11.6725 6.4568 11.57C6.37679 11.4674 6.33334 11.3411 6.33333 11.2111V7.82483C6.3333 7.67014 6.27182 7.52179 6.16242 7.41242L2.42092 3.67092C2.31151 3.56155 2.25003 3.4132 2.25 3.2585V2.33333C2.25 2.17862 2.31146 2.03025 2.42085 1.92085C2.53025 1.81146 2.67862 1.75 2.83333 1.75Z"
-                        stroke="#666666"
-                        strokeWidth="1.5"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
                   </Box>
 
                   <Box
@@ -863,7 +882,7 @@ const ReturnReserve = ({ data, state, handleSubmit, handleEdit, disabled = false
                       Loading...
                     </Typography>
                   </Box>
-                ) : rowData.length === 0 ? (
+                ) : sortedData.length === 0 ? (
                   <Box
                     sx={{
                       display: "flex",
@@ -885,7 +904,7 @@ const ReturnReserve = ({ data, state, handleSubmit, handleEdit, disabled = false
                   </Box>
                 ) : (
 
-                  rowData.map((row, rowIndex) => (
+                  sortedData.map((row, rowIndex) => (
 
                     <Box
                       key={row._id} // Use _id instead of index for key
@@ -1017,12 +1036,20 @@ const ReturnReserve = ({ data, state, handleSubmit, handleEdit, disabled = false
                           padding: "12px 8px",
                         }}
                       >
+                   
+
                         <Typography sx={textStyle}>
-                          {row.items && row.items.length > 0
-                            ? row.items.reduce((total, item) => total + (item.weight || 0), 0)
-                            : 0
-                          }
-                        </Typography>
+  {formatWeight(
+    row.items && row.items.length > 0
+      ? row.items.reduce(
+          (total, item) => total + (item.weight || 0),
+          0
+        )
+      : 0
+  )}
+</Typography>
+
+                          
                       </Box>
 
                       <Box
@@ -1033,12 +1060,19 @@ const ReturnReserve = ({ data, state, handleSubmit, handleEdit, disabled = false
                           justifyContent: "center",
                         }}
                       >
+               
+
                         <Typography sx={textStyle}>
-                          {row.items && row.items.length > 0
-                            ? row.items.reduce((total, item) => total + (item.amount || 0), 0)
-                            : 0
-                          }
-                        </Typography>
+  {formatCurrency(
+    row.items && row.items.length > 0
+      ? row.items.reduce(
+          (total, item) => total + (item.amount || 0),
+          0
+        )
+      : 0
+  )}
+</Typography>
+
                       </Box>
 
                       <Box
@@ -1147,6 +1181,11 @@ const ReturnReserve = ({ data, state, handleSubmit, handleEdit, disabled = false
           </Box>
         </Modal>
       </Box>
+      <ColumnFilterPopover
+        {...popoverProps}
+        sortConfig={sortConfig}
+        setSortConfig={setSortConfig}
+      />
     </>
   );
 };

@@ -28,8 +28,10 @@ import {
 } from "recoil/state/LoadFSMState";
 import useTransactionNavigationGuard from "../../hooks/useTransactionNavigationGuard";
 import ConfirmCancelDialog from "../../component/Commons/ConfirmCancelDialog";
+import { useLocation } from "react-router-dom";
 
 const Load = () => {
+  const location = useLocation();
   const [state, setState] = useState({ selectedItems: [] });
   const [rows, setRows] = useState([]);
   const [open, setOpen] = useState(false);
@@ -1001,6 +1003,40 @@ const Load = () => {
   };
 
   const bodyRef = React.useRef(null);
+  const openedLoadNoRef = React.useRef(null);
+
+  React.useEffect(() => {
+    const openLoadNo = location.state?.openLoadNo;
+    if (!openLoadNo || openedLoadNoRef.current === openLoadNo) return;
+
+    openedLoadNoRef.current = openLoadNo;
+
+    const openLoadFromReport = async () => {
+      try {
+        const loads = await apiRequest("GET", "/loads", {});
+        const selectedLoad = Array.isArray(loads)
+          ? loads.find((load) => load.invoice_no === openLoadNo)
+          : null;
+
+        if (selectedLoad) {
+          handleEdit({
+            ...selectedLoad,
+            load_item: selectedLoad.load_item || [],
+            isFromDayBook: true,
+          });
+        } else {
+          setWarningText(`Load No. ${openLoadNo} was not found.`);
+          setIsOpenModalWarning(true);
+        }
+      } catch (error) {
+        console.error("Failed to open load from primary report:", error);
+        setWarningText(`Failed to open Load No. ${openLoadNo}.`);
+        setIsOpenModalWarning(true);
+      }
+    };
+
+    openLoadFromReport();
+  }, [location.state?.openLoadNo]);
 
   const [isOpenModalConfirm, setIsOpenModalConfrim] = useState(false);
   const [isOpenModalSuccess, setIsOpenModalSuccess] = useState(false);

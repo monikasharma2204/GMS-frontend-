@@ -58,10 +58,10 @@ const SelectedDataComponent = ({
     try {
       // Update the shape in the row
       onChange(rowIndex, "shape", shapeName);
-      
+
       // Clear the size field for this row
       onChange(rowIndex, "size", "");
-      
+
       // Wait for allDropdownOptions to be loaded if it's not ready
       if (allDropdownOptions.length === 0) {
         const data = await fetchData();
@@ -69,22 +69,22 @@ const SelectedDataComponent = ({
         // Wait a bit for state to update
         await new Promise(resolve => setTimeout(resolve, 100));
       }
-      
+
       if (shapeName) {
         // Find the shape code from the name
-        const shapeData = allDropdownOptions.find(item => 
-          item.master_type === "master_stone_shape" && 
+        const shapeData = allDropdownOptions.find(item =>
+          item.master_type === "master_stone_shape" &&
           item.name === shapeName
         );
-        
+
         if (shapeData && shapeData.master_info && shapeData.master_info.size_ids) {
           // Get all size data and filter by the size_ids
-          const allSizes = allDropdownOptions.filter(item => 
-            item.master_type === "master_stone_size" && 
+          const allSizes = allDropdownOptions.filter(item =>
+            item.master_type === "master_stone_size" &&
             item.master_status === "active" &&
             shapeData.master_info.size_ids.includes(item._id)
           );
-          
+
           // Update dropdown options with the new sizes
           setDropdownOptions(prevOptions => {
             const newSizeOptions = allSizes.map(size => ({ label: size.name, value: size.code }));
@@ -128,21 +128,21 @@ const SelectedDataComponent = ({
 
 
 
- 
+
 
   const handleStockSubmit = (selectedStockRows) => {
     // Map the stock data to match your table structure
-   
+
     const newRows = selectedStockRows.map((stockRow) => {
       const imageUrl = stockRow.image
         ? (/^https?:\/\//.test(stockRow.image) ? stockRow.image : `${API_URL}${stockRow.image}`)
         : null;
-      
+
       return {
         stone_code: stockRow.stone_code,
-        account:stockRow.account,
+        account: stockRow.account,
         type: stockRow.type,
-        _id:stockRow._id,
+        _id: stockRow._id,
         stone: stockRow.stone,
         shape: stockRow.shape,
         size: stockRow.size,
@@ -157,28 +157,28 @@ const SelectedDataComponent = ({
         pcs: stockRow.pcs,
         weight: stockRow.weight,
         weight_per_piece: stockRow.weight_per_piece,
-      price: stockRow.type === "Cons." ? stockRow.price : stockRow.sale_price,
-      unit: stockRow.unit ? String(stockRow.unit).toLowerCase() : "cts",
-      amount: stockRow.amount,
-      remark: stockRow.remark,
-      // Add any other fields needed with default values
-      discount_percent: 0,
-      discount_amount: 0,
-      totalAmount: stockRow.amount,
-      labour: "",
-      labour_price: 0,
-      isFromStock:true,
-      image: stockRow.image || null, // Store relative path for saving
-      image_preview: imageUrl, // Full URL for display
-    };
+        price: stockRow.type === "Cons." ? stockRow.price : stockRow.sale_price,
+        unit: stockRow.unit ? String(stockRow.unit).toLowerCase() : "cts",
+        amount: stockRow.amount,
+        remark: stockRow.remark,
+
+        discount_percent: 0,
+        discount_amount: 0,
+        totalAmount: stockRow.amount,
+        labour: "",
+        labour_price: 0,
+        isFromStock: true,
+        image: stockRow.image || null,
+        image_preview: imageUrl,
+      };
     });
-    
 
 
 
 
 
- 
+
+
 
     // Add the new rows to existing rows, but prevent duplicates
     setRows((prevRows) => {
@@ -189,7 +189,7 @@ const SelectedDataComponent = ({
           .filter(row => row.isFromStock && (row._id || row.id)) // Only check rows from stock that have an ID
           .map(row => row._id || row.id) // Use _id or id field (original stock _id)
       );
-      
+
       // Filter out rows that already exist in the table (only check stock items)
       const uniqueNewRows = newRows.filter(
         (newRow) => {
@@ -201,7 +201,7 @@ const SelectedDataComponent = ({
           return true;
         }
       );
-      
+
       // Only add rows that don't already exist
       return [...prevRows, ...uniqueNewRows];
     });
@@ -209,7 +209,7 @@ const SelectedDataComponent = ({
 
 
 
-  
+
   const dropdownOpts = useMemo(() => {
     const options = {
       stone: [],
@@ -280,11 +280,11 @@ const SelectedDataComponent = ({
   // Initialize size options with all available sizes when component loads
   useEffect(() => {
     if (allDropdownOptions.length > 0) {
-      const allSizes = allDropdownOptions.filter(item => 
-        item.master_type === "master_stone_size" && 
+      const allSizes = allDropdownOptions.filter(item =>
+        item.master_type === "master_stone_size" &&
         item.master_status === "active"
       );
-      
+
       if (allSizes.length > 0) {
         setDropdownOptions(prevOptions => ({
           ...prevOptions,
@@ -295,12 +295,12 @@ const SelectedDataComponent = ({
   }, [allDropdownOptions]);
 
   const headers = [
-    { label: "", width: "20px" ,  className: "sticky-col-5 sticky-col " },
-    { label: "#", width: "40px" , className: "sticky-col-1 sticky-col "  },
-    { label: "Pic", width: "40px"  ,  className: "sticky-col-2 sticky-col " },
-    { label: "Stone Code", width: "142px" ,className: "sticky-col-3 sticky-col "  },
-    { label: "Stone", width: "142px" ,className: "sticky-col-4 sticky-col  " },
-    { label: "Shape", width: "142px" ,  className : "sticky-col sticky-col-6" },
+    { label: "", width: "20px", className: "sticky-col-5 sticky-col " },
+    { label: "#", width: "40px", className: "sticky-col-1 sticky-col " },
+    { label: "Pic", width: "40px", className: "sticky-col-2 sticky-col " },
+    { label: "Stone Code", width: "142px", className: "sticky-col-3 sticky-col " },
+    { label: "Stone", width: "142px", className: "sticky-col-4 sticky-col  " },
+    { label: "Shape", width: "142px", className: "sticky-col sticky-col-6" },
     { label: "Size", width: "142px" },
     { label: "Color", width: "142px" },
     { label: "Cutting", width: "142px" },
@@ -344,6 +344,15 @@ const SelectedDataComponent = ({
       </Box>
 
       <Box
+        onScroll={() => {
+          if (
+            document.activeElement &&
+            (document.activeElement.getAttribute("aria-autocomplete") ||
+              document.activeElement.getAttribute("role") === "combobox")
+          ) {
+            document.activeElement.blur();
+          }
+        }}
         sx={{
           height: "294px",
           overflowX: "scroll",
@@ -352,10 +361,9 @@ const SelectedDataComponent = ({
           alignItems: "flex-start",
           border: "1px solid var(--Line-Table, #C6C6C8)",
           borderRadius: "5px",
-      
+
           bgcolor: "#FFF",
           marginTop: "10px",
-          
         }}
       >
         <Box
@@ -383,9 +391,9 @@ const SelectedDataComponent = ({
           >
             <TableHeaderComponent headers={headers} />
             <Box
-              sx={{ 
+              sx={{
                 // height: "200px", overflowX: "hidden", overflowY: "scroll" 
-              minHeight: "200px"
+                minHeight: "200px"
               }}
               className="pikachuuuu"
             >

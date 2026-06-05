@@ -99,7 +99,12 @@ const MergeSplitTargetTable = ({ rows, onUpdate, onRemove, onAddRow, sourceTotal
                   boxSizing: "border-box",
                   // borderRight: (h.label.includes("Cer No.") || h.label.includes("Color") || h.label.includes("Size") || h.label.includes("Weight")) ? "1px solid #C6C6C8" : "1px solid #D9D9D9"
                 }}>
-                  {h.label}
+                  {h.label.includes("*") ? (
+                    <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      {h.label.replace("*", "")}
+                      <Typography component="span" sx={{ color: "red", fontSize: "17px", fontFamily: "inherit", ml: "2px" }}>*</Typography>
+                    </Box>
+                  ) : h.label}
                 </Box>
               ))}
             </Box>
