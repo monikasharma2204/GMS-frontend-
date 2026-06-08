@@ -11,9 +11,20 @@ import SuccessModal from "../../component/Commons/SuccessModal";
 import ErrorModal from "../../component/Commons/ErrorModal";
 import WarningDialog from "../../component/Commons/WarningDialog";
 import ConfirmCancelDialog from "../../component/Commons/ConfirmCancelDialog";
-import { vendorDataState, vendorFieldErrorsState, vendorInvoiceAddressListState } from "recoil/state/VendorState";
+import {
+  vendorDataState,
+  vendorFieldErrorsState,
+  vendorInvoiceAddressListState,
+} from "recoil/state/VendorState";
 import { validateAccountFields } from "../../helpers/accountValidation";
-import { downloadQuotationPdf, downloadPurchaseOrderPdf, downloadPurchasePdf, downloadSalePdf } from "../../helpers/pdfHelper";
+import {
+  downloadQuotationPdf,
+  downloadPurchaseOrderPdf,
+  downloadPurchasePdf,
+  downloadSalePdf,
+  downloadMemoInPdf,
+  downloadMemoReturnPdf,
+} from "../../helpers/pdfHelper";
 
 const Footer = (props) => {
   const isSaveDisabled = false;
@@ -59,12 +70,29 @@ const Footer = (props) => {
       return;
     }
 
-    if ((props.type === "purchaseOrder" || props.type === "purchase" || props.type === "memo_in" || props.type === "memo_return") && props.onSaveClick) {
+    if (
+      (props.type === "purchaseOrder" ||
+        props.type === "purchase" ||
+        props.type === "memo_in" ||
+        props.type === "memo_return") &&
+      props.onSaveClick
+    ) {
       props.onSaveClick();
       return;
     }
 
-    if (props.type !== "quotation" && props.type !== "reserve" && props.type !== "purchase" && props.type !== "purchaseOrder" && props.type !== "memo_in" && props.type !== "memo_out" && props.type !== "memo_return" && props.type !== "memo_out_return" && props.type !== "load" && props.type !== "sale") {
+    if (
+      props.type !== "quotation" &&
+      props.type !== "reserve" &&
+      props.type !== "purchase" &&
+      props.type !== "purchaseOrder" &&
+      props.type !== "memo_in" &&
+      props.type !== "memo_out" &&
+      props.type !== "memo_return" &&
+      props.type !== "memo_out_return" &&
+      props.type !== "load" &&
+      props.type !== "sale"
+    ) {
       if (!validateFields()) {
         return;
       }
@@ -78,36 +106,59 @@ const Footer = (props) => {
     setOpenConfirm(false);
   };
 
-
   const handleConfirmClose = async (confirmed) => {
     if (!confirmed) {
       setOpenConfirm(false);
       return;
     }
 
-
-    if ((props.type === "quotation" || props.type === "reserve" || props.type === "purchaseOrder" || props.type === "purchase" || props.type === "memo_in" || props.type === "memo_return" || props.type === "memo_out" || props.type === "memo_out_return" || props.type === "load" || props.type === "sale") && props.onSaveClick) {
+    if (
+      (props.type === "quotation" ||
+        props.type === "reserve" ||
+        props.type === "purchaseOrder" ||
+        props.type === "purchase" ||
+        props.type === "memo_in" ||
+        props.type === "memo_return" ||
+        props.type === "memo_out" ||
+        props.type === "memo_out_return" ||
+        props.type === "load" ||
+        props.type === "sale") &&
+      props.onSaveClick
+    ) {
       setOpenConfirm(false);
       props.onSaveClick();
       return;
     }
 
     try {
-      const updatedInvoiceAddressList = (vendorData.invoice_address || []).map(addr => ({
-        ...addr
+      const updatedInvoiceAddressList = (vendorData.invoice_address || []).map(
+        (addr) => ({
+          ...addr,
+        }),
+      );
+
+      const updatedShippingAddressList = (
+        vendorData.shipping_address || []
+      ).map((addr) => ({
+        ...addr,
       }));
-
-      const updatedShippingAddressList = (vendorData.shipping_address || []).map(addr => ({
-        ...addr
-      }));
-
-
-
 
       const fsmState = props.fsmState;
-      const hasId = !!(props.formData?._id || props.selectedData?._id || props.originalData?._id || vendorData?._id);
-      const method = (fsmState === "dirty" && !hasId) || (fsmState === "initial" && !hasId) ? "POST" : "PUT";
-      const recordId = props.formData?._id || props.selectedData?._id || props.originalData?._id || vendorData?._id;
+      const hasId = !!(
+        props.formData?._id ||
+        props.selectedData?._id ||
+        props.originalData?._id ||
+        vendorData?._id
+      );
+      const method =
+        (fsmState === "dirty" && !hasId) || (fsmState === "initial" && !hasId)
+          ? "POST"
+          : "PUT";
+      const recordId =
+        props.formData?._id ||
+        props.selectedData?._id ||
+        props.originalData?._id ||
+        vendorData?._id;
       const endpoint = "/account/vendor";
 
       const updatedVendorData = {
@@ -118,7 +169,6 @@ const Footer = (props) => {
       if (recordId) {
         updatedVendorData._id = recordId;
       } else {
-
         delete updatedVendorData._id;
       }
 
@@ -140,7 +190,6 @@ const Footer = (props) => {
             if (savedData.id) {
               savedData._id = savedData.id;
             } else if (recordId) {
-
               savedData._id = recordId;
             } else if (updatedVendorData._id) {
               savedData._id = updatedVendorData._id;
@@ -171,27 +220,30 @@ const Footer = (props) => {
       const timer = setTimeout(() => {
         setOpenSuccess(false);
         setOpenUnsuccess(false);
-
       }, 2000);
       return () => clearTimeout(timer);
     }
   }, [openSuccess]);
 
   const getCancelDisabled = () => {
-
     if (props.type === "purchase" && props.memoInfo?.isPOEdit) {
       return false;
     }
 
-    if (props.type === "reserve" && (props.formData?.from_reserve || props.selectedData?.from_reserve)) {
+    if (
+      props.type === "reserve" &&
+      (props.formData?.from_reserve || props.selectedData?.from_reserve)
+    ) {
       return true;
     }
     const isApproved =
       props.isApproved ||
       ((props.formData?.status || "") + "").toLowerCase() === "approved" ||
       ((props.selectedData?.status || "") + "").toLowerCase() === "approved" ||
-      ((props.formData?.status_approve || "") + "").toLowerCase() === "approved" ||
-      ((props.selectedData?.status_approve || "") + "").toLowerCase() === "approved";
+      ((props.formData?.status_approve || "") + "").toLowerCase() ===
+        "approved" ||
+      ((props.selectedData?.status_approve || "") + "").toLowerCase() ===
+        "approved";
 
     if (props.type === "load" && isApproved) {
       return true;
@@ -201,26 +253,49 @@ const Footer = (props) => {
       return true;
     }
 
-
     const isCancelled =
       ((props.formData?.status || "") + "").toLowerCase() === "cancelled" ||
       ((props.selectedData?.status || "") + "").toLowerCase() === "cancelled" ||
-      ((props.formData?.status_cancel || "") + "").toLowerCase() === "cancelled" ||
-      ((props.selectedData?.status_cancel || "") + "").toLowerCase() === "cancelled";
+      ((props.formData?.status_cancel || "") + "").toLowerCase() ===
+        "cancelled" ||
+      ((props.selectedData?.status_cancel || "") + "").toLowerCase() ===
+        "cancelled";
 
     if (isCancelled) {
       return true;
     }
 
     if (props.fsmState) {
-      if ((props.type === "quotation" || props.type === "reserve" || props.type === "memo_out" || props.type === "memo_out_return" || props.type === "load") && props.hasUnsavedData) {
+      if (
+        (props.type === "quotation" ||
+          props.type === "reserve" ||
+          props.type === "memo_out" ||
+          props.type === "memo_out_return" ||
+          props.type === "load") &&
+        props.hasUnsavedData
+      ) {
         const hasStoneData = props.hasUnsavedData();
-        return !hasStoneData || !(props.fsmState === "dirty" || props.fsmState === "editing");
+        return (
+          !hasStoneData ||
+          !(props.fsmState === "dirty" || props.fsmState === "editing")
+        );
       }
 
-      if (props.type === "purchase" || props.type === "purchaseOrder" || props.type === "memo_in" || props.type === "memo_return" || props.type === "memo_out_return" || props.type === "load") {
-
-        const shouldEnable = props.fsmState === "dirty" || props.fsmState === "editing" || (props.fsmState === "initial" && props.type === "purchase" && props.memoInfo?.isPOEdit) || (props.type === "purchase" && props.memoInfo?.isPOEdit);
+      if (
+        props.type === "purchase" ||
+        props.type === "purchaseOrder" ||
+        props.type === "memo_in" ||
+        props.type === "memo_return" ||
+        props.type === "memo_out_return" ||
+        props.type === "load"
+      ) {
+        const shouldEnable =
+          props.fsmState === "dirty" ||
+          props.fsmState === "editing" ||
+          (props.fsmState === "initial" &&
+            props.type === "purchase" &&
+            props.memoInfo?.isPOEdit) ||
+          (props.type === "purchase" && props.memoInfo?.isPOEdit);
         return !shouldEnable;
       }
 
@@ -231,7 +306,6 @@ const Footer = (props) => {
       return !(props.fsmState === "dirty" || props.fsmState === "editing");
     }
 
-
     if (props.type === "purchase" && props.memoInfo?.isPOEdit) {
       return false;
     }
@@ -239,22 +313,25 @@ const Footer = (props) => {
   };
 
   const getSaveDisabled = () => {
-
     if (props.type === "purchase" && props.memoInfo?.isPOEdit) {
       return props.isSaveDisabled !== undefined ? props.isSaveDisabled : false;
     }
 
-    if (props.type === "reserve" && (props.formData?.from_reserve || props.selectedData?.from_reserve)) {
+    if (
+      props.type === "reserve" &&
+      (props.formData?.from_reserve || props.selectedData?.from_reserve)
+    ) {
       return false;
     }
-
 
     const isApproved =
       props.isApproved ||
       ((props.formData?.status || "") + "").toLowerCase() === "approved" ||
       ((props.selectedData?.status || "") + "").toLowerCase() === "approved" ||
-      ((props.formData?.status_approve || "") + "").toLowerCase() === "approved" ||
-      ((props.selectedData?.status_approve || "") + "").toLowerCase() === "approved";
+      ((props.formData?.status_approve || "") + "").toLowerCase() ===
+        "approved" ||
+      ((props.selectedData?.status_approve || "") + "").toLowerCase() ===
+        "approved";
 
     if (props.type === "load" && isApproved) {
       return true;
@@ -267,19 +344,32 @@ const Footer = (props) => {
     const isCancelled =
       ((props.formData?.status || "") + "").toLowerCase() === "cancelled" ||
       ((props.selectedData?.status || "") + "").toLowerCase() === "cancelled" ||
-      ((props.formData?.status_cancel || "") + "").toLowerCase() === "cancelled" ||
-      ((props.selectedData?.status_cancel || "") + "").toLowerCase() === "cancelled";
+      ((props.formData?.status_cancel || "") + "").toLowerCase() ===
+        "cancelled" ||
+      ((props.selectedData?.status_cancel || "") + "").toLowerCase() ===
+        "cancelled";
 
     if (isCancelled) {
       return true;
     }
 
     if (props.fsmState) {
-
-
-      const saleFromReserve = props.type === "sale" && (props.formData?.from_reserve || props.selectedData?.from_reserve || props.formData?.isReserveEdit || props.selectedData?.isReserveEdit || props.memoInfo?.from_reserve || props.memoInfo?.isReserveEdit);
-      const stateAllowsSave = props.fsmState === "dirty" || props.fsmState === "editing" || (props.fsmState === "initial" && props.type === "purchase" && props.memoInfo?.isPOEdit) || (props.type === "purchase" && props.memoInfo?.isPOEdit) || (props.fsmState === "initial" && saleFromReserve);
-
+      const saleFromReserve =
+        props.type === "sale" &&
+        (props.formData?.from_reserve ||
+          props.selectedData?.from_reserve ||
+          props.formData?.isReserveEdit ||
+          props.selectedData?.isReserveEdit ||
+          props.memoInfo?.from_reserve ||
+          props.memoInfo?.isReserveEdit);
+      const stateAllowsSave =
+        props.fsmState === "dirty" ||
+        props.fsmState === "editing" ||
+        (props.fsmState === "initial" &&
+          props.type === "purchase" &&
+          props.memoInfo?.isPOEdit) ||
+        (props.type === "purchase" && props.memoInfo?.isPOEdit) ||
+        (props.fsmState === "initial" && saleFromReserve);
 
       if (props.type === "sale") {
         console.log("[FooterVendor] Sale Save Button Debug:", {
@@ -288,21 +378,45 @@ const Footer = (props) => {
           isSaveDisabled: props.isSaveDisabled,
           type: props.type,
           saleFromReserve,
-          willBeDisabled: !stateAllowsSave || (props.isSaveDisabled !== undefined ? props.isSaveDisabled : false)
+          willBeDisabled:
+            !stateAllowsSave ||
+            (props.isSaveDisabled !== undefined ? props.isSaveDisabled : false),
         });
       }
 
-      if ((props.type === "quotation" || props.type === "reserve" || props.type === "memo_out" || props.type === "load") && props.hasUnsavedData) {
+      if (
+        (props.type === "quotation" ||
+          props.type === "reserve" ||
+          props.type === "memo_out" ||
+          props.type === "load") &&
+        props.hasUnsavedData
+      ) {
         const hasStoneData = props.hasUnsavedData();
-        return !hasStoneData || !stateAllowsSave || (props.isSaveDisabled !== undefined ? props.isSaveDisabled : false);
+        return (
+          !hasStoneData ||
+          !stateAllowsSave ||
+          (props.isSaveDisabled !== undefined ? props.isSaveDisabled : false)
+        );
       }
 
-      if (props.type === "purchase" || props.type === "purchaseOrder" || props.type === "memo_in" || props.type === "memo_return" || props.type === "load" || props.type === "sale") {
-        return !stateAllowsSave || (props.isSaveDisabled !== undefined ? props.isSaveDisabled : false);
+      if (
+        props.type === "purchase" ||
+        props.type === "purchaseOrder" ||
+        props.type === "memo_in" ||
+        props.type === "memo_return" ||
+        props.type === "load" ||
+        props.type === "sale"
+      ) {
+        return (
+          !stateAllowsSave ||
+          (props.isSaveDisabled !== undefined ? props.isSaveDisabled : false)
+        );
       }
-      return !stateAllowsSave || (props.isSaveDisabled !== undefined ? props.isSaveDisabled : false);
+      return (
+        !stateAllowsSave ||
+        (props.isSaveDisabled !== undefined ? props.isSaveDisabled : false)
+      );
     }
-
 
     if (props.type === "purchase" && props.memoInfo?.isPOEdit) {
       return props.isSaveDisabled !== undefined ? props.isSaveDisabled : false;
@@ -311,7 +425,6 @@ const Footer = (props) => {
   };
 
   const getAddDisabled = () => {
-
     if (props.type === "purchase" && props.memoInfo?.isPOEdit) {
       return true;
     }
@@ -320,11 +433,22 @@ const Footer = (props) => {
       return true;
     }
 
-    if (props.type === "reserve" && (props.formData?.from_reserve || props.selectedData?.from_reserve)) {
+    if (
+      props.type === "reserve" &&
+      (props.formData?.from_reserve || props.selectedData?.from_reserve)
+    ) {
       return false;
     }
 
-    if (props.type === "sale" && (props.formData?.from_reserve || props.selectedData?.from_reserve || props.formData?.isReserveEdit || props.selectedData?.isReserveEdit || props.memoInfo?.from_reserve || props.memoInfo?.isReserveEdit)) {
+    if (
+      props.type === "sale" &&
+      (props.formData?.from_reserve ||
+        props.selectedData?.from_reserve ||
+        props.formData?.isReserveEdit ||
+        props.selectedData?.isReserveEdit ||
+        props.memoInfo?.from_reserve ||
+        props.memoInfo?.isReserveEdit)
+    ) {
       return false;
     }
 
@@ -332,8 +456,10 @@ const Footer = (props) => {
       props.isApproved ||
       ((props.formData?.status || "") + "").toLowerCase() === "approved" ||
       ((props.selectedData?.status || "") + "").toLowerCase() === "approved" ||
-      ((props.formData?.status_approve || "") + "").toLowerCase() === "approved" ||
-      ((props.selectedData?.status_approve || "") + "").toLowerCase() === "approved";
+      ((props.formData?.status_approve || "") + "").toLowerCase() ===
+        "approved" ||
+      ((props.selectedData?.status_approve || "") + "").toLowerCase() ===
+        "approved";
 
     if (isApproved) {
       return false;
@@ -346,7 +472,6 @@ const Footer = (props) => {
   };
 
   const getEditDisabled = () => {
-
     if (props.type === "purchase" && props.memoInfo?.isPOEdit) {
       return true;
     }
@@ -355,7 +480,10 @@ const Footer = (props) => {
       return true;
     }
 
-    if (props.type === "reserve" && (props.formData?.from_reserve || props.selectedData?.from_reserve)) {
+    if (
+      props.type === "reserve" &&
+      (props.formData?.from_reserve || props.selectedData?.from_reserve)
+    ) {
       return true;
     }
 
@@ -363,8 +491,10 @@ const Footer = (props) => {
       props.isApproved ||
       ((props.formData?.status || "") + "").toLowerCase() === "approved" ||
       ((props.selectedData?.status || "") + "").toLowerCase() === "approved" ||
-      ((props.formData?.status_approve || "") + "").toLowerCase() === "approved" ||
-      ((props.selectedData?.status_approve || "") + "").toLowerCase() === "approved";
+      ((props.formData?.status_approve || "") + "").toLowerCase() ===
+        "approved" ||
+      ((props.selectedData?.status_approve || "") + "").toLowerCase() ===
+        "approved";
 
     if (props.type === "load" && isApproved) {
       return true;
@@ -374,12 +504,13 @@ const Footer = (props) => {
       return true;
     }
 
-
     const isCancelled =
       ((props.formData?.status || "") + "").toLowerCase() === "cancelled" ||
       ((props.selectedData?.status || "") + "").toLowerCase() === "cancelled" ||
-      ((props.formData?.status_cancel || "") + "").toLowerCase() === "cancelled" ||
-      ((props.selectedData?.status_cancel || "") + "").toLowerCase() === "cancelled";
+      ((props.formData?.status_cancel || "") + "").toLowerCase() ===
+        "cancelled" ||
+      ((props.selectedData?.status_cancel || "") + "").toLowerCase() ===
+        "cancelled";
 
     if (isCancelled) {
       return true;
@@ -407,9 +538,10 @@ const Footer = (props) => {
     if (!props.account_type) return;
 
     try {
-      const endpoint = props.account_type === "customer"
-        ? "/account/customer/list"
-        : "/account/vendor/list";
+      const endpoint =
+        props.account_type === "customer"
+          ? "/account/customer/list"
+          : "/account/vendor/list";
 
       const response = await axios.get(API_URL + endpoint);
       const data = response.data;
@@ -434,20 +566,29 @@ const Footer = (props) => {
   };
 
   const handlePrint = async (e) => {
-
     e.preventDefault();
     const formData = props.formData || {};
     const selectedData = props.selectedData || {};
     const originalData = props.originalData || {};
 
-    const id = formData._id || formData.id || selectedData._id || selectedData.id || originalData._id || originalData.id;
+    const id =
+      formData._id ||
+      formData.id ||
+      selectedData._id ||
+      selectedData.id ||
+      originalData._id ||
+      originalData.id;
 
     if (props.type === "purchaseOrder") {
       if (!id) {
         alert("Please save the purchase order first to print.");
         return;
       }
-      const invoiceNo = formData.invoice_no || selectedData.invoice_no || originalData.invoice_no || "purchase-order";
+      const invoiceNo =
+        formData.invoice_no ||
+        selectedData.invoice_no ||
+        originalData.invoice_no ||
+        "purchase-order";
       await downloadPurchaseOrderPdf(id, invoiceNo);
       return;
     }
@@ -457,8 +598,44 @@ const Footer = (props) => {
         alert("Please save the purchase first to print.");
         return;
       }
-      const invoiceNo = formData.invoice_no || selectedData.invoice_no || originalData.invoice_no || "purchase";
+      const invoiceNo =
+        formData.invoice_no ||
+        selectedData.invoice_no ||
+        originalData.invoice_no ||
+        "purchase";
       await downloadPurchasePdf(id, invoiceNo);
+      return;
+    }
+
+    if (props.type === "memo_in") {
+      if (!id) {
+        alert("Please save the Memo In first to print.");
+        return;
+      }
+
+      const invoiceNo =
+        formData.invoice_no ||
+        selectedData.invoice_no ||
+        originalData.invoice_no ||
+        "memo-in";
+
+      await downloadMemoInPdf(id, invoiceNo);
+      return;
+    }
+
+    if (props.type === "memo_return") {
+      if (!id) {
+        alert("Please save the Memo return  first to print.");
+        return;
+      }
+
+      const invoiceNo =
+        formData.invoice_no ||
+        selectedData.invoice_no ||
+        originalData.invoice_no ||
+        "memo-return";
+
+      await downloadMemoReturnPdf(id, invoiceNo);
       return;
     }
 
@@ -467,8 +644,13 @@ const Footer = (props) => {
         alert("Please save the quotation first to print.");
         return;
       }
-      const invoiceNo = formData.invoice_no || selectedData.invoice_no || originalData.invoice_no || "quotation";
+      const invoiceNo =
+        formData.invoice_no ||
+        selectedData.invoice_no ||
+        originalData.invoice_no ||
+        "quotation";
       await downloadQuotationPdf(id, invoiceNo);
+      return;
     }
 
     if (props.type === "sale") {
@@ -476,16 +658,17 @@ const Footer = (props) => {
         alert("Please save the sale first to print.");
         return;
       }
-      const invoiceNo = formData.invoice_no || selectedData.invoice_no || originalData.invoice_no || "sale";
+      const invoiceNo =
+        formData.invoice_no ||
+        selectedData.invoice_no ||
+        originalData.invoice_no ||
+        "sale";
       await downloadSalePdf(id, invoiceNo);
       return;
     }
 
-
     window.print();
   };
-
-
 
   return (
     <>
@@ -508,15 +691,16 @@ const Footer = (props) => {
           paddingRight: "32px",
         }}
       >
-
         <Box sx={{ display: "flex", alignItems: "center", gap: "12px" }}>
           {props.onAddClick ? (
             <Button
               disabled={getAddDisabled()}
-              onClick={!getAddDisabled() && props.onAddClick ? props.onAddClick : undefined}
+              onClick={
+                !getAddDisabled() && props.onAddClick
+                  ? props.onAddClick
+                  : undefined
+              }
               sx={{
-
-
                 textTransform: "none",
                 height: "45px",
                 width: "84px",
@@ -534,7 +718,9 @@ const Footer = (props) => {
             >
               <Typography
                 sx={{
-                  color: getAddDisabled() ? "#57646E" : "var(--jw-background-white-textwhite, #FFF)",
+                  color: getAddDisabled()
+                    ? "#57646E"
+                    : "var(--jw-background-white-textwhite, #FFF)",
                   fontFamily: "Calibri",
                   fontSize: "16px",
                   fontStyle: "normal",
@@ -547,87 +733,109 @@ const Footer = (props) => {
             </Button>
           ) : null}
 
-        {props.type !== "sale" && (
-          <Box sx={{
-            paddingRight: "20px",
-
-
-            "@media (min-width: 320px) and (max-width: 480px)": {
-              paddingRight: "4px",
-
-            },
-          }}>
-            <Button
-              disabled={getEditDisabled()}
-              onClick={!getEditDisabled() && props.onEditToggle ? props.onEditToggle : undefined}
+          {props.type !== "sale" && (
+            <Box
               sx={{
-                textTransform: "none",
-                height: "45px",
-                width: "84px",
-                padding: "12px",
-                borderRadius: "4px",
-                border: "1px solid #05595B",
-                gap: "8px",
-                backgroundColor: "#fff",
-                "&:hover": {
-                  backgroundColor: "#fff",
-                },
-                "&:disabled": {
-                  color: "#999191",
-                  backgroundColor: "#fff",
-                  borderColor: "#999191",
-                  "& .MuiTypography-root": {
-                    color: "#999191",
-                  },
-                  "& svg path": {
-                    fill: "#999191",
-                  },
+                paddingRight: "20px",
+
+                "@media (min-width: 320px) and (max-width: 480px)": {
+                  paddingRight: "4px",
                 },
               }}
             >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-              >
-                <path
-                  d="M7 17.0134L11.413 16.9984L21.045 7.45839C21.423 7.08039 21.631 6.57839 21.631 6.04439C21.631 5.51039 21.423 5.00839 21.045 4.63039L19.459 3.04439C18.703 2.28839 17.384 2.29239 16.634 3.04139L7 12.5834V17.0134ZM18.045 4.45839L19.634 6.04139L18.037 7.62339L16.451 6.03839L18.045 4.45839ZM9 13.4174L15.03 7.44439L16.616 9.03039L10.587 15.0014L9 15.0064V13.4174Z"
-                  fill={!getEditDisabled() && props.selectedData ? "#05595B" : "#E6E6E6"}
-                />
-                <path
-                  d="M5 21H19C20.103 21 21 20.103 21 19V10.332L19 12.332V19H8.158C8.132 19 8.105 19.01 8.079 19.01C8.046 19.01 8.013 19.001 7.979 19H5V5H11.847L13.847 3H5C3.897 3 3 3.897 3 5V19C3 20.103 3.897 21 5 21Z"
-                  fill={!getEditDisabled() && props.selectedData ? "#05595B" : "#E6E6E6"}
-                />
-              </svg>
-              <Typography
+              <Button
+                disabled={getEditDisabled()}
+                onClick={
+                  !getEditDisabled() && props.onEditToggle
+                    ? props.onEditToggle
+                    : undefined
+                }
                 sx={{
-                  color: !getEditDisabled() && props.selectedData ? "#05595B" : "#E6E6E6",
-                  fontFamily: "Calibri",
-                  fontSize: "16px",
-                  fontStyle: "normal",
-                  fontWeight: 700,
-                  lineHeight: "normal",
+                  textTransform: "none",
+                  height: "45px",
+                  width: "84px",
+                  padding: "12px",
+                  borderRadius: "4px",
+                  border: "1px solid #05595B",
+                  gap: "8px",
+                  backgroundColor: "#fff",
+                  "&:hover": {
+                    backgroundColor: "#fff",
+                  },
+                  "&:disabled": {
+                    color: "#999191",
+                    backgroundColor: "#fff",
+                    borderColor: "#999191",
+                    "& .MuiTypography-root": {
+                      color: "#999191",
+                    },
+                    "& svg path": {
+                      fill: "#999191",
+                    },
+                  },
                 }}
               >
-                Edit
-              </Typography>
-            </Button>
-
-          </Box>
-        )}
-
-
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                >
+                  <path
+                    d="M7 17.0134L11.413 16.9984L21.045 7.45839C21.423 7.08039 21.631 6.57839 21.631 6.04439C21.631 5.51039 21.423 5.00839 21.045 4.63039L19.459 3.04439C18.703 2.28839 17.384 2.29239 16.634 3.04139L7 12.5834V17.0134ZM18.045 4.45839L19.634 6.04139L18.037 7.62339L16.451 6.03839L18.045 4.45839ZM9 13.4174L15.03 7.44439L16.616 9.03039L10.587 15.0014L9 15.0064V13.4174Z"
+                    fill={
+                      !getEditDisabled() && props.selectedData
+                        ? "#05595B"
+                        : "#E6E6E6"
+                    }
+                  />
+                  <path
+                    d="M5 21H19C20.103 21 21 20.103 21 19V10.332L19 12.332V19H8.158C8.132 19 8.105 19.01 8.079 19.01C8.046 19.01 8.013 19.001 7.979 19H5V5H11.847L13.847 3H5C3.897 3 3 3.897 3 5V19C3 20.103 3.897 21 5 21Z"
+                    fill={
+                      !getEditDisabled() && props.selectedData
+                        ? "#05595B"
+                        : "#E6E6E6"
+                    }
+                  />
+                </svg>
+                <Typography
+                  sx={{
+                    color:
+                      !getEditDisabled() && props.selectedData
+                        ? "#05595B"
+                        : "#E6E6E6",
+                    fontFamily: "Calibri",
+                    fontSize: "16px",
+                    fontStyle: "normal",
+                    fontWeight: 700,
+                    lineHeight: "normal",
+                  }}
+                >
+                  Edit
+                </Typography>
+              </Button>
+            </Box>
+          )}
         </Box>
-
 
         <Box sx={{ display: "flex", alignItems: "center", gap: "8px" }}>
           <Button
             disabled={getCancelDisabled()}
             onClick={() => {
-
-              if ((props.type === "quotation" || props.type === "reserve" || props.type === "purchase" || props.type === "purchaseOrder" || props.type === "memo_in" || props.type === "memo_out" || props.type === "memo_return" || props.type === "memo_out_return" || props.type === "load" || props.type === "sale") && props.onCancelEdit) {
+              if (
+                (props.type === "quotation" ||
+                  props.type === "reserve" ||
+                  props.type === "purchase" ||
+                  props.type === "purchaseOrder" ||
+                  props.type === "memo_in" ||
+                  props.type === "memo_out" ||
+                  props.type === "memo_return" ||
+                  props.type === "memo_out_return" ||
+                  props.type === "load" ||
+                  props.type === "sale") &&
+                props.onCancelEdit
+              ) {
                 props.onCancelEdit();
                 return;
               }
@@ -649,7 +857,9 @@ const Footer = (props) => {
               border: "1px solid #BFBFBF",
               backgroundColor: "var(--jw-background-white-textwhite, #FFF)",
               "&:hover": {
-                backgroundColor: getCancelDisabled() ? "var(--jw-background-white-textwhite, #FFF)" : "#F5F5F5",
+                backgroundColor: getCancelDisabled()
+                  ? "var(--jw-background-white-textwhite, #FFF)"
+                  : "#F5F5F5",
               },
               "&:disabled": {
                 color: "#BFBFBF",
@@ -699,7 +909,6 @@ const Footer = (props) => {
             </Typography>
           </Button>
 
-
           <Box
             onClick={handlePrint}
             sx={{
@@ -710,7 +919,6 @@ const Footer = (props) => {
               marginLeft: "8px",
             }}
           >
-
             <svg
               xmlns="http://www.w3.org/2000/svg"
               width="28"
@@ -748,7 +956,6 @@ const Footer = (props) => {
               />
             </svg>
           </Box>
-
         </Box>
 
         {/* Confirmation Dialog */}
@@ -895,20 +1102,17 @@ const Footer = (props) => {
           </Box>
         </Dialog>
 
-
         <SuccessModal
           open={openSuccess}
           onClose={handleSuccessClose}
           message="Successfully!"
         />
 
-
         <ErrorModal
           open={openUnsuccess}
           onClose={handleSuccessClose}
           message="Unsuccessfully!"
         />
-
 
         <WarningDialog
           open={isOpenModalWarning}

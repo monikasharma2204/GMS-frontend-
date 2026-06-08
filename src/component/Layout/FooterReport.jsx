@@ -22,15 +22,16 @@ const FooterReport = ({ onExcel }) => {
         paddingRight: "32px",
       }}
     >
-      {/* Print Button - Placeholder for future use */}
+      {/* Print Button */}
       <Box
+        onClick={() => window.print()}
         sx={{
           display: "flex",
           alignItems: "center",
           gap: "8px",
-          cursor: "default",
+          cursor: "pointer",
           "&:hover svg path": {
-            fill: "#05595B",
+            fill: "#E9B238",
           },
         }}
       >

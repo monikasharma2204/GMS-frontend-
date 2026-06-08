@@ -489,6 +489,7 @@ const Footer = (props) => {
           </Button>
 
           <Box
+            onClick={() => window.print()}
             sx={{
               "&:hover svg path": {
                 fill: "#E9B238",

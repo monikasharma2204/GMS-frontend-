@@ -165,8 +165,9 @@ const Footer = ({ onClick, onCancelEdit, responseMessage, isSaveDisabled, disabl
           </Typography>
         </Button>
 
-        {/* Copy/Duplicate SVG Icon */}
+        {/* Print SVG Icon */}
         <Box
+          onClick={() => window.print()}
           sx={{
             "&:hover svg path": {
               fill: "#E9B238",

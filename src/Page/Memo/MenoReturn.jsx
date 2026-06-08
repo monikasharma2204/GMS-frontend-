@@ -1,4 +1,10 @@
-import React, { useReducer, useState, useEffect, useMemo, useCallback } from "react";
+import React, {
+  useReducer,
+  useState,
+  useEffect,
+  useMemo,
+  useCallback,
+} from "react";
 import { Box, Button, Dialog, Typography } from "@mui/material";
 import NavBar from "../../component/NavBar/NavBar";
 import Header from "../../component/Layout/Header";
@@ -21,12 +27,20 @@ import {
   newAddTemplate,
 } from "../../component/MemoReturn/Data.jsx";
 import apiRequest from "../../helpers/apiHelper.js";
-import { useRecoilState, useRecoilValueLoadable, useResetRecoilState } from "recoil";
+import {
+  useRecoilState,
+  useRecoilValueLoadable,
+  useResetRecoilState,
+} from "recoil";
 import ConfirmCancelDialog from "../../component/Commons/ConfirmCancelDialog";
 import useTransactionNavigationGuard from "../../hooks/useTransactionNavigationGuard";
 import { getCompanyCurrencyId } from "../../helpers/currencyCache.js";
 import { getVendorInfo } from "recoil/selector/VendorSelector";
-import { memoReturnFSMState, memoReturnOriginalDataState, memoReturnFormDataState } from "recoil/state/MemoReturnFSMState";
+import {
+  memoReturnFSMState,
+  memoReturnOriginalDataState,
+  memoReturnFormDataState,
+} from "recoil/state/MemoReturnFSMState";
 import { editMemoState } from "recoil/MemoReturn/MemoState";
 import { API_URL } from "config/config.js";
 import moment from "moment";
@@ -37,7 +51,6 @@ const formatNumber = (value) => {
   return value.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 };
 
-
 const unformatNumber = (value) => {
   return value.replace(/,/g, "");
 };
@@ -46,14 +59,14 @@ function reducer(state, action) {
   switch (action.type) {
     case "TOGGLE_ITEM": {
       const exists = state.selectedItems.some(
-        (item) => item.account === action.payload.account
+        (item) => item.account === action.payload.account,
       );
       return {
         ...state,
         selectedItems: exists
           ? state.selectedItems.filter(
-            (item) => item.account !== action.payload.account
-          )
+              (item) => item.account !== action.payload.account,
+            )
           : [...state.selectedItems, action.payload],
       };
     }
@@ -90,7 +103,7 @@ function reducer(state, action) {
       return {
         ...state,
         selectedItems: state.selectedItems.filter(
-          (item) => item.account !== action.payload
+          (item) => item.account !== action.payload,
         ),
       };
     case "UPDATE_ITEM":
@@ -99,7 +112,7 @@ function reducer(state, action) {
         selectedItems: state.selectedItems.map((item, idx) =>
           idx === action.payload.index
             ? { ...item, [action.payload.field]: action.payload.value }
-            : item
+            : item,
         ),
       };
     case "TOGGLE_DISCOUNT_PERCENT":
@@ -173,13 +186,13 @@ const MemoReturn = () => {
   const [accountNew] = useRecoilState(useQuotationAccountState);
   const [loading, setLoading] = useState(true);
   const [invoiceAddress, setInvoiceAddress] = useRecoilState(
-    QuotationInvoiceAddressState
+    QuotationInvoiceAddressState,
   );
   const [selectedInvoiceAddress, setSelectedInvoiceAddress] = useRecoilState(
-    QuotationSelectedInvoiceAddressState
+    QuotationSelectedInvoiceAddressState,
   );
   const [shippingAddress, setShippingAddress] = useRecoilState(
-    QuotationShippingAddressState
+    QuotationShippingAddressState,
   );
   const [grandTotal, setGrandTotal] = useRecoilState(grandTotalState);
   const vendorData = useRecoilValueLoadable(getVendorInfo);
@@ -187,7 +200,6 @@ const MemoReturn = () => {
   useEffect(() => {
     dispatch({ type: "RESET_STATE" });
   }, []);
-
 
   // Function inside Header
 
@@ -342,7 +354,7 @@ const MemoReturn = () => {
     const [integerPart, decimalPart] = numberString.split(".");
     const formattedIntegerPart = integerPart.replace(
       /\B(?=(\d{3})+(?!\d))/g,
-      ","
+      ",",
     );
 
     if (decimalPart !== undefined) {
@@ -356,9 +368,9 @@ const MemoReturn = () => {
     const totalAmount =
       item.unit === "pcs"
         ? (isNumeric(item.pcs) ? item.pcs : 0) *
-        (isNumeric(item.price) ? item.price : 0)
+          (isNumeric(item.price) ? item.price : 0)
         : (isNumeric(item.weight) ? item.weight : 0) *
-        (isNumeric(item.price) ? item.price : 0);
+          (isNumeric(item.price) ? item.price : 0);
     return totalAmount;
   };
 
@@ -374,10 +386,13 @@ const MemoReturn = () => {
     }, 0);
 
     if (state.useDiscountPercent) {
-      total -= (total * state.discount_percent) / 100 ? (total * state.discount_percent) / 100 : 0.00;
+      total -=
+        (total * state.discount_percent) / 100
+          ? (total * state.discount_percent) / 100
+          : 0.0;
     }
     if (state.useDiscountAmount) {
-      total -= state.discount_amount ? state.discount_amount : 0.00;
+      total -= state.discount_amount ? state.discount_amount : 0.0;
     }
 
     return Number(total).toFixed(2);
@@ -440,7 +455,10 @@ const MemoReturn = () => {
     const otherCharge = parseFloat(state.otherCharge) || 0;
 
     // Final grand total
-    const grandTotal = totalAfterDiscount + totalAfterVAT + otherCharge ? totalAfterDiscount + totalAfterVAT + otherCharge : 0.00;
+    const grandTotal =
+      totalAfterDiscount + totalAfterVAT + otherCharge
+        ? totalAfterDiscount + totalAfterVAT + otherCharge
+        : 0.0;
 
     return Number(grandTotal).toFixed(2);
   };
@@ -471,7 +489,7 @@ const MemoReturn = () => {
     handleUpdate(
       index,
       "discount_amount",
-      Number(calculatedDiscountAmount).toFixed(2)
+      Number(calculatedDiscountAmount).toFixed(2),
     );
     // dispatch({
     //   type: "UPDATE_ITEM",
@@ -500,7 +518,7 @@ const MemoReturn = () => {
     handleUpdate(
       index,
       "discount_percent",
-      Number(calculatedDiscountPercent).toFixed(2)
+      Number(calculatedDiscountPercent).toFixed(2),
     );
     // dispatch({
     //   type: "UPDATE_ITEM",
@@ -515,9 +533,10 @@ const MemoReturn = () => {
 
   const calculateTotalAfterDiscountPercent = () => {
     if (state.useDiscountPercent) {
-      return (
-        (calculateSubTotalAfterItemDiscounts() * state.discount_percent) / 100 ? (calculateSubTotalAfterItemDiscounts() * state.discount_percent) / 100 : 0.00
-      );
+      return (calculateSubTotalAfterItemDiscounts() * state.discount_percent) /
+        100
+        ? (calculateSubTotalAfterItemDiscounts() * state.discount_percent) / 100
+        : 0.0;
     }
 
     return 0;
@@ -545,18 +564,27 @@ const MemoReturn = () => {
   const [memoInfo, setMemoInfo] = useRecoilState(memoInfoState);
   const [companyCurrency, setCompanyCurrency] = useState(null);
 
-  const isApproved = ((memoInfo?.status || "") + "").toLowerCase() === "approved" ||
+  const isApproved =
+    ((memoInfo?.status || "") + "").toLowerCase() === "approved" ||
     ((memoInfo?.status_approve || "") + "").toLowerCase() === "approved";
   const [fsmState, setFsmState] = useRecoilState(memoReturnFSMState);
-  const [originalData, setOriginalData] = useRecoilState(memoReturnOriginalDataState);
+  const [originalData, setOriginalData] = useRecoilState(
+    memoReturnOriginalDataState,
+  );
   const [formData, setFormData] = useRecoilState(memoReturnFormDataState);
   const [editMemoStatus, setEditMemoStatus] = useRecoilState(editMemoState);
   const [showCancelConfirmDialog, setShowCancelConfirmDialog] = useState(false);
 
   // Reset functions for Recoil states
-  const resetInvoiceAddressState = useResetRecoilState(QuotationInvoiceAddressState);
-  const resetSelectedInvoiceAddressState = useResetRecoilState(QuotationSelectedInvoiceAddressState);
-  const resetShippingAddressState = useResetRecoilState(QuotationShippingAddressState);
+  const resetInvoiceAddressState = useResetRecoilState(
+    QuotationInvoiceAddressState,
+  );
+  const resetSelectedInvoiceAddressState = useResetRecoilState(
+    QuotationSelectedInvoiceAddressState,
+  );
+  const resetShippingAddressState = useResetRecoilState(
+    QuotationShippingAddressState,
+  );
   const resetRowsState = useResetRecoilState(QuotationtableRowsState);
   const resetGrandTotalState = useResetRecoilState(grandTotalState);
   const resetMemoInfoState = useResetRecoilState(memoInfoState);
@@ -593,18 +621,22 @@ const MemoReturn = () => {
     // Only check if there are rows with actual data (not just empty rows)
     if (rows && rows.length > 0) {
       // Check if any row has meaningful data
-      const hasRowData = rows.some(row =>
-        row?.stone || row?.stone_code || row?.pcs > 0 || row?.weight > 0 || row?.price > 0
+      const hasRowData = rows.some(
+        (row) =>
+          row?.stone ||
+          row?.stone_code ||
+          row?.pcs > 0 ||
+          row?.weight > 0 ||
+          row?.price > 0,
       );
       if (hasRowData) {
         return true;
       }
     }
-    // Header fields (account, ref1, ref2, exchange rate, invoice address, shipping address, note, remark) 
+    // Header fields (account, ref1, ref2, exchange rate, invoice address, shipping address, note, remark)
     // are not considered as unsaved data - only item rows trigger the warning
     return false;
   }, [memoInfo, rows]);
-
 
   const shouldShowUnsavedDialog = useMemo(() => {
     if (fsmState === "saved") {
@@ -613,9 +645,7 @@ const MemoReturn = () => {
     return hasUnsavedData;
   }, [fsmState, hasUnsavedData]);
 
-
   useTransactionNavigationGuard(shouldShowUnsavedDialog, resetMemoReturnState);
-
 
   useEffect(() => {
     dispatch({ type: "RESET_STATE" });
@@ -665,10 +695,11 @@ const MemoReturn = () => {
     const recordId = memoReturnData?._id || memoReturnData?.id || memoInfo?.id;
     const invoiceNo = memoReturnData?.invoice_no || memoInfo?.invoice_no;
     const status = memoReturnData?.status || memoInfo?.status || "unapproved";
-    const statusApprove = memoReturnData?.status_approve || memoInfo?.status_approve;
+    const statusApprove =
+      memoReturnData?.status_approve || memoInfo?.status_approve;
 
     if (recordId) {
-      setMemoInfo(prev => ({
+      setMemoInfo((prev) => ({
         ...prev,
         id: recordId,
         invoice_no: invoiceNo || prev.invoice_no,
@@ -684,7 +715,8 @@ const MemoReturn = () => {
         invoice_no: invoiceNo,
         account: memoInfo.account?.label || "",
         vendor_code_id: memoInfo.account?.code || "",
-        invoice_address: selectedInvoiceAddress?.label || invoiceAddress?.[0]?.label || "",
+        invoice_address:
+          selectedInvoiceAddress?.label || invoiceAddress?.[0]?.label || "",
         shipping_address: shippingAddress?.[0]?.label || "",
         currency: {
           _id: memoInfo.currency,
@@ -732,10 +764,25 @@ const MemoReturn = () => {
       const totalWeight = rows.reduce((a, r) => a + (Number(r.weight) || 0), 0);
 
       const summaryHeaders = [
-        "Doc Date", "Due Date", "Memo Return No.", "Account", "Ref 1", "Ref 2",
-        "Currency", "Exc Rate", "Pcs", "Weight", "SubTotal",
-        "Discount(%)", "Discount Amt", "VAT(%)", "VAT",
-        "Other Charges", "Grand Total", "Remark", "Status"
+        "Doc Date",
+        "Due Date",
+        "Memo Return No.",
+        "Account",
+        "Ref 1",
+        "Ref 2",
+        "Currency",
+        "Exc Rate",
+        "Pcs",
+        "Weight",
+        "SubTotal",
+        "Discount(%)",
+        "Discount Amt",
+        "VAT(%)",
+        "VAT",
+        "Other Charges",
+        "Grand Total",
+        "Remark",
+        "Status",
       ];
 
       const summaryValues = [
@@ -757,17 +804,31 @@ const MemoReturn = () => {
         Number(state.otherCharge || 0),
         Number(grandTotal || 0),
         remark || "",
-        "Valid"
+        "Valid",
       ];
 
       const itemHeaders = [
-        "Type", "Ref No.", "Stone", "Shape", "Size", "Color",
-        "Cutting", "Quality", "Clarity", "Cer Type", "Cer No.", "Pcs", "Weight",
-        "Price", "Unit", "Amount", "Remark"
+        "Type",
+        "Ref No.",
+        "Stone",
+        "Shape",
+        "Size",
+        "Color",
+        "Cutting",
+        "Quality",
+        "Clarity",
+        "Cer Type",
+        "Cer No.",
+        "Pcs",
+        "Weight",
+        "Price",
+        "Unit",
+        "Amount",
+        "Remark",
       ];
 
-      const itemRows = rows.map(row => ([
-        (row.type === "select" ? "" : (row.type || row.stone_type || "")),
+      const itemRows = rows.map((row) => [
+        row.type === "select" ? "" : row.type || row.stone_type || "",
         row.ref_no || row["Ref No."] || "",
         row.stone || "",
         row.shape || "",
@@ -783,8 +844,8 @@ const MemoReturn = () => {
         Number(row.price || 0),
         row.unit || "cts",
         Number(calculateAmountAfterDiscount(row) || 0),
-        row.remark || ""
-      ]));
+        row.remark || "",
+      ]);
 
       exportTransactionToExcel({
         filename: memoInfo?.invoice_no || "Memo Return",
@@ -794,7 +855,6 @@ const MemoReturn = () => {
         itemHeaders,
         itemRows,
       });
-
     } catch (err) {
       console.error(err);
       alert("Failed to export Excel");
@@ -811,7 +871,12 @@ const MemoReturn = () => {
     setRemark(data.remark || "");
     setNote(data.note || "");
 
-    if (data.exchange_rate === 0 || data.exchange_rate === "0" || data.exchange_rate === "" || data.exchange_rate === null) {
+    if (
+      data.exchange_rate === 0 ||
+      data.exchange_rate === "0" ||
+      data.exchange_rate === "" ||
+      data.exchange_rate === null
+    ) {
       setExchangeRate("");
     } else {
       setExchangeRate(data.exchange_rate);
@@ -828,17 +893,24 @@ const MemoReturn = () => {
         discount_amount: Number(el.discount_amount).toFixed(2),
         labour_price: parseFloat(Number(el.labour_price).toFixed(2)),
         amount: Number(el.amount).toFixed(2),
-        other_charge: el.other_charge !== undefined ? parseFloat(el.other_charge).toFixed(2) : "0.00",
+        other_charge:
+          el.other_charge !== undefined
+            ? parseFloat(el.other_charge).toFixed(2)
+            : "0.00",
         image: el.image || null,
         image_preview: (() => {
-          if (!el.image || typeof el.image !== 'string' || el.image.trim() === '') {
+          if (
+            !el.image ||
+            typeof el.image !== "string" ||
+            el.image.trim() === ""
+          ) {
             return null;
           }
           const imgPath = el.image.trim();
           if (/^https?:\/\//.test(imgPath)) {
             return imgPath;
           }
-          if (imgPath.startsWith('/')) {
+          if (imgPath.startsWith("/")) {
             return `${API_URL}${imgPath}`;
           }
           return `${API_URL}/${imgPath}`;
@@ -848,10 +920,19 @@ const MemoReturn = () => {
     }
 
     if (data.summary) {
-      dispatch({ type: "SET_DISCOUNT_PERCENT", payload: data.summary.discount || 0 });
-      dispatch({ type: "SET_DISCOUNT_AMOUNT", payload: data.summary.discount_amount || 0 });
+      dispatch({
+        type: "SET_DISCOUNT_PERCENT",
+        payload: data.summary.discount || 0,
+      });
+      dispatch({
+        type: "SET_DISCOUNT_AMOUNT",
+        payload: data.summary.discount_amount || 0,
+      });
       dispatch({ type: "SET_VAT_AMOUNT", payload: data.summary.vat || 0 });
-      dispatch({ type: "SET_OTHER_CHARGE", payload: data.summary.other_charge || 0 });
+      dispatch({
+        type: "SET_OTHER_CHARGE",
+        payload: data.summary.other_charge || 0,
+      });
     }
 
     setFsmState("saved");
@@ -876,20 +957,18 @@ const MemoReturn = () => {
       setLoading(true); // Set loading to true before fetch
       const response = await apiRequest(
         "GET",
-        `/consignments/memo-pending?account=${item?.account || ""}`
+        `/consignments/memo-pending?account=${item?.account || ""}`,
       );
       // setRowData(response);
       setMemoInfo((prev) => ({
         ...prev,
         memoReturnDayBookData: response,
-
       }));
       //       setRows((prev) => ({
       //   ...prev,
       //   uniqueId: memoPendingData,
 
       // }));
-
     } catch (error) {
       console.error("Error fetching stock:", error);
     } finally {
@@ -906,7 +985,7 @@ const MemoReturn = () => {
     handleUpdate(index, field, value);
   };
 
-  const handleCurrencyChange = (currency) => { };
+  const handleCurrencyChange = (currency) => {};
 
   const handlePost = () => {
     setIsOpenModalConfrim(true);
@@ -920,7 +999,7 @@ const MemoReturn = () => {
       try {
         const id = await getCompanyCurrencyId(apiRequest);
         setCompanyCurrency(id);
-      } catch { }
+      } catch {}
     })();
   }, []);
 
@@ -961,7 +1040,6 @@ const MemoReturn = () => {
         rowErrors.push("Pcs");
       }
 
-
       if (!isNumeric(el.weight) || parseFloat(el.weight) <= 0) {
         rowErrors.push("Weight");
       }
@@ -970,8 +1048,7 @@ const MemoReturn = () => {
         rowErrors.push("Price");
       }
 
-
-      const totalAmount = calculateAmountAfterDiscount(el);  // Assuming this function returns total_amount
+      const totalAmount = calculateAmountAfterDiscount(el); // Assuming this function returns total_amount
       // if (!isNumeric(totalAmount) || totalAmount <= 0) {
       //   rowErrors.push("Total Amount");
       // }
@@ -989,13 +1066,11 @@ const MemoReturn = () => {
 
     // --------- Final Invalid Check ---------
     if (invalidList.length > 0) {
-
-
       const headerErrors = invalidList
-        .filter(el => el.row === "Header")
-        .flatMap(el => el.list);
+        .filter((el) => el.row === "Header")
+        .flatMap((el) => el.list);
 
-      const rowErrors = invalidList.filter(el => el.row !== "Header");
+      const rowErrors = invalidList.filter((el) => el.row !== "Header");
 
       let warningText = "";
 
@@ -1005,7 +1080,7 @@ const MemoReturn = () => {
 
       if (rowErrors.length > 0) {
         const rowText = rowErrors
-          .map(el => `${el.row}: ${el.list.join(", ")}`)
+          .map((el) => `${el.row}: ${el.list.join(", ")}`)
           .join(" | ");
 
         warningText += warningText ? " | " + rowText : rowText;
@@ -1017,8 +1092,6 @@ const MemoReturn = () => {
       return;
     }
 
-
-
     // --------- Body Preparation ---------
     const sub_total = calculateSubTotalAfterItemDiscounts();
     const grand_total = calculateGrandTotal();
@@ -1026,22 +1099,21 @@ const MemoReturn = () => {
     const otherCharge = parseFloat(state.otherCharge);
     const totaldiscountper = calculateTotalAfterDiscountPercent();
 
-
     const body = {
       invoice_no: memoInfo?.invoice_no || "",
-      account: memoInfo?.account?.label,
+      account: memoInfo?.account?._id,
       vendor_code_id: memoInfo?.account?.code,
       invoice_address:
-        selectedInvoiceAddress?.label ||
-        invoiceAddress?.[0]?.label ||
-        "",
+        selectedInvoiceAddress?.label || invoiceAddress?.[0]?.label || "",
       shipping_address: shippingAddress?.[0]?.label,
       currency: memoInfo.currency,
       doc_date: docDate,
       due_date: dueDate,
       inventory_type: "purchase_po",
       exchange_rate:
-        exchangeRate === "" || exchangeRate === null || Number(exchangeRate) === 0
+        exchangeRate === "" ||
+        exchangeRate === null ||
+        Number(exchangeRate) === 0
           ? 1
           : Number(exchangeRate),
       ref_1: ref1,
@@ -1088,7 +1160,9 @@ const MemoReturn = () => {
       summary: {
         sub_total: parseFloat(sub_total).toFixed(2),
         discount: parseFloat(totaldiscountper).toFixed(2),
-        discount_amount: isNaN(parseFloat(state.discount_amount)) ? "0.00" : parseFloat(state.discount_amount).toFixed(2),
+        discount_amount: isNaN(parseFloat(state.discount_amount))
+          ? "0.00"
+          : parseFloat(state.discount_amount).toFixed(2),
         total_after_discount: parseFloat(totalAfterDiscount).toFixed(2),
         vat: parseFloat(state.vatAmount).toFixed(2),
         vat_amount: parseFloat(totalAfterVAT).toFixed(2),
@@ -1104,6 +1178,10 @@ const MemoReturn = () => {
       method = "PUT";
       URL = `/memo-returns/${memoInfo?.id}`;
     }
+
+    console.log("ACCOUNT DATA:", memoInfo.account);
+    console.log("ACCOUNT ID:", memoInfo?.account?._id);
+    console.log("BODY:", body);
     const postData = await apiRequest(method, URL, body);
     if (postData) {
       setIsOpenModalConfrim(false);
@@ -1114,7 +1192,6 @@ const MemoReturn = () => {
     setTimeout(() => {
       setIsOpenModalSuccess(false);
     }, 500);
-
   };
 
   const resetData = () => {
@@ -1140,7 +1217,7 @@ const MemoReturn = () => {
     let allInvoiceAddresses = [];
     if (vendorData.state === "hasValue" && Array.isArray(vendorData.contents)) {
       const matchedAccount = vendorData.contents.find(
-        (acc) => acc.code === item.vendor_code_id
+        (acc) => acc.code === item.vendor_code_id,
       );
       if (matchedAccount) {
         allInvoiceAddresses = matchedAccount.invoiceAddress || [];
@@ -1150,11 +1227,11 @@ const MemoReturn = () => {
     if (allInvoiceAddresses.length > 0) {
       const savedAddressText = (item.invoice_address || "").trim();
       const savedAddress = allInvoiceAddresses.find(
-        (addr) => (addr.label || "").trim() === savedAddressText
+        (addr) => (addr.label || "").trim() === savedAddressText,
       );
       if (savedAddress) {
         const remainingAddresses = allInvoiceAddresses.filter(
-          (addr) => (addr.label || "").trim() !== savedAddressText
+          (addr) => (addr.label || "").trim() !== savedAddressText,
         );
         const reorderedAddresses = [savedAddress, ...remainingAddresses];
         setInvoiceAddress(reorderedAddresses);
@@ -1199,7 +1276,7 @@ const MemoReturn = () => {
       } else {
         setExchangeRate(item.exchange_rate);
       }
-    }, 900); // delay in milliseconds, adjust as needed 
+    }, 900); // delay in milliseconds, adjust as needed
 
     setRef1(item.ref_1);
     setRef2(item.ref_2);
@@ -1207,7 +1284,9 @@ const MemoReturn = () => {
       ...prev,
       currency: item?.currency?._id || prev?.currency,
       currencyCode: item?.currency?.code || prev?.currencyCode,
-      exchange_rate: item?.exchange_rate ? parseFloat(item?.exchange_rate).toFixed(2) : prev?.exchange_rate,
+      exchange_rate: item?.exchange_rate
+        ? parseFloat(item?.exchange_rate).toFixed(2)
+        : prev?.exchange_rate,
       account: { label: item.account, code: item.vendor_code_id },
       invoice_no: item?.invoice_no,
       id: item?._id,
@@ -1245,7 +1324,6 @@ const MemoReturn = () => {
     });
     setRows(updatedItems);
     handleCurrencyChange(item?.currency?.code);
-
 
     setFsmState("saved");
     setEditMemoStatus(false);
@@ -1650,7 +1728,9 @@ const MemoReturn = () => {
   return (
     <Box sx={{ display: "flex" }}>
       <NavBar />
-      <Box sx={{ marginLeft: "222px", Height: "100vh ", paddingBottom: "130px" }}>
+      <Box
+        sx={{ marginLeft: "222px", Height: "100vh ", paddingBottom: "130px" }}
+      >
         <Header />
         <Box sx={{ display: "flex" }}>
           <Box>
@@ -1749,19 +1829,19 @@ const MemoReturn = () => {
               isDayBookDataLoaded={memoInfo?.isDayBookEdit || false}
               setIsDayBookDataLoaded={(value) => {
                 if (!value) {
-                  setMemoInfo(prev => ({ ...prev, isDayBookEdit: false }));
+                  setMemoInfo((prev) => ({ ...prev, isDayBookEdit: false }));
                 }
               }}
               triggerFSMDirty={triggerFSMDirty}
               fsmState={fsmState}
               editMemoStatus={editMemoStatus}
               hasUnsavedData={() => hasUnsavedData}
-            // isApproved={isApproved}
+              // isApproved={isApproved}
             />
           </Box>
         </Box>
         <FooterVendor
-          type="purchase"
+          type="memo_return"
           fsmState={fsmState}
           formData={formData}
           selectedData={originalData}

@@ -51,13 +51,21 @@ const formatWeight = (weight) => {
 
 const formatCurrency = (amount) => {
   const num = parseFloat(amount);
-  return isNaN(num) ? "0.00" : num.toLocaleString("en-US", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
+  return isNaN(num)
+    ? "0.00"
+    : num.toLocaleString("en-US", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      });
 };
 
-const ReturnMemoPending = ({ data, state, handleSubmit, fsmState, hasUnsavedData }) => {
+const ReturnMemoPending = ({
+  data,
+  state,
+  handleSubmit,
+  fsmState,
+  hasUnsavedData,
+}) => {
   const [open, setOpen] = useState(false);
   const [checked, setChecked] = useState(false);
   const [rowData, setRowData] = useState([]);
@@ -67,11 +75,17 @@ const ReturnMemoPending = ({ data, state, handleSubmit, fsmState, hasUnsavedData
   const [memoInfo, setMemoInfo] = useRecoilState(memoInfoState);
   const [editMemoStatus, setEditMemoStatus] = useRecoilState(editMemoState);
 
-  const { filteredData, handleFilterClick, popoverProps, isFilterActive } = useColumnFilters(rowData, open);
-  const { sortedData, requestSort, sortConfig, setSortConfig } = useTableSort(filteredData, { key: 'doc_date', direction: 'desc' });
+  const { filteredData, handleFilterClick, popoverProps, isFilterActive } =
+    useColumnFilters(rowData, open);
+  const { sortedData, requestSort, sortConfig, setSortConfig } = useTableSort(
+    filteredData,
+    { key: "doc_date", direction: "desc" },
+  );
 
   const renderFilterIcon = (columnKey) => {
-    const active = isFilterActive(columnKey) || (popoverProps.open && popoverProps.activeColumnKey === columnKey);
+    const active =
+      isFilterActive(columnKey) ||
+      (popoverProps.open && popoverProps.activeColumnKey === columnKey);
     return (
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -104,22 +118,27 @@ const ReturnMemoPending = ({ data, state, handleSubmit, fsmState, hasUnsavedData
   const [pendingSubmit, setPendingSubmit] = useState(false);
 
   const [rows, setRows] = useRecoilState(QuotationtableRowsState);
-  
-          const disabled = () => {
-        return rows.some(r => r.isFromMemoPending);
-      }
+
+  const disabled = () => {
+    return rows.some((r) => r.isFromMemoPending);
+  };
 
   useEffect(() => {
     const fetchMemoIn = async () => {
       try {
         setLoading(true); // Set loading to true before fetch
+        // const response = await apiRequest(
+        //   "GET",
+        //   `/consignments/memo-pending?account=${memoInfo?.account?.label || ""}`
+        // );
+
         const response = await apiRequest(
           "GET",
-          `/consignments/memo-pending?account=${memoInfo?.account?.label || ""}`
+          `/consignments/memo-pending?account=${memoInfo?.account?.value || ""}`,
         );
+
         setRowData(response);
-        setMemoInfo({...memoInfo,memoPendingData:response});
-       
+        setMemoInfo({ ...memoInfo, memoPendingData: response });
       } catch (error) {
         console.error("Error fetching stock:", error);
       } finally {
@@ -135,10 +154,15 @@ const ReturnMemoPending = ({ data, state, handleSubmit, fsmState, hasUnsavedData
 
   const handleOkClick = () => {
     // Check if we should show confirmation dialog
-    const shouldShowDialog = 
-      (editMemoStatus === true) || 
-      ((fsmState === "initial" || fsmState === "dirty" || fsmState === "editing") && hasUnsavedData && hasUnsavedData() && selectedRows.length > 0);
-    
+    const shouldShowDialog =
+      editMemoStatus === true ||
+      ((fsmState === "initial" ||
+        fsmState === "dirty" ||
+        fsmState === "editing") &&
+        hasUnsavedData &&
+        hasUnsavedData() &&
+        selectedRows.length > 0);
+
     if (shouldShowDialog) {
       setPendingSubmit(true);
       setShowConfirmDialog(true);
@@ -148,7 +172,7 @@ const ReturnMemoPending = ({ data, state, handleSubmit, fsmState, hasUnsavedData
       handleClose();
     }
   };
-  
+
   const proceedWithSubmit = (confirmed) => {
     if (confirmed && pendingSubmit) {
       handleSubmit(selectedRows);
@@ -161,7 +185,7 @@ const ReturnMemoPending = ({ data, state, handleSubmit, fsmState, hasUnsavedData
   const handleCheckboxChange = (row) => {
     setSelectedRows((prev) => {
       const isSelected = prev.some(
-        (selectedRow) => selectedRow._id === row._id
+        (selectedRow) => selectedRow._id === row._id,
       );
       return isSelected
         ? prev.filter((selectedRow) => selectedRow._id !== row._id)
@@ -194,7 +218,6 @@ const ReturnMemoPending = ({ data, state, handleSubmit, fsmState, hasUnsavedData
 
   const handleCheckboxClick = () => {
     setChecked((prev) => !prev);
-   
   };
 
   const [age, setAge] = React.useState("");
@@ -203,43 +226,39 @@ const ReturnMemoPending = ({ data, state, handleSubmit, fsmState, hasUnsavedData
     setAge(event.target.value);
   };
 
-  
   return (
     <>
       <Box>
-
-           <Button
-                  disabled={memoInfo?.isDayBookEdit}
-                  onClick={handleOpen}
-                   sx={{
-                             textTransform: "none",
-                             height: "26px",
-                             width: "118px",
-                             padding: "12px",
-                             borderRadius: "4px",
-                             border: "1px solid #57646E",
-                             backgroundColor: "#000",
-                             "&:hover": {
-                               backgroundColor: "#000",
-                             },
-                           }}
-                 
-                >
-                  <Typography
-                       sx={{
-                                 color: "#FFF",
-                                 textAlign: "center",
-                                 fontFamily: "Calibri",
-                                 fontSize: "14px",
-                                 fontStyle: "normal",
-                                 fontWeight: 700,
-                                 lineHeight: "normal",
-                               }}
-                  >
-                     Memo Pending
-                  </Typography>
-                </Button>
-       
+        <Button
+          disabled={memoInfo?.isDayBookEdit}
+          onClick={handleOpen}
+          sx={{
+            textTransform: "none",
+            height: "26px",
+            width: "118px",
+            padding: "12px",
+            borderRadius: "4px",
+            border: "1px solid #57646E",
+            backgroundColor: "#000",
+            "&:hover": {
+              backgroundColor: "#000",
+            },
+          }}
+        >
+          <Typography
+            sx={{
+              color: "#FFF",
+              textAlign: "center",
+              fontFamily: "Calibri",
+              fontSize: "14px",
+              fontStyle: "normal",
+              fontWeight: 700,
+              lineHeight: "normal",
+            }}
+          >
+            Memo Pending
+          </Typography>
+        </Button>
 
         <Dialog
           open={openSelectAccountModal}
@@ -648,7 +667,7 @@ const ReturnMemoPending = ({ data, state, handleSubmit, fsmState, hasUnsavedData
                   </Box>
 
                   <Box
-                    onClick={() => requestSort('doc_date')}
+                    onClick={() => requestSort("doc_date")}
                     sx={{
                       width: "140px",
                       display: "flex",
@@ -673,7 +692,7 @@ const ReturnMemoPending = ({ data, state, handleSubmit, fsmState, hasUnsavedData
                   </Box>
 
                   <Box
-                    onClick={() => requestSort('due_date')}
+                    onClick={() => requestSort("due_date")}
                     sx={{
                       width: "140px",
                       display: "flex",
@@ -698,16 +717,16 @@ const ReturnMemoPending = ({ data, state, handleSubmit, fsmState, hasUnsavedData
                   </Box>
 
                   <Box
-                    onClick={(e) => handleFilterClick(e, 'memo_no')}
+                    onClick={(e) => handleFilterClick(e, "memo_no")}
                     sx={{
                       width: "140px",
                       display: "flex",
                       alignItems: "center",
-                     justifyContent: "center",
+                      justifyContent: "center",
                       padding: "12px 8px",
                       cursor: "pointer",
                       "&:hover": {
-                        bgcolor: "rgba(0, 0, 0, 0.04)"
+                        bgcolor: "rgba(0, 0, 0, 0.04)",
                       },
                     }}
                   >
@@ -722,16 +741,16 @@ const ReturnMemoPending = ({ data, state, handleSubmit, fsmState, hasUnsavedData
                     >
                       Memo In NO.
                     </Typography>
-                    {renderFilterIcon('memo_no')}
+                    {renderFilterIcon("memo_no")}
                   </Box>
 
                   <Box
                     sx={{
                       width: "120px",
                       display: "flex",
-                         padding: "12px 8px",
+                      padding: "12px 8px",
                       alignItems: "center",
-                    justifyContent: "center",
+                      justifyContent: "center",
                       borderRight: "1px solid #C6C6C8",
                     }}
                   >
@@ -749,7 +768,7 @@ const ReturnMemoPending = ({ data, state, handleSubmit, fsmState, hasUnsavedData
                   </Box>
 
                   <Box
-                    onClick={(e) => handleFilterClick(e, 'stone')}
+                    onClick={(e) => handleFilterClick(e, "stone")}
                     sx={{
                       width: "120px",
                       display: "flex",
@@ -758,7 +777,7 @@ const ReturnMemoPending = ({ data, state, handleSubmit, fsmState, hasUnsavedData
                       padding: "12px 8px",
                       cursor: "pointer",
                       "&:hover": {
-                        bgcolor: "rgba(0, 0, 0, 0.04)"
+                        bgcolor: "rgba(0, 0, 0, 0.04)",
                       },
                     }}
                   >
@@ -773,20 +792,20 @@ const ReturnMemoPending = ({ data, state, handleSubmit, fsmState, hasUnsavedData
                     >
                       Stone
                     </Typography>
-                    {renderFilterIcon('stone')}
+                    {renderFilterIcon("stone")}
                   </Box>
 
                   <Box
-                    onClick={(e) => handleFilterClick(e, 'shape')}
+                    onClick={(e) => handleFilterClick(e, "shape")}
                     sx={{
                       width: "120px",
                       display: "flex",
                       alignItems: "center",
-                    justifyContent: "center",
+                      justifyContent: "center",
                       padding: "12px 8px",
                       cursor: "pointer",
                       "&:hover": {
-                        bgcolor: "rgba(0, 0, 0, 0.04)"
+                        bgcolor: "rgba(0, 0, 0, 0.04)",
                       },
                     }}
                   >
@@ -801,20 +820,20 @@ const ReturnMemoPending = ({ data, state, handleSubmit, fsmState, hasUnsavedData
                     >
                       Shape
                     </Typography>
-                    {renderFilterIcon('shape')}
+                    {renderFilterIcon("shape")}
                   </Box>
 
                   <Box
-                    onClick={(e) => handleFilterClick(e, 'size')}
+                    onClick={(e) => handleFilterClick(e, "size")}
                     sx={{
                       width: "120px",
                       display: "flex",
                       alignItems: "center",
-                     justifyContent: "center",
+                      justifyContent: "center",
                       padding: "12px 8px",
                       cursor: "pointer",
                       "&:hover": {
-                        bgcolor: "rgba(0, 0, 0, 0.04)"
+                        bgcolor: "rgba(0, 0, 0, 0.04)",
                       },
                     }}
                   >
@@ -829,11 +848,11 @@ const ReturnMemoPending = ({ data, state, handleSubmit, fsmState, hasUnsavedData
                     >
                       Size
                     </Typography>
-                    {renderFilterIcon('size')}
+                    {renderFilterIcon("size")}
                   </Box>
 
                   <Box
-                    onClick={(e) => handleFilterClick(e, 'color')}
+                    onClick={(e) => handleFilterClick(e, "color")}
                     sx={{
                       width: "120px",
                       display: "flex",
@@ -842,7 +861,7 @@ const ReturnMemoPending = ({ data, state, handleSubmit, fsmState, hasUnsavedData
                       padding: "12px 8px",
                       cursor: "pointer",
                       "&:hover": {
-                        bgcolor: "rgba(0, 0, 0, 0.04)"
+                        bgcolor: "rgba(0, 0, 0, 0.04)",
                       },
                     }}
                   >
@@ -857,20 +876,20 @@ const ReturnMemoPending = ({ data, state, handleSubmit, fsmState, hasUnsavedData
                     >
                       Color
                     </Typography>
-                    {renderFilterIcon('color')}
+                    {renderFilterIcon("color")}
                   </Box>
 
                   <Box
-                    onClick={(e) => handleFilterClick(e, 'cutting')}
+                    onClick={(e) => handleFilterClick(e, "cutting")}
                     sx={{
                       width: "120px",
                       display: "flex",
                       alignItems: "center",
-                     justifyContent: "center",
+                      justifyContent: "center",
                       padding: "12px 8px",
                       cursor: "pointer",
                       "&:hover": {
-                        bgcolor: "rgba(0, 0, 0, 0.04)"
+                        bgcolor: "rgba(0, 0, 0, 0.04)",
                       },
                     }}
                   >
@@ -885,20 +904,20 @@ const ReturnMemoPending = ({ data, state, handleSubmit, fsmState, hasUnsavedData
                     >
                       Cutting
                     </Typography>
-                    {renderFilterIcon('cutting')}
+                    {renderFilterIcon("cutting")}
                   </Box>
 
                   <Box
-                    onClick={(e) => handleFilterClick(e, 'quality')}
+                    onClick={(e) => handleFilterClick(e, "quality")}
                     sx={{
                       width: "120px",
                       display: "flex",
                       alignItems: "center",
-                     justifyContent: "center",
+                      justifyContent: "center",
                       padding: "12px 8px",
                       cursor: "pointer",
                       "&:hover": {
-                        bgcolor: "rgba(0, 0, 0, 0.04)"
+                        bgcolor: "rgba(0, 0, 0, 0.04)",
                       },
                     }}
                   >
@@ -913,20 +932,20 @@ const ReturnMemoPending = ({ data, state, handleSubmit, fsmState, hasUnsavedData
                     >
                       Quality
                     </Typography>
-                    {renderFilterIcon('quality')}
+                    {renderFilterIcon("quality")}
                   </Box>
 
                   <Box
-                    onClick={(e) => handleFilterClick(e, 'clarity')}
+                    onClick={(e) => handleFilterClick(e, "clarity")}
                     sx={{
                       width: "120px",
                       display: "flex",
                       alignItems: "center",
                       padding: "12px 8px",
-                    justifyContent: "center",
+                      justifyContent: "center",
                       cursor: "pointer",
                       "&:hover": {
-                        bgcolor: "rgba(0, 0, 0, 0.04)"
+                        bgcolor: "rgba(0, 0, 0, 0.04)",
                       },
                     }}
                   >
@@ -941,11 +960,11 @@ const ReturnMemoPending = ({ data, state, handleSubmit, fsmState, hasUnsavedData
                     >
                       Clarity
                     </Typography>
-                    {renderFilterIcon('clarity')}
+                    {renderFilterIcon("clarity")}
                   </Box>
 
                   <Box
-                    onClick={(e) => handleFilterClick(e, 'cer_type')}
+                    onClick={(e) => handleFilterClick(e, "cer_type")}
                     sx={{
                       width: "140px",
                       display: "flex",
@@ -954,7 +973,7 @@ const ReturnMemoPending = ({ data, state, handleSubmit, fsmState, hasUnsavedData
                       padding: "12px 8px",
                       cursor: "pointer",
                       "&:hover": {
-                        bgcolor: "rgba(0, 0, 0, 0.04)"
+                        bgcolor: "rgba(0, 0, 0, 0.04)",
                       },
                     }}
                   >
@@ -969,7 +988,7 @@ const ReturnMemoPending = ({ data, state, handleSubmit, fsmState, hasUnsavedData
                     >
                       Cer Type
                     </Typography>
-                    {renderFilterIcon('cer_type')}
+                    {renderFilterIcon("cer_type")}
                   </Box>
 
                   <Box
@@ -996,7 +1015,7 @@ const ReturnMemoPending = ({ data, state, handleSubmit, fsmState, hasUnsavedData
 
                   <Box
                     sx={{
-                       width: "120px",
+                      width: "120px",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
@@ -1043,7 +1062,7 @@ const ReturnMemoPending = ({ data, state, handleSubmit, fsmState, hasUnsavedData
                       width: "120px",
                       display: "flex",
                       alignItems: "center",
-                     justifyContent: "center",
+                      justifyContent: "center",
                       borderLeft: "1px solid #C6C6C8",
 
                       padding: "12px 8px",
@@ -1090,7 +1109,7 @@ const ReturnMemoPending = ({ data, state, handleSubmit, fsmState, hasUnsavedData
                       width: "120px",
                       display: "flex",
                       alignItems: "center",
-                    justifyContent: "center",
+                      justifyContent: "center",
                       padding: "12px 8px",
                     }}
                   >
@@ -1193,7 +1212,7 @@ const ReturnMemoPending = ({ data, state, handleSubmit, fsmState, hasUnsavedData
                       >
                         <Checkbox
                           checked={selectedRows.some(
-                            (selectedRow) => selectedRow._id === row._id // Update ID comparison
+                            (selectedRow) => selectedRow._id === row._id, // Update ID comparison
                           )}
                           onChange={() => handleCheckboxChange(row)}
                         />
@@ -1211,7 +1230,9 @@ const ReturnMemoPending = ({ data, state, handleSubmit, fsmState, hasUnsavedData
                         }}
                       >
                         <Typography sx={textStyle}>
-                          {row.doc_date ? dayjs(row.doc_date).format("DD/MM/YYYY") : ""}
+                          {row.doc_date
+                            ? dayjs(row.doc_date).format("DD/MM/YYYY")
+                            : ""}
                         </Typography>
                       </Box>
                       <Box
@@ -1224,7 +1245,9 @@ const ReturnMemoPending = ({ data, state, handleSubmit, fsmState, hasUnsavedData
                         }}
                       >
                         <Typography sx={textStyle}>
-                          {row.due_date ? dayjs(row.due_date).format("DD/MM/YYYY") : ""}
+                          {row.due_date
+                            ? dayjs(row.due_date).format("DD/MM/YYYY")
+                            : ""}
                         </Typography>
                       </Box>
                       <Box
@@ -1253,7 +1276,8 @@ const ReturnMemoPending = ({ data, state, handleSubmit, fsmState, hasUnsavedData
                         sx={{
                           width: "120px",
                           display: "flex",
-                          alignItems: "center",justifyContent: "center",
+                          alignItems: "center",
+                          justifyContent: "center",
                           padding: "12px 8px",
                         }}
                       >
@@ -1263,7 +1287,8 @@ const ReturnMemoPending = ({ data, state, handleSubmit, fsmState, hasUnsavedData
                         sx={{
                           width: "120px",
                           display: "flex",
-                          alignItems: "center",justifyContent: "center",
+                          alignItems: "center",
+                          justifyContent: "center",
                           padding: "12px 8px",
                         }}
                       >
@@ -1274,8 +1299,8 @@ const ReturnMemoPending = ({ data, state, handleSubmit, fsmState, hasUnsavedData
                           width: "120px",
                           display: "flex",
                           alignItems: "center",
-                        justifyContent: "center",
-                        padding: "12px 8px",
+                          justifyContent: "center",
+                          padding: "12px 8px",
                         }}
                       >
                         <Typography sx={textStyle}>{row.size}</Typography>
@@ -1297,7 +1322,7 @@ const ReturnMemoPending = ({ data, state, handleSubmit, fsmState, hasUnsavedData
                           display: "flex",
                           alignItems: "center",
                           padding: "12px 8px",
-                                                  justifyContent: "center",
+                          justifyContent: "center",
                         }}
                       >
                         <Typography sx={textStyle}>{row.cutting}</Typography>
@@ -1308,7 +1333,7 @@ const ReturnMemoPending = ({ data, state, handleSubmit, fsmState, hasUnsavedData
                           display: "flex",
                           alignItems: "center",
                           padding: "12px 8px",
-                                                  justifyContent: "center",
+                          justifyContent: "center",
                         }}
                       >
                         <Typography sx={textStyle}>{row.quality}</Typography>
@@ -1319,7 +1344,7 @@ const ReturnMemoPending = ({ data, state, handleSubmit, fsmState, hasUnsavedData
                           display: "flex",
                           alignItems: "center",
                           padding: "12px 8px",
-                                                  justifyContent: "center",
+                          justifyContent: "center",
                         }}
                       >
                         <Typography sx={textStyle}>{row.clarity}</Typography>
@@ -1330,7 +1355,7 @@ const ReturnMemoPending = ({ data, state, handleSubmit, fsmState, hasUnsavedData
                           display: "flex",
                           alignItems: "center",
                           padding: "12px 8px",
-                                                 justifyContent: "center",
+                          justifyContent: "center",
                         }}
                       >
                         <Typography sx={textStyle}>{row.cer_type}</Typography>
@@ -1341,7 +1366,7 @@ const ReturnMemoPending = ({ data, state, handleSubmit, fsmState, hasUnsavedData
                           display: "flex",
                           alignItems: "center",
                           padding: "12px 8px",
-                                                 justifyContent: "center",
+                          justifyContent: "center",
                         }}
                       >
                         <Typography sx={textStyle}>{row.cer_no}</Typography>
@@ -1352,7 +1377,7 @@ const ReturnMemoPending = ({ data, state, handleSubmit, fsmState, hasUnsavedData
                           width: "120px",
                           display: "flex",
                           alignItems: "center",
-                                                  justifyContent: "center",
+                          justifyContent: "center",
                           padding: "12px 8px",
                         }}
                       >
@@ -1363,22 +1388,26 @@ const ReturnMemoPending = ({ data, state, handleSubmit, fsmState, hasUnsavedData
                           width: "120px",
                           display: "flex",
                           alignItems: "center",
-                                                  justifyContent: "center",
+                          justifyContent: "center",
                           padding: "12px 8px",
                         }}
                       >
-                        <Typography sx={textStyle}>{formatWeight(row.weight)}</Typography>
+                        <Typography sx={textStyle}>
+                          {formatWeight(row.weight)}
+                        </Typography>
                       </Box>
                       <Box
                         sx={{
                           width: "120px",
                           display: "flex",
                           alignItems: "center",
-                                                  justifyContent: "center",
+                          justifyContent: "center",
                           padding: "12px 8px",
                         }}
                       >
-                         <Typography sx={textStyle}>{formatCurrency(row.price)}</Typography>
+                        <Typography sx={textStyle}>
+                          {formatCurrency(row.price)}
+                        </Typography>
                       </Box>
                       <Box
                         sx={{
@@ -1396,11 +1425,13 @@ const ReturnMemoPending = ({ data, state, handleSubmit, fsmState, hasUnsavedData
                           width: "120px",
                           display: "flex",
                           alignItems: "center",
-                                         justifyContent: "center",
+                          justifyContent: "center",
                           padding: "12px 8px",
                         }}
                       >
-                        <Typography sx={textStyle}>{formatCurrency(row.amount)}</Typography>
+                        <Typography sx={textStyle}>
+                          {formatCurrency(row.amount)}
+                        </Typography>
                       </Box>
                       <Box
                         sx={{
@@ -1408,7 +1439,7 @@ const ReturnMemoPending = ({ data, state, handleSubmit, fsmState, hasUnsavedData
                           display: "flex",
                           alignItems: "center",
                           padding: "12px 8px",
-                                                  justifyContent: "center",
+                          justifyContent: "center",
                         }}
                       >
                         <Typography sx={textStyle}>{row.remark}</Typography>
@@ -1502,7 +1533,7 @@ const ReturnMemoPending = ({ data, state, handleSubmit, fsmState, hasUnsavedData
         sortConfig={sortConfig}
         setSortConfig={setSortConfig}
       />
-      
+
       <ConfirmCancelDialog
         open={showConfirmDialog}
         onClose={proceedWithSubmit}

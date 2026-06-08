@@ -1,4 +1,10 @@
-import React, { useReducer, useState, useEffect, useMemo, useCallback } from "react";
+import React, {
+  useReducer,
+  useState,
+  useEffect,
+  useMemo,
+  useCallback,
+} from "react";
 import { Box, Button, Dialog, Typography } from "@mui/material";
 import NavBar from "../../component/NavBar/NavBar";
 import Header from "../../component/Layout/Header";
@@ -11,7 +17,11 @@ import {
   QuotationShippingAddressState,
   QuotationSelectedInvoiceAddressState,
 } from "recoil/MemoIn/MemoInState";
-import { grandTotalState, memoInfoState, editMemoState } from "recoil/MemoIn/MemoState";
+import {
+  grandTotalState,
+  memoInfoState,
+  editMemoState,
+} from "recoil/MemoIn/MemoState";
 import { currencyState } from "recoil/state/CommonState";
 import {
   initialData,
@@ -20,11 +30,18 @@ import {
   newAddTemplate,
 } from "../../component/MemoIn/Data.jsx";
 
-
 import apiRequest from "../../helpers/apiHelper.js";
 import { QuotationtableRowsState } from "recoil/MemoIn/MemoInState";
-import { useRecoilState, useRecoilValueLoadable, useResetRecoilState } from "recoil";
-import { memoInFSMState, memoInOriginalDataState, memoInFormDataState } from "recoil/state/MemoInFSMState";
+import {
+  useRecoilState,
+  useRecoilValueLoadable,
+  useResetRecoilState,
+} from "recoil";
+import {
+  memoInFSMState,
+  memoInOriginalDataState,
+  memoInFormDataState,
+} from "recoil/state/MemoInFSMState";
 import ConfirmCancelDialog from "../../component/Commons/ConfirmCancelDialog";
 import useTransactionNavigationGuard from "../../hooks/useTransactionNavigationGuard";
 import { getCompanyCurrencyId } from "../../helpers/currencyCache.js";
@@ -39,7 +56,6 @@ import {
 import moment from "moment";
 import { exportTransactionToExcel } from "../../helpers/excelHelper";
 
-
 const formatNumber = (value) => {
   if (!value) return "";
   return value.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
@@ -53,14 +69,14 @@ function reducer(state, action) {
   switch (action.type) {
     case "TOGGLE_ITEM": {
       const exists = state.selectedItems.some(
-        (item) => item.account === action.payload.account
+        (item) => item.account === action.payload.account,
       );
       return {
         ...state,
         selectedItems: exists
           ? state.selectedItems.filter(
-            (item) => item.account !== action.payload.account
-          )
+              (item) => item.account !== action.payload.account,
+            )
           : [...state.selectedItems, action.payload],
       };
     }
@@ -97,7 +113,7 @@ function reducer(state, action) {
       return {
         ...state,
         selectedItems: state.selectedItems.filter(
-          (item) => item.account !== action.payload
+          (item) => item.account !== action.payload,
         ),
       };
     case "UPDATE_ITEM":
@@ -106,7 +122,7 @@ function reducer(state, action) {
         selectedItems: state.selectedItems.map((item, idx) =>
           idx === action.payload.index
             ? { ...item, [action.payload.field]: action.payload.value }
-            : item
+            : item,
         ),
       };
     case "TOGGLE_DISCOUNT_PERCENT":
@@ -177,13 +193,13 @@ const MemoInOrder = () => {
   const [open, setOpen] = useState(false);
   const [accountNew] = useRecoilState(useQuotationAccountState);
   const [invoiceAddress, setInvoiceAddress] = useRecoilState(
-    QuotationInvoiceAddressState
+    QuotationInvoiceAddressState,
   );
   const [selectedInvoiceAddress, setSelectedInvoiceAddress] = useRecoilState(
-    QuotationSelectedInvoiceAddressState
+    QuotationSelectedInvoiceAddressState,
   );
   const [shippingAddress, setShippingAddress] = useRecoilState(
-    QuotationShippingAddressState
+    QuotationShippingAddressState,
   );
   const [grandTotal, setGrandTotal] = useRecoilState(grandTotalState);
   const vendorData = useRecoilValueLoadable(getVendorInfo);
@@ -193,8 +209,6 @@ const MemoInOrder = () => {
   useEffect(() => {
     dispatch({ type: "RESET_STATE" });
   }, []);
-
-
 
   // Function inside Header
 
@@ -339,17 +353,14 @@ const MemoInOrder = () => {
   // End_Dispatch
 
   const isNumeric = (str) => {
-    return (
-      !isNaN(str) && 
-      !isNaN(parseFloat(str))
-    ); 
+    return !isNaN(str) && !isNaN(parseFloat(str));
   };
   const formatNumberWithCommas = (number) => {
     const numberString = number.toString();
     const [integerPart, decimalPart] = numberString.split(".");
     const formattedIntegerPart = integerPart.replace(
       /\B(?=(\d{3})+(?!\d))/g,
-      ","
+      ",",
     );
 
     if (decimalPart !== undefined) {
@@ -363,12 +374,11 @@ const MemoInOrder = () => {
     const totalAmount =
       item.unit === "pcs"
         ? (isNumeric(item.pcs) ? item.pcs : 0) *
-        (isNumeric(item.price) ? item.price : 0)
+          (isNumeric(item.price) ? item.price : 0)
         : (isNumeric(item.weight) ? item.weight : 0) *
-        (isNumeric(item.price) ? item.price : 0);
+          (isNumeric(item.price) ? item.price : 0);
     return totalAmount;
   };
-
 
   const calculateTotalAfterDiscount = () => {
     let total = rows.reduce((sum, item) => {
@@ -376,10 +386,13 @@ const MemoInOrder = () => {
     }, 0);
 
     if (state.useDiscountPercent) {
-      total -= (total * state.discount_percent) / 100 ? (total * state.discount_percent) / 100 : 0.00;
+      total -=
+        (total * state.discount_percent) / 100
+          ? (total * state.discount_percent) / 100
+          : 0.0;
     }
     if (state.useDiscountAmount) {
-      total -= state.discount_amount ? state.discount_amount : 0.00;
+      total -= state.discount_amount ? state.discount_amount : 0.0;
     }
 
     return Number(total).toFixed(2);
@@ -398,8 +411,7 @@ const MemoInOrder = () => {
     }
 
     // Calculate amount after discount
-    const afterDiscount =
-      baseAmount - discountAmount;
+    const afterDiscount = baseAmount - discountAmount;
     return afterDiscount;
   };
 
@@ -443,7 +455,10 @@ const MemoInOrder = () => {
     const otherCharge = parseFloat(state.otherCharge) || 0;
 
     // Final grand total
-    const grandTotal = totalAfterDiscount + totalAfterVAT + otherCharge ? totalAfterDiscount + totalAfterVAT + otherCharge : 0.00;
+    const grandTotal =
+      totalAfterDiscount + totalAfterVAT + otherCharge
+        ? totalAfterDiscount + totalAfterVAT + otherCharge
+        : 0.0;
 
     return Number(grandTotal).toFixed(2);
   };
@@ -474,7 +489,7 @@ const MemoInOrder = () => {
     handleUpdate(
       index,
       "discount_amount",
-      Number(calculatedDiscountAmount).toFixed(2)
+      Number(calculatedDiscountAmount).toFixed(2),
     );
   };
 
@@ -487,16 +502,17 @@ const MemoInOrder = () => {
     handleUpdate(
       index,
       "discount_percent",
-      Number(calculatedDiscountPercent).toFixed(2)
+      Number(calculatedDiscountPercent).toFixed(2),
     );
   };
   // THIS ONE ALSO
 
   const calculateTotalAfterDiscountPercent = () => {
     if (state.useDiscountPercent) {
-      return (
-        (calculateSubTotalAfterItemDiscounts() * state.discount_percent) / 100 ? (calculateSubTotalAfterItemDiscounts() * state.discount_percent) / 100 : 0.00
-      );
+      return (calculateSubTotalAfterItemDiscounts() * state.discount_percent) /
+        100
+        ? (calculateSubTotalAfterItemDiscounts() * state.discount_percent) / 100
+        : 0.0;
     }
 
     return 0;
@@ -505,7 +521,6 @@ const MemoInOrder = () => {
   const [docDate, setDocDate] = useState(new Date());
   const [dueDate, setDueDate] = useState(new Date());
   const [exchangeRate, setExchangeRateRaw] = useState("");
-
 
   const handleDocDateChange = createDateChangeHandler(setDocDate);
   const handleDueDateChange = createDateChangeHandler(setDueDate);
@@ -519,7 +534,6 @@ const MemoInOrder = () => {
     }
   };
 
-
   const [ref1, setRef1] = useState("");
   const [ref2, setRef2] = useState("");
   const [lot, setLot] = useState("");
@@ -530,18 +544,26 @@ const MemoInOrder = () => {
   const [editMemoStatus, setEditMemoStatus] = useRecoilState(editMemoState);
   const [companyCurrency, setCompanyCurrency] = useState(null);
 
-
-  const isApproved = ((memoInfo?.status || "") + "").toLowerCase() === "approved" ||
+  const isApproved =
+    ((memoInfo?.status || "") + "").toLowerCase() === "approved" ||
     ((memoInfo?.status_approve || "") + "").toLowerCase() === "approved";
   const [fsmState, setFsmState] = useRecoilState(memoInFSMState);
-  const [originalData, setOriginalData] = useRecoilState(memoInOriginalDataState);
+  const [originalData, setOriginalData] = useRecoilState(
+    memoInOriginalDataState,
+  );
   const [formData, setFormData] = useRecoilState(memoInFormDataState);
   const [showCancelConfirmDialog, setShowCancelConfirmDialog] = useState(false);
 
   // Reset functions for Recoil states
-  const resetInvoiceAddressState = useResetRecoilState(QuotationInvoiceAddressState);
-  const resetSelectedInvoiceAddressState = useResetRecoilState(QuotationSelectedInvoiceAddressState);
-  const resetShippingAddressState = useResetRecoilState(QuotationShippingAddressState);
+  const resetInvoiceAddressState = useResetRecoilState(
+    QuotationInvoiceAddressState,
+  );
+  const resetSelectedInvoiceAddressState = useResetRecoilState(
+    QuotationSelectedInvoiceAddressState,
+  );
+  const resetShippingAddressState = useResetRecoilState(
+    QuotationShippingAddressState,
+  );
   const resetRowsState = useResetRecoilState(QuotationtableRowsState);
   const resetGrandTotalState = useResetRecoilState(grandTotalState);
   const resetMemoInfoState = useResetRecoilState(memoInfoState);
@@ -570,7 +592,6 @@ const MemoInOrder = () => {
     resetMemoInfoState,
   ]);
 
-
   const hasUnsavedData = useMemo(() => {
     // Check if daybook data is loaded
     if (memoInfo?.isDayBookEdit) {
@@ -579,14 +600,19 @@ const MemoInOrder = () => {
 
     if (rows && rows.length > 0) {
       // Check if any row has meaningful data
-      const hasRowData = rows.some(row =>
-        row?.stone || row?.stone_code || row?.pcs > 0 || row?.weight > 0 || row?.price > 0
+      const hasRowData = rows.some(
+        (row) =>
+          row?.stone ||
+          row?.stone_code ||
+          row?.pcs > 0 ||
+          row?.weight > 0 ||
+          row?.price > 0,
       );
       if (hasRowData) {
         return true;
       }
     }
-    // Header fields (account, ref1, ref2, exchange rate, invoice address, shipping address, note, remark) 
+    // Header fields (account, ref1, ref2, exchange rate, invoice address, shipping address, note, remark)
     // are not considered as unsaved data - only item rows trigger the warning
     return false;
   }, [memoInfo, rows]);
@@ -598,9 +624,7 @@ const MemoInOrder = () => {
     return hasUnsavedData;
   }, [fsmState, hasUnsavedData]);
 
-
   useTransactionNavigationGuard(shouldShowUnsavedDialog, resetMemoInState);
-
 
   useEffect(() => {
     setFsmState("initial");
@@ -627,9 +651,7 @@ const MemoInOrder = () => {
     handleUpdate(index, field, value);
   };
 
-  const handleCurrencyChange = (currency) => {
-
-  };
+  const handleCurrencyChange = (currency) => {};
 
   const handlePost = () => {
     setIsOpenModalConfrim(true);
@@ -643,7 +665,7 @@ const MemoInOrder = () => {
       try {
         const id = await getCompanyCurrencyId(apiRequest);
         setCompanyCurrency(id);
-      } catch { }
+      } catch {}
     })();
   }, []);
 
@@ -692,8 +714,7 @@ const MemoInOrder = () => {
         rowErrors.push("Price");
       }
 
-
-      const totalAmount = calculateAmountAfterDiscount(el);  // Assuming this function returns total_amount
+      const totalAmount = calculateAmountAfterDiscount(el); // Assuming this function returns total_amount
       // if (!isNumeric(totalAmount) || totalAmount <= 0) {
       //   rowErrors.push("Total Amount");
       // }
@@ -710,13 +731,11 @@ const MemoInOrder = () => {
     const totalAfterDiscount = parseFloat(calculateTotalAfterDiscount());
 
     if (invalidList.length > 0) {
-
-
       const headerErrors = invalidList
-        .filter(el => el.row === "Header")
-        .flatMap(el => el.list);
+        .filter((el) => el.row === "Header")
+        .flatMap((el) => el.list);
 
-      const rowErrors = invalidList.filter(el => el.row !== "Header");
+      const rowErrors = invalidList.filter((el) => el.row !== "Header");
 
       let warningText = "";
 
@@ -726,7 +745,7 @@ const MemoInOrder = () => {
 
       if (rowErrors.length > 0) {
         const rowText = rowErrors
-          .map(el => `${el.row}: ${el.list.join(", ")}`)
+          .map((el) => `${el.row}: ${el.list.join(", ")}`)
           .join(" | ");
 
         warningText += warningText ? " | " + rowText : rowText;
@@ -738,8 +757,6 @@ const MemoInOrder = () => {
       return;
     }
 
-
-
     // --------- Body Preparation ---------
     const sub_total = calculateSubTotalAfterItemDiscounts();
     const grand_total = calculateGrandTotal();
@@ -747,29 +764,41 @@ const MemoInOrder = () => {
     const otherCharge = parseFloat(state.otherCharge);
     const totaldiscountper = calculateTotalAfterDiscountPercent();
 
+    let accountId = memoInfo?.account?._id || memoInfo?.account?.id;
 
+    if (!accountId && vendorData.state === "hasValue") {
+      const foundAccount = vendorData.contents.find(
+        (acc) => acc.code === memoInfo?.account?.code,
+      );
 
-
-
+      if (foundAccount) {
+        accountId = foundAccount._id || foundAccount.id;
+      }
+    }
 
     const body = {
       invoice_no: memoInfo?.invoice_no || "",
       exchange_rate:
-        exchangeRate === "" || exchangeRate === null || Number(exchangeRate) === 0
+        exchangeRate === "" ||
+        exchangeRate === null ||
+        Number(exchangeRate) === 0
           ? 1
           : Number(exchangeRate),
-      account: memoInfo?.account?.label,
+      account: accountId,
       vendor_code_id: memoInfo?.account?.code,
-      invoice_address: selectedInvoiceAddress?.label || invoiceAddress?.[0]?.label || "",
+      invoice_address:
+        selectedInvoiceAddress?.label || invoiceAddress?.[0]?.label || "",
       shipping_address: shippingAddress?.[0]?.label,
       currency: memoInfo.currency,
 
-      ...validateBodyDates(
-        { doc_date: docDate, due_date: dueDate },
-        ['doc_date', 'due_date']
-      ),
+      ...validateBodyDates({ doc_date: docDate, due_date: dueDate }, [
+        "doc_date",
+        "due_date",
+      ]),
       exchange_rate:
-        exchangeRate === "" || exchangeRate === null || Number(exchangeRate) === 0
+        exchangeRate === "" ||
+        exchangeRate === null ||
+        Number(exchangeRate) === 0
           ? 1
           : Number(exchangeRate),
       ref_1: ref1,
@@ -779,9 +808,17 @@ const MemoInOrder = () => {
       items: rows.map((el) => {
         // Include _id only if it's a valid ObjectId (for backend image matching)
         let itemId = null;
-        if (el._id && typeof el._id === "string" && /^[0-9a-fA-F]{24}$/.test(el._id)) {
+        if (
+          el._id &&
+          typeof el._id === "string" &&
+          /^[0-9a-fA-F]{24}$/.test(el._id)
+        ) {
           itemId = el._id;
-        } else if (el.id && typeof el.id === "string" && /^[0-9a-fA-F]{24}$/.test(el.id)) {
+        } else if (
+          el.id &&
+          typeof el.id === "string" &&
+          /^[0-9a-fA-F]{24}$/.test(el.id)
+        ) {
           itemId = el.id;
         }
 
@@ -789,7 +826,11 @@ const MemoInOrder = () => {
           ...(itemId ? { _id: itemId } : {}),
           stone_code: el.stone_code,
 
-          ...(el.stock_id && typeof el.stock_id === 'string' && el.stock_id.trim() !== '' ? { stock_id: el.stock_id } : {}),
+          ...(el.stock_id &&
+          typeof el.stock_id === "string" &&
+          el.stock_id.trim() !== ""
+            ? { stock_id: el.stock_id }
+            : {}),
           account: el.account,
           location: el.location,
           type: el.type,
@@ -809,7 +850,7 @@ const MemoInOrder = () => {
           weight: Number(el.weight),
           unit_price: Number(el.price),
           total_amount: Number(calculateAmountAfterDiscount(el)),
-          sale_price : Number(el.sale_price),
+          sale_price: Number(el.sale_price),
           price: Number(el.price),
           discount_percent: Number(el.discount_percent),
           discount_amount: Number(el.discount_amount),
@@ -821,21 +862,30 @@ const MemoInOrder = () => {
           unit: el.unit ? el.unit.toLowerCase() : "cts",
           status: "active",
           // Preserve image but strip full URL to relative before saving (unless uploading new file)
-          image: el.imageFile ? undefined : (el.image ? (() => {
-            const img = el.image;
-            if (typeof img === 'string' && /^https?:\/\/.+?\/uploads\//.test(img)) {
-              const match = img.match(/\/uploads\/.+$/);
-              return match ? match[0] : img;
-            }
-            return img;
-          })() : null),
+          image: el.imageFile
+            ? undefined
+            : el.image
+              ? (() => {
+                  const img = el.image;
+                  if (
+                    typeof img === "string" &&
+                    /^https?:\/\/.+?\/uploads\//.test(img)
+                  ) {
+                    const match = img.match(/\/uploads\/.+$/);
+                    return match ? match[0] : img;
+                  }
+                  return img;
+                })()
+              : null,
         };
       }),
 
       summary: {
         sub_total: parseFloat(sub_total).toFixed(2),
         discount: parseFloat(totaldiscountper).toFixed(2),
-        discount_amount: isNaN(parseFloat(state.discount_amount)) ? "0.00" : parseFloat(state.discount_amount).toFixed(2),
+        discount_amount: isNaN(parseFloat(state.discount_amount))
+          ? "0.00"
+          : parseFloat(state.discount_amount).toFixed(2),
         total_after_discount: parseFloat(totalAfterDiscount).toFixed(2),
         vat: parseFloat(state.vatAmount).toFixed(2),
         vat_amount: parseFloat(totalAfterVAT).toFixed(2),
@@ -849,22 +899,27 @@ const MemoInOrder = () => {
     console.log("Full memo in body:", body);
 
     let method = "POST";
-    let URL = "/memo-in"
+    let URL = "/memo-in";
     if (memoInfo?.id) {
       method = "PUT";
-      URL = `/memo-in/${memoInfo?.id}`
+      URL = `/memo-in/${memoInfo?.id}`;
     }
     // If any row contains a new imageFile, send multipart FormData; otherwise JSON
     let payload = body;
-    if (Array.isArray(rows) && rows.some(r => r && r.imageFile instanceof File)) {
+    if (
+      Array.isArray(rows) &&
+      rows.some((r) => r && r.imageFile instanceof File)
+    ) {
       const formData = new FormData();
-
 
       const bodyWithoutItems = { ...body };
       delete bodyWithoutItems.items;
       delete bodyWithoutItems.summary;
 
-      appendDatesToFormData(bodyWithoutItems, formData, ['doc_date', 'due_date']);
+      appendDatesToFormData(bodyWithoutItems, formData, [
+        "doc_date",
+        "due_date",
+      ]);
 
       formData.append("items", JSON.stringify(body.items || []));
       formData.append("summary", JSON.stringify(body.summary || {}));
@@ -872,9 +927,10 @@ const MemoInOrder = () => {
         if (r && r.imageFile instanceof File) {
           let token = String(idx);
           try {
-            const isValidObjectId = typeof r._id === "string" && /^[0-9a-fA-F]{24}$/.test(r._id);
+            const isValidObjectId =
+              typeof r._id === "string" && /^[0-9a-fA-F]{24}$/.test(r._id);
             if (isValidObjectId) token = r._id;
-          } catch { }
+          } catch {}
           const fieldKey = `image_${token}`;
           formData.append(fieldKey, r.imageFile, r.imageFile.name || fieldKey);
         }
@@ -894,7 +950,6 @@ const MemoInOrder = () => {
     setTimeout(() => {
       setIsOpenModalSuccess(false);
     }, 500);
-
   };
 
   const [isOpenModalError, setIsOpenModalError] = useState(false);
@@ -927,23 +982,33 @@ const MemoInOrder = () => {
     setFsmState("saved");
     setEditMemoStatus(false);
 
-
-    const memoInData = savedData?.memoIn || savedData?.updatedMemoIn || savedData;
+    const memoInData =
+      savedData?.memoIn || savedData?.updatedMemoIn || savedData;
     const recordId = memoInData?._id || memoInData?.id || memoInfo?.id;
     const invoiceNo = memoInData?.invoice_no || memoInfo?.invoice_no;
     const status = memoInData?.status || memoInfo?.status || "unapproved";
-    const statusApprove = memoInData?.status_approve || memoInfo?.status_approve;
+    const statusApprove =
+      memoInData?.status_approve || memoInfo?.status_approve;
 
-    console.log("handleSaveSuccess - recordId:", recordId, "status:", status, "memoInData:", memoInData);
+    console.log(
+      "handleSaveSuccess - recordId:",
+      recordId,
+      "status:",
+      status,
+      "memoInData:",
+      memoInData,
+    );
     console.log("Saved items from backend:", memoInData?.items);
 
-
-    if (memoInData?.items && Array.isArray(memoInData.items) && memoInData.items.length > 0) {
-      setRows(prevRows => {
+    if (
+      memoInData?.items &&
+      Array.isArray(memoInData.items) &&
+      memoInData.items.length > 0
+    ) {
+      setRows((prevRows) => {
         return prevRows.map((prevRow, index) => {
           const savedItem = memoInData.items[index];
           if (savedItem && savedItem.stock_id) {
-
             return {
               ...prevRow,
               stock_id: savedItem.stock_id,
@@ -956,7 +1021,7 @@ const MemoInOrder = () => {
     }
 
     if (recordId) {
-      setMemoInfo(prev => {
+      setMemoInfo((prev) => {
         const updated = {
           ...prev,
           id: recordId,
@@ -970,35 +1035,37 @@ const MemoInOrder = () => {
       });
     }
 
-
-
     if (recordId || rows.length > 0) {
       const completeData = {
         _id: recordId,
         invoice_no: invoiceNo,
         account: memoInfo.account?.label || "",
         vendor_code_id: memoInfo.account?.code || "",
-        invoice_address: selectedInvoiceAddress?.label || invoiceAddress?.[0]?.label || "",
+        invoice_address:
+          selectedInvoiceAddress?.label || invoiceAddress?.[0]?.label || "",
         shipping_address: shippingAddress?.[0]?.label || "",
         currency: {
           _id: memoInfo.currency,
           code: memoInfo.currencyCode,
         },
 
-        ...validateBodyDates(
-          { doc_date: docDate, due_date: dueDate },
-          ['doc_date', 'due_date']
-        ),
+        ...validateBodyDates({ doc_date: docDate, due_date: dueDate }, [
+          "doc_date",
+          "due_date",
+        ]),
         exchange_rate: exchangeRate,
         ref_1: ref1,
         ref_2: ref2,
         remark: remark,
         note: note,
         items: rows.map((row, index) => {
-
           const savedItem = memoInData?.items?.[index];
           if (savedItem?.stock_id) {
-            return { ...row, stock_id: savedItem.stock_id, _id: savedItem._id || row._id };
+            return {
+              ...row,
+              stock_id: savedItem.stock_id,
+              _id: savedItem._id || row._id,
+            };
           }
           return row;
         }),
@@ -1037,10 +1104,25 @@ const MemoInOrder = () => {
       const totalWeight = rows.reduce((a, r) => a + (Number(r.weight) || 0), 0);
 
       const summaryHeaders = [
-        "Doc Date", "Due Date", "Memo In No.", "Account", "Ref 1", "Ref 2",
-        "Currency", "Exc Rate", "Pcs", "Weight", "SubTotal",
-        "Discount(%)", "Discount Amt", "VAT(%)", "VAT",
-        "Other Charges", "Grand Total", "Remark", "Status"
+        "Doc Date",
+        "Due Date",
+        "Memo In No.",
+        "Account",
+        "Ref 1",
+        "Ref 2",
+        "Currency",
+        "Exc Rate",
+        "Pcs",
+        "Weight",
+        "SubTotal",
+        "Discount(%)",
+        "Discount Amt",
+        "VAT(%)",
+        "VAT",
+        "Other Charges",
+        "Grand Total",
+        "Remark",
+        "Status",
       ];
 
       const summaryValues = [
@@ -1062,17 +1144,31 @@ const MemoInOrder = () => {
         Number(state.otherCharge || 0),
         Number(grandTotal || 0),
         remark || "",
-        "Valid"
+        "Valid",
       ];
 
       const itemHeaders = [
-        "Type", "Ref No.", "Stone", "Shape", "Size", "Color",
-        "Cutting", "Quality", "Clarity", "Cer Type", "Cer No.", "Pcs", "Weight",
-        "Price", "Unit", "Amount", "Remark"
+        "Type",
+        "Ref No.",
+        "Stone",
+        "Shape",
+        "Size",
+        "Color",
+        "Cutting",
+        "Quality",
+        "Clarity",
+        "Cer Type",
+        "Cer No.",
+        "Pcs",
+        "Weight",
+        "Price",
+        "Unit",
+        "Amount",
+        "Remark",
       ];
 
-      const itemRows = rows.map(row => ([
-        (row.type === "select" ? "" : (row.type || row.stone_type || "")),
+      const itemRows = rows.map((row) => [
+        row.type === "select" ? "" : row.type || row.stone_type || "",
         row.ref_no || row["Ref No."] || "",
         row.stone || "",
         row.shape || "",
@@ -1089,8 +1185,8 @@ const MemoInOrder = () => {
         Number(row.price || 0),
         row.unit || "cts",
         Number(calculateAmountAfterDiscount(row) || 0),
-        row.remark || ""
-      ]));
+        row.remark || "",
+      ]);
 
       exportTransactionToExcel({
         filename: memoInfo?.invoice_no || "Memo In",
@@ -1100,7 +1196,6 @@ const MemoInOrder = () => {
         itemHeaders,
         itemRows,
       });
-
     } catch (err) {
       console.error(err);
       alert("Failed to export Excel");
@@ -1119,19 +1214,17 @@ const MemoInOrder = () => {
 
     if (vendorData.state === "hasValue" && Array.isArray(vendorData.contents)) {
       const matchedAccount = vendorData.contents.find(
-        (acc) => acc.code === item.vendor_code_id
+        (acc) => acc.code === item.vendor_code_id,
       );
       if (matchedAccount) {
         allInvoiceAddresses = matchedAccount.invoiceAddress || [];
       }
     }
 
-
     if (allInvoiceAddresses.length > 0) {
-
       const savedAddressText = (item.invoice_address || "").trim();
       const savedAddress = allInvoiceAddresses.find(
-        (addr) => (addr.label || "").trim() === savedAddressText
+        (addr) => (addr.label || "").trim() === savedAddressText,
       );
 
       if (savedAddress) {
@@ -1139,7 +1232,6 @@ const MemoInOrder = () => {
 
         setInvoiceAddress(allInvoiceAddresses);
       } else {
-
         const fallbackAddress = {
           label: item.invoice_address,
           code: "",
@@ -1177,7 +1269,7 @@ const MemoInOrder = () => {
       } else {
         setExchangeRate(item.exchange_rate);
       }
-    }, 900); // delay in milliseconds, adjust as needed 
+    }, 900); // delay in milliseconds, adjust as needed
 
     setRef1(item.ref_1);
     setRef2(item.ref_2);
@@ -1192,19 +1284,25 @@ const MemoInOrder = () => {
       _id: item?._id,
       isDayBookEdit: true,
       status: item?.status,
-      status_approve: item?.status_approve
+      status_approve: item?.status_approve,
     });
     setRemark(item.remark);
     setNote(item.note);
 
-
     console.log("Loading memo in items:", item.items);
-    console.log("Stock IDs in loaded items:", item.items.map(el => ({ _id: el._id, stock_id: el.stock_id })));
+    console.log(
+      "Stock IDs in loaded items:",
+      item.items.map((el) => ({ _id: el._id, stock_id: el.stock_id })),
+    );
 
     const formattedItems = item.items.map((el) => ({
       ...el,
       // Only preserve stock_id if it's a valid non-empty string, otherwise omit it (backend will generate)
-      ...(el.stock_id && typeof el.stock_id === 'string' && el.stock_id.trim() !== '' ? { stock_id: el.stock_id } : {}),
+      ...(el.stock_id &&
+      typeof el.stock_id === "string" &&
+      el.stock_id.trim() !== ""
+        ? { stock_id: el.stock_id }
+        : {}),
       total_amount: Number(el.total_amount).toFixed(2),
       weight_per_piece: Number(el.weight_per_piece).toFixed(2),
       weight: Number(el.weight).toFixed(3),
@@ -1214,11 +1312,18 @@ const MemoInOrder = () => {
       discount_amount: Number(el.discount_amount).toFixed(2),
       labour_price: parseFloat(Number(el.labour_price).toFixed(2)),
       amount: Number(el.amount).toFixed(2),
-      other_charge: el.other_charge !== undefined ? parseFloat(el.other_charge).toFixed(2) : "0.00",
+      other_charge:
+        el.other_charge !== undefined
+          ? parseFloat(el.other_charge).toFixed(2)
+          : "0.00",
 
       image: el.image || null,
       image_preview: (() => {
-        if (!el.image || typeof el.image !== 'string' || el.image.trim() === '') {
+        if (
+          !el.image ||
+          typeof el.image !== "string" ||
+          el.image.trim() === ""
+        ) {
           return null;
         }
         const imgPath = el.image.trim();
@@ -1227,7 +1332,7 @@ const MemoInOrder = () => {
           return imgPath;
         }
 
-        if (imgPath.startsWith('/')) {
+        if (imgPath.startsWith("/")) {
           return `${API_URL}${imgPath}`;
         }
 
@@ -1236,7 +1341,6 @@ const MemoInOrder = () => {
     }));
 
     setRows(formattedItems);
-
 
     setFsmState("saved");
     setOriginalData({
@@ -1303,7 +1407,6 @@ const MemoInOrder = () => {
       payload: summary.discount_amount,
     });
 
-
     dispatch({ type: "SET_OTHER_CHARGE", payload: summary.other_charge || 0 });
 
     if (summary.vat_amount > 0 || summary.vat > 0) {
@@ -1325,9 +1428,7 @@ const MemoInOrder = () => {
       type: "SET_DISCOUNT_PERCENT",
       payload: percentage,
     });
-
   };
-
 
   const renderDialogSuccess = () => {
     return (
@@ -1678,7 +1779,9 @@ const MemoInOrder = () => {
   return (
     <Box sx={{ display: "flex" }}>
       <NavBar />
-      <Box sx={{ marginLeft: "222px", Height: "100vh ", paddingBottom: "130px" }}>
+      <Box
+        sx={{ marginLeft: "222px", Height: "100vh ", paddingBottom: "130px" }}
+      >
         <Header />
         <Box sx={{ display: "flex" }}>
           <Box>
@@ -1756,7 +1859,7 @@ const MemoInOrder = () => {
               isDayBookDataLoaded={memoInfo?.isDayBookEdit || false}
               setIsDayBookDataLoaded={(value) => {
                 if (!value) {
-                  setMemoInfo(prev => ({ ...prev, isDayBookEdit: false }));
+                  setMemoInfo((prev) => ({ ...prev, isDayBookEdit: false }));
                 }
               }}
               triggerFSMDirty={triggerFSMDirty}
@@ -1765,7 +1868,7 @@ const MemoInOrder = () => {
           </Box>
         </Box>
         <FooterVendor
-          type="purchase"
+          type="memo_in"
           fsmState={fsmState}
           formData={formData}
           selectedData={originalData}
@@ -1796,7 +1899,6 @@ const MemoInOrder = () => {
           if (!confirmed) return;
 
           if (fsmState === "editing" && originalData) {
-
             setDocDate(parseBackendDate(originalData.doc_date));
             setDueDate(parseBackendDate(originalData.due_date));
             setRef1(originalData.ref_1 || "");
